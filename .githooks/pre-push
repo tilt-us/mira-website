@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Blocks direct pushes to master and offers an automatic backmerge.
+
+while read local_ref local_sha remote_ref remote_sha; do
+  if [[ "$remote_ref" == "refs/heads/master" ]]; then
+    echo ""
+    echo "⚠️  You are pushing directly to master!"
+    echo "   All work should go through development first."
+    echo ""
+    echo "   Do you want to run a backmerge (master → development) instead? [y/N]"
+    read -r answer < /dev/tty
+
+    if [[ "$answer" =~ ^[Yy]$ ]]; then
+      bash "$(git rev-parse --show-toplevel)/scripts/backmerge-master-to-development.sh"
+    fi
+
+    echo "   Push to master blocked."
+    exit 1
+  fi
+done
+
+exit 0

@@ -1,0 +1,27 @@
+name: Backmerge master → development
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  backmerge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Merge master into development
+        run: |
+          git checkout development
+          git merge origin/master --no-ff -m "chore: backmerge master into development [skip ci]"
+          git push origin development
