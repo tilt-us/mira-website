@@ -1,6 +1,10 @@
 # mira-website
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.0.4.
+![Angular](https://img.shields.io/badge/Angular-22-red?logo=angular)
+![pnpm](https://img.shields.io/badge/pnpm-11.9.0-orange?logo=pnpm)
+![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue?logo=typescript)
+![Vitest](https://img.shields.io/badge/Vitest-4.1.9-green?logo=vitest)
+![Playwright](https://img.shields.io/badge/Playwright-1.61.1-teal?logo=playwright)
 
 ## Branch Strategy
 
