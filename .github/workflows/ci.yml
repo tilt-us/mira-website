@@ -1,0 +1,159 @@
+name: CI + Release
+
+on:
+  push:
+    branches:
+      - development
+      - master
+  pull_request:
+    branches:
+      - development
+      - master
+
+jobs:
+  unit-tests:
+    name: Unit Tests + Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.17.x'
+
+      - name: Install pnpm
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          npm i -g pnpm@11.5.0 --prefix "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run unit tests and collect coverage
+        run: pnpm run test:ci
+
+      - name: Upload coverage report to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/mira-website/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unit
+          fail_ci_if_error: true
+          verbose: true
+
+  playwright:
+    name: Playwright Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.17.x'
+
+      - name: Install pnpm
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          npm i -g pnpm@11.5.0 --prefix "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps
+
+      - name: Run Playwright tests
+        run: pnpm run test:e2e
+
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  release:
+    name: Deploy to S-TEST
+    runs-on: ubuntu-latest
+    needs: [unit-tests, playwright]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    environment:
+      name: s-test
+      url: https://tilt-us.com
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.17.x'
+
+      - name: Install pnpm
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          npm i -g pnpm@11.5.0 --prefix "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build production bundle
+        run: pnpm run build:prod
+
+      - name: Setup SSH key
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_SSH_KEY }}
+
+      - name: Add deploy host to known_hosts
+        run: |
+          if [ -z "${DEPLOY_HOST}" ] || [ -z "${DEPLOY_USER}" ]; then
+            echo "DEPLOY_HOST and DEPLOY_USER are required for deployment."
+            exit 1
+          fi
+          mkdir -p ~/.ssh
+          DEPLOY_PORT="${DEPLOY_PORT:-22}"
+          DEPLOY_PATH="${DEPLOY_PATH:-/var/wwww/tilt-us}"
+          ssh-keyscan -p "$DEPLOY_PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
+      - name: Sync build files to S-TEST
+        run: |
+          DEPLOY_PORT="${DEPLOY_PORT:-22}"
+          DEPLOY_PATH="${DEPLOY_PATH:-/var/wwww/tilt-us}"
+          rsync -avz --delete -e "ssh -p $DEPLOY_PORT" dist/mira-website/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+
+      - name: Reload/restart website service
+        run: |
+          DEPLOY_PORT="${DEPLOY_PORT:-22}"
+          if [ -z "${POST_DEPLOY_CMD}" ]; then
+            echo "No DEPLOY_POST_COMMAND set; skipping restart hook."
+            exit 0
+          fi
+          ssh -p "${DEPLOY_PORT}" ${DEPLOY_USER}@${DEPLOY_HOST} "${POST_DEPLOY_CMD}"
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+          DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          POST_DEPLOY_CMD: ${{ secrets.DEPLOY_POST_DEPLOY_COMMAND }}

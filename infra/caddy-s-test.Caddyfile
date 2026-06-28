@@ -1,0 +1,14 @@
+{
+  # Keep the existing server settings you already use, only add/adjust the
+  # application host entry once deployment is writing files to ${DEPLOY_PATH}.
+}
+
+tilt-us.com {
+  # Option A: reverse proxy to your app process on port 5000
+  reverse_proxy 127.0.0.1:5000
+
+  # Option B: if you serve static files directly from Caddy instead of an app server,
+  # replace reverse_proxy with:
+  # root * /var/www/tilt-us
+  # file_server
+}
