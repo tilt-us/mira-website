@@ -72,6 +72,9 @@
               "text-summary",
               "lcov",
               "json-summary"
+            ],
+            "exclude": [
+              "src/e2e/**/*.ts"
             ]
           }
         }
