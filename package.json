@@ -8,8 +8,8 @@
     "build": "ng build",
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test --watch=false --code-coverage",
-    "test:vite": "ng test --watch=false --code-coverage",
+    "test": "ng test --watch=false --coverage",
+    "test:vite": "ng test --watch=false --coverage",
     "test:ci": "pnpm run test:vite && node scripts/check-coverage.js",
     "test:e2e": "playwright test"
   },
