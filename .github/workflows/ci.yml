@@ -125,7 +125,7 @@ jobs:
           fi
           mkdir -p ~/.ssh
           DEPLOY_PORT="${DEPLOY_PORT:-22}"
-          DEPLOY_PATH="${DEPLOY_PATH:-/var/wwww/tilt-us}"
+          DEPLOY_PATH="${DEPLOY_PATH:-/srv/mira/website}"
           ssh-keyscan -p "$DEPLOY_PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
@@ -136,24 +136,109 @@ jobs:
       - name: Sync build files to S-TEST
         run: |
           DEPLOY_PORT="${DEPLOY_PORT:-22}"
-          DEPLOY_PATH="${DEPLOY_PATH:-/var/wwww/tilt-us}"
-          rsync -avz --delete -e "ssh -p $DEPLOY_PORT" dist/mira-website/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
+          DEPLOY_PATH="${DEPLOY_PATH:-/srv/mira/website}"
+          RSYNC_OPTS=(-avz --delete)
+          if [ "${DEPLOY_RSYNC_WITH_SUDO}" = "true" ]; then
+            RSYNC_OPTS+=("--rsync-path=sudo rsync")
+          fi
+          rsync "${RSYNC_OPTS[@]}" -e "ssh -p $DEPLOY_PORT" dist/mira-website/ ${DEPLOY_USER}@${DEPLOY_HOST}:${DEPLOY_PATH}/
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
+          DEPLOY_RSYNC_WITH_SUDO: ${{ secrets.DEPLOY_RSYNC_WITH_SUDO }}
 
-      - name: Reload/restart website service
+      - name: Sync to caddy and reload
         run: |
           DEPLOY_PORT="${DEPLOY_PORT:-22}"
-          if [ -z "${POST_DEPLOY_CMD}" ]; then
-            echo "No DEPLOY_POST_COMMAND set; skipping restart hook."
+          if [ -n "${POST_DEPLOY_CMD}" ]; then
+            ssh -p "${DEPLOY_PORT}" ${DEPLOY_USER}@${DEPLOY_HOST} "${POST_DEPLOY_CMD}"
             exit 0
           fi
-          ssh -p "${DEPLOY_PORT}" ${DEPLOY_USER}@${DEPLOY_HOST} "${POST_DEPLOY_CMD}"
+
+          DEPLOY_PATH="${DEPLOY_PATH:-/srv/mira/website}"
+          CADDY_CONTAINER="${CADDY_CONTAINER:-mira-caddy}"
+          CADDY_CONTAINER_CONFIG_PATH="${CADDY_CONTAINER_CONFIG_PATH:-${CADDY_CONFIG_PATH:-/etc/caddy/Caddyfile}}"
+          CADDY_HOST_CONFIG_PATH="${CADDY_HOST_CONFIG_PATH:-}"
+          CADDY_SITE_ROOT="${CADDY_SITE_ROOT:-${DEPLOY_PATH}/browser}"
+          CADDY_CONFIG_MARKER="## BEGIN auto-managed by mira-website"
+
+          ssh -p "${DEPLOY_PORT}" ${DEPLOY_USER}@${DEPLOY_HOST} \
+            "DEPLOY_PATH=\"${DEPLOY_PATH}\" \
+            CADDY_CONTAINER=\"${CADDY_CONTAINER}\" \
+            CADDY_CONTAINER_CONFIG_PATH=\"${CADDY_CONTAINER_CONFIG_PATH}\" \
+            CADDY_HOST_CONFIG_PATH=\"${CADDY_HOST_CONFIG_PATH}\" \
+            CADDY_SITE_ROOT=\"${CADDY_SITE_ROOT}\" \
+            CADDY_CONTAINER_USE_SUDO=\"${CADDY_CONTAINER_USE_SUDO}\" \
+            CADDY_CONFIG_MARKER=\"${CADDY_CONFIG_MARKER}\" \
+            bash -se" <<'REMOTE_SCRIPT'
+          set -euo pipefail
+
+          if [ -z "${DEPLOY_PATH}" ] || [ -z "${CADDY_CONTAINER}" ] || [ -z "${CADDY_CONTAINER_CONFIG_PATH}" ] || [ -z "${CADDY_SITE_ROOT}" ]; then
+            echo "Missing deployment variables in post-deploy step." >&2
+            exit 1
+          fi
+
+          CADDY_HOST_CONFIG_PATH="${CADDY_HOST_CONFIG_PATH}"
+          CADDY_CONTAINER_USE_SUDO="${CADDY_CONTAINER_USE_SUDO:-false}"
+          CADDY_CONFIG_MARKER="${CADDY_CONFIG_MARKER}"
+          CADDY_CONTAINER_CONFIG_PATH="${CADDY_CONTAINER_CONFIG_PATH}"
+          RUN_CMD_PREFIX=""
+
+          if [ "${CADDY_CONTAINER_USE_SUDO}" = "true" ]; then
+            RUN_CMD_PREFIX="sudo"
+          fi
+
+          if [ -z "${CADDY_HOST_CONFIG_PATH}" ]; then
+            CADDY_HOST_CONFIG_PATH="$(${RUN_CMD_PREFIX} docker inspect "${CADDY_CONTAINER}" --format '{{range .Mounts}}{{if eq .Destination "/etc/caddy/Caddyfile"}}{{.Source}}{{end}}{{end}}')"
+          fi
+
+          if [ -z "${CADDY_HOST_CONFIG_PATH}" ] || [ ! -f "${CADDY_HOST_CONFIG_PATH}" ]; then
+            echo "Could not find usable host-side Caddy config file."
+            exit 1
+          fi
+
+          ${RUN_CMD_PREFIX} mkdir -p "${DEPLOY_PATH}/browser"
+
+          if ! ${RUN_CMD_PREFIX} docker inspect "${CADDY_CONTAINER}" >/dev/null 2>&1; then
+            echo "Cannot access docker for container ${CADDY_CONTAINER}. Adjust CADDY_CONTAINER_USE_SUDO if docker needs elevated privileges."
+            exit 1
+          fi
+
+          if ! ${RUN_CMD_PREFIX} docker exec "${CADDY_CONTAINER}" test -d "${CADDY_SITE_ROOT}"; then
+            echo "Caddy container cannot access Caddy site root ${CADDY_SITE_ROOT}. Mount this path into mira-caddy or set CADDY_SITE_ROOT to a mounted path."
+            exit 1
+          fi
+
+          if ! grep -Fq "${CADDY_CONFIG_MARKER}" "${CADDY_HOST_CONFIG_PATH}"; then
+            {
+              echo
+              echo "${CADDY_CONFIG_MARKER}"
+              echo "tilt-us.com {"
+              echo "  root * ${CADDY_SITE_ROOT}"
+              echo "  try_files {path} /index.html"
+              echo "  file_server"
+              echo "}"
+              echo
+              echo "www.tilt-us.com {"
+              echo "  redir https://tilt-us.com{uri} 302"
+              echo "}"
+              echo "## END auto-managed by mira-website"
+            } | ${RUN_CMD_PREFIX} tee -a "${CADDY_HOST_CONFIG_PATH}" >/dev/null
+          fi
+
+          ${RUN_CMD_PREFIX} docker exec "${CADDY_CONTAINER}" caddy validate --config "${CADDY_CONTAINER_CONFIG_PATH}"
+          ${RUN_CMD_PREFIX} docker exec "${CADDY_CONTAINER}" caddy reload --config "${CADDY_CONTAINER_CONFIG_PATH}"
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
           DEPLOY_PORT: ${{ secrets.DEPLOY_PORT }}
           POST_DEPLOY_CMD: ${{ secrets.DEPLOY_POST_DEPLOY_COMMAND }}
+          CADDY_CONTAINER: ${{ secrets.DEPLOY_CADDY_CONTAINER }}
+          CADDY_CONTAINER_CONFIG_PATH: ${{ secrets.CADDY_CONTAINER_CONFIG_PATH }}
+          CADDY_HOST_CONFIG_PATH: ${{ secrets.CADDY_HOST_CONFIG_PATH }}
+          CADDY_SITE_ROOT: ${{ secrets.CADDY_SITE_ROOT }}
+          CADDY_CONTAINER_USE_SUDO: ${{ secrets.CADDY_CONTAINER_USE_SUDO }}
+          CADDY_CONFIG_PATH: ${{ secrets.CADDY_CONFIG_PATH }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
