@@ -22,11 +22,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install pnpm
-        run: npm i -g pnpm@11.5.0
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          npm i -g pnpm@11.5.0 --prefix "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -55,11 +57,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install pnpm
-        run: npm i -g pnpm@11.5.0
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          npm i -g pnpm@11.5.0 --prefix "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -94,11 +98,13 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '24'
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install pnpm
-        run: npm i -g pnpm@11.5.0
+        run: |
+          mkdir -p "$HOME/.local/bin"
+          npm i -g pnpm@11.5.0 --prefix "$HOME/.local"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
