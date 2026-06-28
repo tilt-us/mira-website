@@ -5,7 +5,7 @@
 # Frontend only (do NOT use a wildcard, so api.tilt-us.com is untouched)
 tilt-us.com {
   # production: serve the Angular build artifacts directly from disk (no Angular runtime needed)
-  root * /var/wwww/tilt-us/browser
+  root * /srv/mira/website/browser
   try_files {path} /index.html
   file_server
 }
