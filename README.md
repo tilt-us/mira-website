@@ -66,10 +66,10 @@ This prevents accidental direct pushes to `master`.
 To start a local development server, run:
 
 ```bash
-ng serve
+pnpm start
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+Once the server is running, open your browser and navigate to `http://localhost:5000/`. The application will automatically reload whenever you modify any of the source files.
 
 ## Code Scaffolding
 
@@ -100,13 +100,30 @@ This will compile your project and store the build artifacts in the `dist/` dire
 To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
 
 ```bash
-ng test
+pnpm run test
 ```
+
+The CI pipeline runs `pnpm run test:ci` and enforces a minimum coverage threshold of **90%** (lines, branches, functions, statements) before deployment.
 
 ## Running End-to-End Tests
 
 For end-to-end (e2e) testing, run:
 
 ```bash
-ng e2e
+pnpm run test:e2e
 ```
+
+## Deployment
+
+On `development` branch pushes, the CI workflow deploys the build output to `S-TEST` and publishes it to
+`https://tilt-us.com` (served via Caddy on the server at the configured `DEPLOY_HOST`).
+Use `infra/caddy-s-test.Caddyfile` as a starting point for the server side.
+
+Required repository secrets for deployment:
+
+- `CODECOV_TOKEN`
+- `DEPLOY_HOST`
+- `DEPLOY_USER`
+- `DEPLOY_SSH_KEY`
+- `DEPLOY_PATH` (optional, default: `/var/wwww/tilt-us`)
+- Optional: `DEPLOY_PORT` (defaults to `22`) and `DEPLOY_POST_DEPLOY_COMMAND` (for Caddy/service reload)
