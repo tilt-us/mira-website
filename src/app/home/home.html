@@ -1,0 +1,56 @@
+<section class="flex min-h-dvh flex-col items-center justify-center gap-8 p-6 text-center">
+  <div appReveal>
+    <h1 class="text-5xl font-bold tracking-tight sm:text-6xl">Mira</h1>
+    <p class="mt-3 text-lg text-white/70">Enter a world of time and magic.</p>
+  </div>
+
+  <div appReveal>
+    <app-download-button />
+  </div>
+
+  <a
+    href="#news"
+    class="mt-6 text-sm text-white/50 transition-colors hover:text-white"
+    aria-label="Scroll to news"
+  >
+    News &amp; Events ↓
+  </a>
+</section>
+
+<section id="news" class="mx-auto max-w-6xl px-6 py-24">
+  <h2 appReveal class="mb-8 text-3xl font-semibold">News</h2>
+  <div appReveal>
+    <app-card-carousel
+      [items]="news"
+      [durationSeconds]="40"
+      [paused]="carouselsPaused()"
+      (hoveredChange)="setCarouselsPaused($event)"
+    />
+  </div>
+</section>
+
+<section id="events" class="mx-auto max-w-6xl px-6 py-24">
+  <h2 appReveal class="mb-8 text-3xl font-semibold">Events</h2>
+  <div appReveal>
+    <app-card-carousel
+      [items]="events"
+      [durationSeconds]="40"
+      [paused]="carouselsPaused()"
+      (hoveredChange)="setCarouselsPaused($event)"
+    />
+  </div>
+</section>
+
+<section class="mx-auto max-w-3xl px-6 py-24 text-center" appReveal>
+  <h2 class="text-3xl font-semibold">Join the community</h2>
+  <p class="mt-3 text-white/70">Hang out with other players on our Discord.</p>
+  <a
+    class="btn-accent mt-6"
+    [href]="discordUrl"
+    data-testid="discord-link"
+    target="_blank"
+    rel="noopener"
+  >
+    Join our Discord
+  </a>
+</section>

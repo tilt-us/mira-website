@@ -3,15 +3,19 @@ module.exports = {
   content: ['./src/**/*.{html,ts}'],
   theme: {
     extend: {
-      // TODO: replace placeholder values with the final Mira brand palette.
+      // Palette derived from the Lira client wallpaper (violet magic + gold gears).
       colors: {
         brand: {
-          DEFAULT: '#6d28d9',
-          hover: '#5b21b6',
+          DEFAULT: '#8b5cf6',
+          hover: '#7c3aed',
           fg: '#ffffff',
         },
+        accent: {
+          DEFAULT: '#e0b341',
+          hover: '#c99a2e',
+        },
         surface: {
-          DEFAULT: '#11111b',
+          DEFAULT: '#0e0a1a',
           border: 'rgba(255, 255, 255, 0.12)',
         },
       },
