@@ -1,0 +1,23 @@
+<div class="flex flex-col items-center gap-3">
+  <button
+    type="button"
+    class="btn-primary text-lg"
+    data-testid="primary-download"
+    (click)="onPrimaryClick()"
+  >
+    {{ primaryLabel() }}
+  </button>
+
+  <button
+    type="button"
+    class="link text-sm"
+    data-testid="other-systems"
+    (click)="openModal()"
+  >
+    Other systems (Linux &amp; macOS)
+  </button>
+</div>
+
+@if (modalOpen()) {
+  <app-os-modal [version]="version()" (close)="closeModal()" />
+}

@@ -1,0 +1,35 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html,
+  body {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-surface font-sans text-white antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium
+      transition-colors duration-200 focus:outline-none
+      focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
+      focus-visible:ring-offset-surface;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand text-brand-fg hover:bg-brand-hover;
+  }
+
+  .btn-ghost {
+    @apply btn bg-white/5 text-white/90 hover:bg-white/10;
+  }
+
+  .link {
+    @apply text-brand underline-offset-4 transition-colors hover:underline;
+  }
+}
