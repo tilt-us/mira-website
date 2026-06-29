@@ -160,4 +160,18 @@ describe('DownloadService', () => {
       expect(() => service.triggerDownload('https://x/file.exe')).not.toThrow();
     });
   });
+
+  describe('detectOs default argument', () => {
+    it('returns unknown when there is no browser window', () => {
+      TestBed.configureTestingModule({
+        providers: [
+          DownloadService,
+          provideHttpClient(),
+          provideHttpClientTesting(),
+          { provide: DOCUMENT, useValue: { defaultView: null } },
+        ],
+      });
+      expect(TestBed.inject(DownloadService).detectOs()).toBe('unknown');
+    });
+  });
 });
