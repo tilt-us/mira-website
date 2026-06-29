@@ -1,23 +1,17 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  // Scan all Angular templates and component sources for utility classes.
   content: ['./src/**/*.{html,ts}'],
   theme: {
     extend: {
-      // ---------------------------------------------------------------------
-      // Central design tokens (single source of truth for the whole site).
-      // TODO: finalise these values together with the official Mira style guide
-      // and the game-client background art. Tune them here once — every page
-      // and component picks them up automatically.
-      // ---------------------------------------------------------------------
+      // TODO: replace placeholder values with the final Mira brand palette.
       colors: {
         brand: {
-          DEFAULT: '#6d28d9', // primary accent (buttons, links)
-          hover: '#5b21b6', // primary hover/active
-          fg: '#ffffff', // text/icon colour on top of the brand colour
+          DEFAULT: '#6d28d9',
+          hover: '#5b21b6',
+          fg: '#ffffff',
         },
         surface: {
-          DEFAULT: '#11111b', // panels / modals over the background image
+          DEFAULT: '#11111b',
           border: 'rgba(255, 255, 255, 0.12)',
         },
       },
