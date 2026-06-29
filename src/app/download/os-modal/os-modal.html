@@ -1,0 +1,46 @@
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+  <!-- Backdrop -->
+  <div
+    class="absolute inset-0 bg-black/70 backdrop-blur-sm"
+    aria-hidden="true"
+    data-testid="backdrop"
+    (click)="close.emit()"
+  ></div>
+
+  <!-- Dialog -->
+  <div
+    class="relative w-full max-w-md rounded-2xl border border-surface-border bg-surface p-6 shadow-2xl"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="os-modal-title"
+  >
+    <div class="mb-4 flex items-center justify-between">
+      <h2 id="os-modal-title" class="text-lg font-semibold">Choose your system</h2>
+      <button
+        type="button"
+        class="link text-sm"
+        aria-label="Close"
+        data-testid="modal-close"
+        (click)="close.emit()"
+      >
+        ✕
+      </button>
+    </div>
+
+    <ul class="flex flex-col gap-2">
+      @for (option of options(); track option.target) {
+        <li>
+          <a
+            class="btn-ghost w-full justify-start"
+            [href]="hrefFor(option.target)"
+            (click)="close.emit()"
+          >
+            {{ option.label }}
+          </a>
+        </li>
+      }
+    </ul>
+
+    <p class="mt-4 text-xs text-white/50">Version {{ version() }}</p>
+  </div>
+</div>

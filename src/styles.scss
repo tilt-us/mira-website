@@ -1,0 +1,51 @@
+// =============================================================================
+// Global stylesheet — the single, central style guide for the whole site.
+//
+// Shared look & feel (button colours, links, hover effects, base typography)
+// lives HERE so every page is consistent. Sub-pages/components should reuse
+// these classes and only override what genuinely differs.
+//
+// Design tokens (colours, fonts) are defined in `tailwind.config.js`.
+// =============================================================================
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// --- Base ---------------------------------------------------------------------
+@layer base {
+  html,
+  body {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-surface font-sans text-white antialiased;
+  }
+}
+
+// --- Reusable components (the shared style guide) -----------------------------
+@layer components {
+  // Base button: shared shape, spacing, focus ring and transition.
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium
+      transition-colors duration-200 focus:outline-none
+      focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
+      focus-visible:ring-offset-surface;
+  }
+
+  // Primary call-to-action (e.g. the download button).
+  .btn-primary {
+    @apply btn bg-brand text-brand-fg hover:bg-brand-hover;
+  }
+
+  // Secondary / low-emphasis button (e.g. "other systems").
+  .btn-ghost {
+    @apply btn bg-white/5 text-white/90 hover:bg-white/10;
+  }
+
+  // Shared link style.
+  .link {
+    @apply text-brand underline-offset-4 transition-colors hover:underline;
+  }
+}
