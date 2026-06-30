@@ -62,7 +62,7 @@ describe('DownloadButton', () => {
     expect(stub.triggered).toEqual(['https://dl/mac/9.9.9']);
   });
 
-  it('opens the modal instead of downloading on Linux', () => {
+  it('opens the modal with only the three Linux installers on Linux', () => {
     const { fixture, stub } = createFixture('linux');
     expect(byTestId(fixture, 'primary-download').textContent).toContain('Linux');
 
@@ -71,6 +71,12 @@ describe('DownloadButton', () => {
 
     expect(stub.triggered).toEqual([]);
     expect(fixture.nativeElement.querySelector('app-os-modal')).toBeTruthy();
+
+    const hrefs = Array.from(
+      fixture.nativeElement.querySelectorAll('app-os-modal a[href]'),
+    ).map((a) => (a as HTMLAnchorElement).getAttribute('href') ?? '');
+    expect(hrefs.length).toBe(3);
+    expect(hrefs.every((h) => h.includes('/linux-'))).toBe(true);
   });
 
   it('shows a generic label and opens the modal for an unknown OS', () => {
@@ -93,6 +99,9 @@ describe('DownloadButton', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-os-modal')).toBeTruthy();
+    expect(
+      fixture.nativeElement.querySelectorAll('app-os-modal a[href]').length,
+    ).toBe(5);
   });
 
   it('closes the modal when it emits close', () => {

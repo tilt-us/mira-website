@@ -19,3 +19,6 @@ export const DOWNLOAD_OPTIONS: readonly DownloadOption[] = [
   { target: 'linux-fedora', label: 'Linux · Fedora (.rpm)' },
   { target: 'linux-arch', label: 'Linux · Arch / universal (.AppImage)' },
 ];
+
+export const LINUX_DOWNLOAD_OPTIONS: readonly DownloadOption[] =
+  DOWNLOAD_OPTIONS.filter((option) => option.target.startsWith('linux'));

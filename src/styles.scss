@@ -7,6 +7,20 @@
     @apply scroll-smooth;
   }
 
+  // The layout is rem-based, so lifting the root font-size scales type,
+  // spacing and max-widths together to fill large 4K / ultrawide displays.
+  @media (min-width: 2560px) {
+    html {
+      font-size: 20px;
+    }
+  }
+
+  @media (min-width: 3840px) {
+    html {
+      font-size: 26px;
+    }
+  }
+
   html,
   body {
     @apply h-full;

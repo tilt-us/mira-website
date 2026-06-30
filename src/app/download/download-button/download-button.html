@@ -19,5 +19,9 @@
 </div>
 
 @if (modalOpen()) {
-  <app-os-modal [version]="version()" (close)="closeModal()" />
+  <app-os-modal
+    [version]="version()"
+    [options]="modalOptions()"
+    (close)="closeModal()"
+  />
 }
