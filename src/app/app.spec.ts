@@ -16,11 +16,13 @@ describe('App', () => {
     expect(fixture.componentInstance).toBeTruthy();
   });
 
-  it('renders the fixed background layer', () => {
+  it('renders the fixed background layer driven by the wallpaper variable', () => {
     const fixture = TestBed.createComponent(App);
     fixture.detectChanges();
     expect(
-      fixture.nativeElement.querySelector('[style*="lira-wallpaper"]'),
+      fixture.nativeElement.querySelector(
+        '[style*="--app-background-wallpaper"]',
+      ),
     ).toBeTruthy();
   });
 });

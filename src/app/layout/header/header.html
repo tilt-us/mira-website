@@ -1,5 +1,70 @@
 <header class="bg-black">
   <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
     <a routerLink="/" class="text-xl font-bold tracking-tight">Mira</a>
+
+    <div class="relative">
+      @if (auth.isLoggedIn(); as loggedIn) {
+        <button
+          type="button"
+          class="btn-ghost text-sm"
+          data-testid="user-menu-button"
+          [attr.aria-expanded]="menuOpen()"
+          (click)="toggleMenu()"
+        >
+          {{ auth.user()?.displayName }}
+        </button>
+
+        @if (menuOpen()) {
+          <!-- Click-away layer that dismisses the popover. -->
+          <button
+            type="button"
+            class="fixed inset-0 z-30 cursor-default"
+            aria-hidden="true"
+            tabindex="-1"
+            data-testid="menu-backdrop"
+            (click)="closeMenu()"
+          ></button>
+
+          <div
+            class="absolute right-0 z-40 mt-2 w-56 rounded-lg border border-surface-border bg-surface p-3 shadow-2xl"
+            role="menu"
+            data-testid="user-menu"
+          >
+            <p class="px-1 text-sm font-medium">{{ auth.user()?.displayName }}</p>
+            <p class="truncate px-1 text-xs text-white/50">
+              {{ auth.user()?.email }}
+            </p>
+
+            <a
+              routerLink="/settings"
+              class="btn-ghost mt-3 w-full justify-start text-sm"
+              role="menuitem"
+              data-testid="settings-link"
+              (click)="closeMenu()"
+            >
+              User settings
+            </a>
+
+            <button
+              type="button"
+              class="link mt-2 px-1 text-sm"
+              data-testid="logout-button"
+              (click)="logout()"
+            >
+              Log out
+            </button>
+          </div>
+        }
+      } @else {
+        <button
+          type="button"
+          class="btn-primary text-sm"
+          data-testid="login-button"
+          (click)="auth.login()"
+        >
+          Login
+        </button>
+      }
+    </div>
   </div>
 </header>
