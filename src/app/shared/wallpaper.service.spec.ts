@@ -1,3 +1,4 @@
+import { DOCUMENT } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 
 import { WallpaperService } from './wallpaper.service';
@@ -42,6 +43,31 @@ describe('WallpaperService', () => {
 
   it('ignores an invalid stored value', () => {
     localStorage.setItem(STORAGE_KEY, 'not-a-wallpaper');
+    expect(TestBed.inject(WallpaperService).wallpaper()).toBe('lira');
+  });
+
+  it('falls back to the default when storage access throws', () => {
+    const throwingDocument = {
+      documentElement: { style: { setProperty: () => undefined } },
+      defaultView: {
+        localStorage: {
+          getItem: () => {
+            throw new Error('storage blocked');
+          },
+          setItem: () => {
+            throw new Error('storage blocked');
+          },
+        },
+      },
+    };
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        WallpaperService,
+        { provide: DOCUMENT, useValue: throwingDocument },
+      ],
+    });
+
     expect(TestBed.inject(WallpaperService).wallpaper()).toBe('lira');
   });
 });

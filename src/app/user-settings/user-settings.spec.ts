@@ -1,7 +1,9 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { UserSettings } from './user-settings';
 import { AuthService } from '../auth/auth.service';
+import { AuthUser } from '../auth/auth.types';
 import { ACCOUNT_PROVIDERS } from './account-providers';
 
 function setup(): {
@@ -98,6 +100,30 @@ describe('UserSettings', () => {
     expect(
       fixture.nativeElement.querySelector('[data-testid="display-name"]'),
     ).toBeTruthy();
+  });
+
+  it('falls back to an empty name when the user has no display name', async () => {
+    const auth = {
+      user: signal<AuthUser | null>({
+        displayName: undefined as unknown as string,
+        email: 'player@tilt-us.com',
+      }),
+      isLoggedIn: () => true,
+      login: () => undefined,
+      logout: () => undefined,
+    };
+    TestBed.configureTestingModule({
+      imports: [UserSettings],
+      providers: [{ provide: AuthService, useValue: auth }],
+    });
+    const fixture = TestBed.createComponent(UserSettings);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const name = fixture.nativeElement.querySelector(
+      '[data-testid="display-name"]',
+    ) as HTMLInputElement;
+    expect(name.value).toBe('');
   });
 
   it('includes the wallpaper picker when logged in', () => {

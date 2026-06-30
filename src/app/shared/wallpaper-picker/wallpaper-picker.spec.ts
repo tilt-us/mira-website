@@ -1,7 +1,8 @@
+import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { WallpaperPicker } from './wallpaper-picker';
-import { WallpaperService } from '../wallpaper.service';
+import { Wallpaper, WallpaperService } from '../wallpaper.service';
 
 function byTestId(
   fixture: ComponentFixture<WallpaperPicker>,
@@ -99,5 +100,28 @@ describe('WallpaperPicker', () => {
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     fixture.detectChanges();
     expect(byTestId(fixture, 'wallpaper-listbox')).toBeFalsy();
+  });
+
+  it('shows an empty label when the current wallpaper is unknown', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [WallpaperPicker],
+      providers: [
+        {
+          provide: WallpaperService,
+          useValue: {
+            wallpaper: signal('bogus' as Wallpaper),
+            set: () => undefined,
+          },
+        },
+      ],
+    });
+    const local = TestBed.createComponent(WallpaperPicker);
+    local.detectChanges();
+
+    const label = local.nativeElement.querySelector(
+      '[data-testid="wallpaper-trigger"] span',
+    ) as HTMLElement;
+    expect(label.textContent).toBe('');
   });
 });

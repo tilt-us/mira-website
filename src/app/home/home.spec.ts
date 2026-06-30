@@ -46,4 +46,22 @@ describe('Home', () => {
     const tracks = Array.from(el.querySelectorAll('.marquee-track'));
     expect(tracks.every((track) => track.classList.contains('is-paused'))).toBe(true);
   });
+
+  it('resumes both carousels when the hover ends', () => {
+    const fixture = TestBed.createComponent(Home);
+    fixture.detectChanges();
+    const el = fixture.nativeElement as HTMLElement;
+    const marquees = el.querySelectorAll('.marquee');
+
+    // Hover the second carousel, then leave it again.
+    marquees[1].dispatchEvent(new MouseEvent('mouseenter'));
+    fixture.detectChanges();
+    let tracks = Array.from(el.querySelectorAll('.marquee-track'));
+    expect(tracks.every((track) => track.classList.contains('is-paused'))).toBe(true);
+
+    marquees[1].dispatchEvent(new MouseEvent('mouseleave'));
+    fixture.detectChanges();
+    tracks = Array.from(el.querySelectorAll('.marquee-track'));
+    expect(tracks.some((track) => track.classList.contains('is-paused'))).toBe(false);
+  });
 });
