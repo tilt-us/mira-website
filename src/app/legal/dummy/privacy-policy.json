@@ -1,0 +1,40 @@
+{
+  "title": "Privacy Policy",
+  "lastUpdated": "2026-06-30",
+  "intro": "This placeholder Privacy Policy explains, in general terms, how Mira handles your data while the final legal text is being prepared. The authoritative version will be served from the backend once published.",
+  "sections": [
+    {
+      "heading": "1. Data We Collect",
+      "body": [
+        "When you create an account we store the information required to sign you in, such as your username and authentication identifiers.",
+        "Technical data such as your operating system may be processed to provide the correct download."
+      ]
+    },
+    {
+      "heading": "2. How We Use Your Data",
+      "body": [
+        "We use your data to operate the Mira service, authenticate you, and improve the game experience.",
+        "We do not sell your personal data to third parties."
+      ]
+    },
+    {
+      "heading": "3. Third-Party Sign-In",
+      "body": [
+        "If you sign in via Google, GitHub, or Discord, those providers share basic profile information with us in line with their own privacy policies."
+      ]
+    },
+    {
+      "heading": "4. Data Retention",
+      "body": [
+        "We keep your account data for as long as your account exists.",
+        "You may request deletion of your account and associated data at any time."
+      ]
+    },
+    {
+      "heading": "5. Contact",
+      "body": [
+        "For privacy questions or data requests, please reach out to the Mira team via our community channels."
+      ]
+    }
+  ]
+}
