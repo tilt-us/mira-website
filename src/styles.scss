@@ -27,17 +27,19 @@
   }
 
   body {
-    @apply bg-surface font-sans text-white antialiased;
+    @apply bg-surface font-sans antialiased;
+    // Soft off-white from the client palette.
+    color: #edf2f7;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 font-medium
-      transition-colors duration-200 focus:outline-none
+    @apply inline-flex min-h-[46px] items-center justify-center gap-2 rounded-lg px-5 py-3
+      font-bold transition-colors duration-200 focus:outline-none
       focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
       focus-visible:ring-offset-surface
-      disabled:cursor-not-allowed disabled:opacity-50;
+      disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .btn-primary {
@@ -45,11 +47,12 @@
   }
 
   .btn-ghost {
-    @apply btn bg-white/5 text-white/90 hover:bg-white/10;
+    @apply btn border border-surface-border bg-surface-raised text-white
+      hover:bg-surface-raised-hover;
   }
 
   .btn-accent {
-    @apply btn bg-accent font-semibold text-surface hover:bg-accent-hover;
+    @apply btn bg-accent text-brand-fg hover:bg-accent-hover;
   }
 
   .link {
@@ -57,9 +60,9 @@
   }
 
   .input {
-    @apply rounded-xl border border-surface-border bg-surface/60 px-4 py-2.5 text-white
+    @apply rounded-lg border border-surface-border bg-surface px-4 py-3 text-white
       placeholder:text-white/30 transition-colors focus:outline-none
-      focus-visible:ring-2 focus-visible:ring-brand;
+      focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand;
   }
 }
 

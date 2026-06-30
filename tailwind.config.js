@@ -3,19 +3,22 @@ module.exports = {
   content: ['./src/**/*.{html,ts}'],
   theme: {
     extend: {
-      // Palette derived from the Lira client wallpaper (violet magic + gold gears).
+      // Palette matched to the Mira client UI: dark blue-black slate + gold accent.
       colors: {
+        // Primary action = the client's gold accent (dark text on gold).
         brand: {
-          DEFAULT: '#8b5cf6',
-          hover: '#7c3aed',
-          fg: '#ffffff',
+          DEFAULT: '#f2c45b',
+          hover: '#f4cf78',
+          fg: '#101216',
         },
         accent: {
-          DEFAULT: '#e0b341',
-          hover: '#c99a2e',
+          DEFAULT: '#f2c45b',
+          hover: '#f4cf78',
         },
         surface: {
-          DEFAULT: '#0e0a1a',
+          DEFAULT: '#101216',
+          raised: '#20242c',
+          'raised-hover': '#29303a',
           border: 'rgba(255, 255, 255, 0.12)',
         },
       },
