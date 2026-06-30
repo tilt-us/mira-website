@@ -4,4 +4,10 @@
 ></div>
 <div class="pointer-events-none fixed inset-0 -z-10 bg-surface/70"></div>
 
-<router-outlet />
+<div class="flex min-h-dvh flex-col">
+  <app-header />
+  <main class="flex-1">
+    <router-outlet />
+  </main>
+  <app-footer />
+</div>
