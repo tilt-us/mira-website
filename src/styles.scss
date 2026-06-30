@@ -3,6 +3,11 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    // Default background wallpaper; WallpaperService overrides it from storage.
+    --app-background-wallpaper: url('/lira-wallpaper.png');
+  }
+
   html {
     @apply scroll-smooth;
   }

@@ -2,11 +2,12 @@ import { Component, inject, linkedSignal, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../auth/auth.service';
+import { WallpaperPicker } from '../shared/wallpaper-picker/wallpaper-picker';
 import { ACCOUNT_PROVIDERS } from './account-providers';
 
 @Component({
   selector: 'app-user-settings',
-  imports: [FormsModule],
+  imports: [FormsModule, WallpaperPicker],
   templateUrl: './user-settings.html',
 })
 export class UserSettings {

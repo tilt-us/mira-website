@@ -55,6 +55,15 @@
       </button>
     </form>
 
+    <h2 class="mt-14 text-2xl font-semibold">Appearance</h2>
+    <p class="mt-1 text-sm text-white/50">
+      Choose the background wallpaper. Your choice is saved on this device.
+    </p>
+    <div class="mt-4 flex flex-col gap-2">
+      <span class="text-sm font-medium">Background</span>
+      <app-wallpaper-picker />
+    </div>
+
     <h2 class="mt-14 text-2xl font-semibold">Change password</h2>
     <form class="mt-6 flex flex-col gap-6" (ngSubmit)="$event.preventDefault()">
       <label class="flex flex-col gap-2">

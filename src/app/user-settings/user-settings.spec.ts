@@ -100,6 +100,16 @@ describe('UserSettings', () => {
     ).toBeTruthy();
   });
 
+  it('includes the wallpaper picker when logged in', () => {
+    const { fixture, auth } = setup();
+    auth.login();
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('app-wallpaper-picker'),
+    ).toBeTruthy();
+  });
+
   it('renders a placeholder link button for every provider', () => {
     const { fixture, auth } = setup();
     auth.login();
