@@ -60,6 +60,31 @@ describe('LegalPage', () => {
     expect(fixture.nativeElement.querySelectorAll('section p').length).toBe(3);
   });
 
+  it('omits the meta line and intro when the document has neither', () => {
+    const minimal: LegalDocument = {
+      title: 'Terms of Use',
+      sections: [{ heading: '1. Only', body: ['One paragraph.'] }],
+    };
+    const stub = { getDocument: () => of(minimal) } as unknown as LegalService;
+    TestBed.configureTestingModule({
+      imports: [LegalPage],
+      providers: [
+        { provide: LegalService, useValue: stub },
+        {
+          provide: ActivatedRoute,
+          useValue: { snapshot: { data: { slug: 'terms-of-use' } } },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(LegalPage);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).not.toContain('Last updated');
+    // The intro is the only <p> that is a direct child of <article>.
+    expect(fixture.nativeElement.querySelector('article > p')).toBeFalsy();
+    expect(fixture.nativeElement.querySelectorAll('section').length).toBe(1);
+  });
+
   it('shows a loading placeholder until the document resolves', () => {
     const stub = { getDocument: () => of() } as unknown as LegalService;
     TestBed.configureTestingModule({
