@@ -1,0 +1,41 @@
+{
+  "title": "Terms of Use",
+  "lastUpdated": "2026-06-30",
+  "intro": "These placeholder Terms of Use describe how you may use the Mira website and game client while the final legal text is being prepared. The authoritative version will be served from the backend once published.",
+  "sections": [
+    {
+      "heading": "1. Acceptance of Terms",
+      "body": [
+        "By accessing the Mira website or downloading the Mira client you agree to these Terms of Use.",
+        "If you do not agree with these terms, please do not use the website or the client."
+      ]
+    },
+    {
+      "heading": "2. Use of the Service",
+      "body": [
+        "Mira is provided for personal, non-commercial entertainment purposes.",
+        "You agree not to misuse the service, interfere with its operation, or attempt to access it in a way other than the interface we provide."
+      ]
+    },
+    {
+      "heading": "3. Intellectual Property",
+      "body": [
+        "All game assets, artwork, and trademarks remain the property of the Mira team and its licensors.",
+        "You may not redistribute or modify the client except where expressly permitted."
+      ]
+    },
+    {
+      "heading": "4. Disclaimer",
+      "body": [
+        "Mira is currently in active development and is provided \"as is\" without warranties of any kind.",
+        "Features may change, break, or disappear without notice."
+      ]
+    },
+    {
+      "heading": "5. Contact",
+      "body": [
+        "Questions about these terms can be directed to the Mira team via our community channels."
+      ]
+    }
+  ]
+}
