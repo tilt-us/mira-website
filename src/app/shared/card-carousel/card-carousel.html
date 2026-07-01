@@ -1,0 +1,19 @@
+<div
+  class="marquee"
+  [style.--marquee-duration]="durationSeconds() + 's'"
+  (mouseenter)="hoveredChange.emit(true)"
+  (mouseleave)="hoveredChange.emit(false)"
+>
+  <ul class="marquee-track" [class.is-paused]="paused()">
+    @for (card of loop(); track $index) {
+      <li class="w-72 shrink-0">
+        <article
+          class="h-full rounded-lg border border-surface-border bg-surface/60 p-6 backdrop-blur"
+        >
+          <h3 class="text-lg font-semibold">{{ card.title }}</h3>
+          <p class="mt-2 text-sm text-white/70">{{ card.body }}</p>
+        </article>
+      </li>
+    }
+  </ul>
+</div>

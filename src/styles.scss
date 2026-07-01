@@ -1,0 +1,171 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    // Default background wallpaper; WallpaperService overrides it from storage.
+    --app-background-wallpaper: url('/lira-wallpaper.png');
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  // The layout is rem-based, so lifting the root font-size scales type,
+  // spacing and max-widths together to fill large 4K / ultrawide displays.
+  @media (min-width: 2560px) {
+    html {
+      font-size: 20px;
+    }
+  }
+
+  @media (min-width: 3840px) {
+    html {
+      font-size: 26px;
+    }
+  }
+
+  html,
+  body {
+    @apply h-full;
+  }
+
+  body {
+    @apply bg-surface font-sans antialiased;
+    // Soft off-white from the client palette.
+    color: #edf2f7;
+  }
+
+  // Themed scrollbar replacing the default OS one, matched to the slate palette.
+  // The standard properties are scoped to browsers WITHOUT ::-webkit-scrollbar
+  // (i.e. Firefox). On Chromium/Opera GX, setting scrollbar-width/color would
+  // disable the pseudo-element styling below and fall back to the native bar,
+  // so we keep those off there and style via ::-webkit-scrollbar instead.
+  @supports not selector(::-webkit-scrollbar) {
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(242, 196, 91, 0.65) transparent;
+    }
+  }
+
+  ::-webkit-scrollbar {
+    width: 14px;
+    height: 14px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  // Transparent track lets the wallpaper show; the thumb is on-brand gold,
+  // translucent at rest and solid on hover. The transparent border + padding
+  // clip makes it float as a slim rounded pill.
+  ::-webkit-scrollbar-thumb {
+    border: 3px solid transparent;
+    border-radius: 9999px;
+    background-clip: padding-box;
+    background-color: rgba(242, 196, 91, 0.6);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #f2c45b;
+  }
+
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex min-h-[46px] items-center justify-center gap-2 rounded-lg px-5 py-3
+      font-bold transition-colors duration-200 focus:outline-none
+      focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2
+      focus-visible:ring-offset-surface
+      disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-primary {
+    @apply btn bg-brand text-brand-fg hover:bg-brand-hover;
+  }
+
+  .btn-ghost {
+    @apply btn border border-surface-border bg-surface-raised text-white
+      hover:bg-surface-raised-hover;
+  }
+
+  .btn-accent {
+    @apply btn bg-accent text-brand-fg hover:bg-accent-hover;
+  }
+
+  .link {
+    @apply text-brand underline-offset-4 transition-colors hover:underline;
+  }
+
+  .input {
+    @apply rounded-lg border border-surface-border bg-surface px-4 py-3 text-white
+      placeholder:text-white/30 transition-colors focus:outline-none
+      focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand;
+  }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s ease;
+}
+
+.reveal-visible {
+  opacity: 1;
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal-visible {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+.marquee {
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 6%,
+    black 94%,
+    transparent
+  );
+  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  gap: 1.5rem;
+  animation: marquee-scroll var(--marquee-duration, 30s) linear infinite;
+}
+
+.marquee-track.is-paused {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(-50%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}

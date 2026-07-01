@@ -1,14 +1,21 @@
 {
-  # Keep the existing server settings you already use, only add/adjust the
-  # application host entry once deployment is writing files to ${DEPLOY_PATH}.
+  # Keep any existing global options (logging, ACME email, import, etc.)
 }
 
+# Frontend only (do NOT use a wildcard, so api.tilt-us.com is untouched)
 tilt-us.com {
-  # Option A: reverse proxy to your app process on port 5000
-  reverse_proxy 127.0.0.1:5000
+  # production: serve the Angular build artifacts directly from disk (no Angular runtime needed)
+  root * /srv/mira/website/browser
+  try_files {path} /index.html
+  file_server
+}
 
-  # Option B: if you serve static files directly from Caddy instead of an app server,
-  # replace reverse_proxy with:
-  # root * /var/www/tilt-us
-  # file_server
+# API block is managed separately in the main Caddy config and must remain unchanged:
+# api.tilt-us.com {
+#   reverse_proxy <your-api-upstream>:<port>
+# }
+
+# Optional redirect keeps old host behavior consistent.
+www.tilt-us.com {
+  redir https://tilt-us.com{uri} 302
 }
