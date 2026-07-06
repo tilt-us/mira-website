@@ -1,0 +1,149 @@
+<div class="relative w-full">
+  <button
+    type="button"
+    class="input flex w-full items-center justify-between gap-2 text-left"
+    aria-haspopup="dialog"
+    [attr.aria-expanded]="open()"
+    [attr.aria-label]="triggerLabel()"
+    data-testid="date-picker-trigger"
+    (click)="toggle()"
+  >
+    @if (display()) {
+      <span data-testid="date-picker-display">{{ display() }}</span>
+    } @else {
+      <span class="text-white/30" data-testid="date-picker-placeholder">
+        {{ placeholder() }}
+      </span>
+    }
+    <svg
+      aria-hidden="true"
+      class="h-5 w-5 shrink-0 text-white/50"
+      viewBox="0 0 20 20"
+      fill="currentColor"
+    >
+      <path
+        fill-rule="evenodd"
+        d="M6 2a1 1 0 0 1 1 1v1h6V3a1 1 0 1 1 2 0v1h1a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1V3a1 1 0 0 1 1-1Zm10 6H4v8h12V8Z"
+        clip-rule="evenodd"
+      />
+    </svg>
+  </button>
+
+  @if (open()) {
+    <button
+      type="button"
+      class="fixed inset-0 z-30 cursor-default"
+      aria-hidden="true"
+      tabindex="-1"
+      data-testid="date-picker-backdrop"
+      (click)="close()"
+    ></button>
+
+    <div
+      class="absolute left-0 z-40 mt-2 w-72 rounded-lg border border-surface-border bg-surface p-3 shadow-2xl"
+      role="dialog"
+      [attr.aria-label]="triggerLabel()"
+      data-testid="date-picker-panel"
+    >
+      <div class="flex items-center gap-1">
+        <button
+          type="button"
+          class="grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors hover:bg-surface-raised"
+          [attr.aria-label]="labels().prev"
+          data-testid="date-picker-prev"
+          (click)="previous()"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="flex-1 rounded-lg px-2 py-2 text-sm font-semibold transition-colors enabled:hover:bg-surface-raised"
+          [disabled]="view() === 'years'"
+          data-testid="date-picker-header"
+          (click)="zoomOut()"
+        >
+          {{ headerLabel() }}
+        </button>
+        <button
+          type="button"
+          class="grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors hover:bg-surface-raised"
+          [attr.aria-label]="labels().next"
+          data-testid="date-picker-next"
+          (click)="next()"
+        >
+          ›
+        </button>
+      </div>
+
+      @switch (view()) {
+        @case ('months') {
+          <div class="mt-2 grid grid-cols-3 gap-1" data-testid="date-picker-months">
+            @for (name of monthNames(); track $index) {
+              <button
+                type="button"
+                class="rounded-lg px-2 py-3 text-sm transition-colors hover:bg-surface-raised"
+                [class.text-brand]="$index === viewMonth()"
+                [class.font-semibold]="$index === viewMonth()"
+                [attr.data-testid]="'date-picker-month-' + $index"
+                (click)="selectMonth($index)"
+              >
+                {{ name }}
+              </button>
+            }
+          </div>
+        }
+        @case ('years') {
+          <div class="mt-2 grid grid-cols-3 gap-1" data-testid="date-picker-years">
+            @for (year of years(); track year) {
+              <button
+                type="button"
+                class="rounded-lg px-2 py-3 text-sm transition-colors hover:bg-surface-raised"
+                [class.text-brand]="year === viewYear()"
+                [class.font-semibold]="year === viewYear()"
+                [attr.data-testid]="'date-picker-year-' + year"
+                (click)="selectYear(year)"
+              >
+                {{ year }}
+              </button>
+            }
+          </div>
+        }
+        @default {
+          <div class="mt-2 grid grid-cols-7" data-testid="date-picker-weekdays">
+            @for (weekday of weekdays(); track $index) {
+              <span class="grid h-9 w-9 place-items-center text-xs font-medium text-white/50">
+                {{ weekday }}
+              </span>
+            }
+          </div>
+          <div class="grid grid-cols-7 gap-y-0.5" data-testid="date-picker-days">
+            @for (cell of days(); track cell.iso) {
+              <button
+                type="button"
+                class="grid h-9 w-9 place-items-center rounded-lg text-sm transition-colors"
+                [class]="dayClass(cell)"
+                [attr.aria-selected]="cell.iso === selectedIso()"
+                [attr.aria-current]="cell.today ? 'date' : null"
+                [attr.data-testid]="'date-picker-day-' + cell.iso"
+                (click)="selectDay(cell.iso)"
+              >
+                {{ cell.day }}
+              </button>
+            }
+          </div>
+        }
+      }
+
+      <div class="mt-2 flex justify-end border-t border-surface-border pt-2">
+        <button
+          type="button"
+          class="rounded-lg px-3 py-1.5 text-sm text-white/70 transition-colors hover:bg-surface-raised hover:text-white"
+          data-testid="date-picker-clear"
+          (click)="clear()"
+        >
+          {{ labels().clear }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

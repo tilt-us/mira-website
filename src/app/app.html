@@ -11,8 +11,11 @@
   "
 ></div>
 
+<app-header />
+
+<!-- The fixed header overlays the page, so main carries no top offset:
+     the home hero flows underneath it and every sub-page starts with py-24. -->
 <div class="flex min-h-dvh flex-col">
-  <app-header />
   <main class="flex-1">
     <router-outlet />
   </main>
