@@ -3,18 +3,56 @@ import { Component, signal } from '@angular/core';
 import { DownloadButton } from '../download/download-button/download-button';
 import { Reveal } from '../shared/reveal';
 import { CardCarousel, CarouselCard } from '../shared/card-carousel/card-carousel';
+import { CharacterShowcase, ShowcaseCharacter } from './character-showcase/character-showcase';
+import { DISCORD_INVITE_URL } from '../shared/community';
 
 @Component({
   selector: 'app-home',
-  imports: [DownloadButton, Reveal, CardCarousel],
+  imports: [DownloadButton, Reveal, CardCarousel, CharacterShowcase],
   templateUrl: './home.html',
 })
 export class Home {
-  // Placeholder until the real community invite exists (tracked in the wiki).
-  protected readonly discordUrl = '#';
+  protected readonly discordUrl = DISCORD_INVITE_URL;
 
   // Shared so both carousels pause together and stay in sync.
   protected readonly carouselsPaused = signal(false);
+
+  // Reuses the approved client wallpapers; bios are placeholder copy
+  // until real lore exists (tracked in the wiki).
+  protected readonly characters: ShowcaseCharacter[] = [
+    {
+      id: 'lira',
+      name: 'Lira',
+      epithet: 'The Timeweaver',
+      description:
+        'Bends the flow of battle to her will, rewinding mistakes and hastening allies before the enemy can react.',
+      image: '/lira-wallpaper.png',
+    },
+    {
+      id: 'ignara',
+      name: 'Ignara',
+      epithet: 'The Flameheart',
+      description:
+        'A frontline duelist who trades safety for raw power, burning brighter the longer a fight goes on.',
+      image: '/ignara-wallpaper.png',
+    },
+    {
+      id: 'yuna',
+      name: 'Yuna',
+      epithet: 'The Stormcaller',
+      description:
+        'Commands wind and lightning from afar, controlling space and punishing anyone who groups up.',
+      image: '/yuna-wallpaper.png',
+    },
+    {
+      id: 'sophia',
+      name: 'Sophia',
+      epithet: 'The Lightbringer',
+      description:
+        'A guardian who shields the team and turns incoming damage into openings for a counterattack.',
+      image: '/sophia-wallpaper.png',
+    },
+  ];
 
   // Placeholder content — no news/events backend yet (tracked in the wiki).
   // Will later be the latest ~5 entries from the backend.
