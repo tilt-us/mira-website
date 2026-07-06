@@ -8,10 +8,9 @@ import {
 
 import { DownloadService, FALLBACK_VERSION } from './download.service';
 
-const RELEASE_URL =
-  'https://api.github.com/repos/tilt-us/mira-clients/releases/latest';
-const DL_BASE =
-  'https://api.tilt-us.com/downloads/mira/game-sources/installer/releases';
+const LATEST_URL =
+  'https://api.tilt-us.com/downloads/game-sources/latest.json';
+const DL_BASE = 'https://api.tilt-us.com/downloads/game-sources/installer';
 
 describe('DownloadService', () => {
   describe('OS detection & URL building', () => {
@@ -72,38 +71,38 @@ describe('DownloadService', () => {
 
     it('builds the Windows URL', () => {
       expect(service.buildDownloadUrl('windows', '1.2.3')).toBe(
-        `${DL_BASE}/v1.2.3/mira-installer-1.2.3-windows-mira-installer.exe`,
+        `${DL_BASE}/mira-installer-1.2.3-windows-mira-installer.exe`,
       );
     });
 
     it('builds the Arch AppImage URL', () => {
       expect(service.buildDownloadUrl('linux-arch', '1.2.3')).toBe(
-        `${DL_BASE}/v1.2.3/mira-installer-1.2.3-linux-Mira-Installer.AppImage`,
+        `${DL_BASE}/mira-installer-1.2.3-linux-Mira-Installer.AppImage`,
       );
     });
 
     it('builds the Fedora RPM URL', () => {
       expect(service.buildDownloadUrl('linux-fedora', '1.2.3')).toBe(
-        `${DL_BASE}/v1.2.3/mira-installer-1.2.3-linux-Mira-Installer-1.2.3-1.x86_64.rpm`,
+        `${DL_BASE}/mira-installer-1.2.3-linux-Mira-Installer-1.2.3-1.x86_64.rpm`,
       );
     });
 
     it('builds the Debian DEB URL', () => {
       expect(service.buildDownloadUrl('linux-debian', '1.2.3')).toBe(
-        `${DL_BASE}/v1.2.3/mira-installer-1.2.3-linux-Mira-Installer_1.2.3_amd64.deb`,
+        `${DL_BASE}/mira-installer-1.2.3-linux-Mira-Installer_1.2.3_amd64.deb`,
       );
     });
 
     it('builds the macOS DMG URL', () => {
       expect(service.buildDownloadUrl('mac', '1.2.3')).toBe(
-        `${DL_BASE}/v1.2.3/mira-installer-1.2.3-macos-Mira-Installer_1.2.3_aarch64.dmg`,
+        `${DL_BASE}/mira-installer-1.2.3-macos-Mira-Installer_1.2.3_aarch64.dmg`,
       );
     });
 
-    it('maps the release tag and strips the leading "v"', () => {
+    it('maps the version from latest.json and strips any leading "v"', () => {
       let result: string | undefined;
       service.getLatestVersion().subscribe((v) => (result = v));
-      http.expectOne(RELEASE_URL).flush({ tag_name: 'v2.3.4' });
+      http.expectOne(LATEST_URL).flush({ version: 'v2.3.4' });
       expect(result).toBe('2.3.4');
     });
 
@@ -111,15 +110,15 @@ describe('DownloadService', () => {
       let result: string | undefined;
       service.getLatestVersion().subscribe((v) => (result = v));
       http
-        .expectOne(RELEASE_URL)
+        .expectOne(LATEST_URL)
         .flush('boom', { status: 500, statusText: 'Server Error' });
       expect(result).toBe(FALLBACK_VERSION);
     });
 
-    it('falls back when the tag is missing', () => {
+    it('falls back when the version is missing', () => {
       let result: string | undefined;
       service.getLatestVersion().subscribe((v) => (result = v));
-      http.expectOne(RELEASE_URL).flush({});
+      http.expectOne(LATEST_URL).flush({});
       expect(result).toBe(FALLBACK_VERSION);
     });
 
@@ -127,7 +126,7 @@ describe('DownloadService', () => {
       service.getLatestVersion().subscribe();
       service.getLatestVersion().subscribe();
       // Only one HTTP request is expected thanks to shareReplay.
-      http.expectOne(RELEASE_URL).flush({ tag_name: 'v1.0.0' });
+      http.expectOne(LATEST_URL).flush({ version: '1.0.0' });
     });
   });
 

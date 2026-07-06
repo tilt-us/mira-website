@@ -5,11 +5,13 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 
 import { DownloadTarget, Os } from './download.types';
 
-const GITHUB_LATEST_RELEASE_URL =
-  'https://api.github.com/repos/tilt-us/mira-clients/releases/latest';
+// Source of truth for the current release: reports the latest version and
+// links to the per-artifact manifests.
+const LATEST_JSON_URL =
+  'https://api.tilt-us.com/downloads/game-sources/latest.json';
 
 const DOWNLOAD_BASE =
-  'https://api.tilt-us.com/downloads/mira/game-sources/installer/releases';
+  'https://api.tilt-us.com/downloads/game-sources/installer';
 
 export const FALLBACK_VERSION = '1.0.0';
 
@@ -42,9 +44,9 @@ export class DownloadService {
 
   getLatestVersion(): Observable<string> {
     this.version$ ??= this.http
-      .get<{ tag_name?: string | null }>(GITHUB_LATEST_RELEASE_URL)
+      .get<{ version?: string | null }>(LATEST_JSON_URL)
       .pipe(
-        map((release) => this.normaliseVersion(release.tag_name)),
+        map((release) => this.normaliseVersion(release.version)),
         catchError(() => of(FALLBACK_VERSION)),
         shareReplay({ bufferSize: 1, refCount: false }),
       );
@@ -52,15 +54,16 @@ export class DownloadService {
   }
 
   buildDownloadUrl(target: DownloadTarget, version: string): string {
-    return `${DOWNLOAD_BASE}/v${version}/${this.fileName(target, version)}`;
+    // Installers are served flat from the base; the version lives in the name.
+    return `${DOWNLOAD_BASE}/${this.fileName(target, version)}`;
   }
 
   triggerDownload(url: string): void {
     this.document.defaultView?.location.assign(url);
   }
 
-  private normaliseVersion(tag: string | undefined | null): string {
-    const version = (tag ?? '').trim().replace(/^v/i, '');
+  private normaliseVersion(raw: string | undefined | null): string {
+    const version = (raw ?? '').trim().replace(/^v/i, '');
     return version || FALLBACK_VERSION;
   }
 

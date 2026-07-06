@@ -32,7 +32,7 @@ test.describe('Download game button', () => {
     for (const href of hrefs) {
       // Every link points at a versioned installer on the download server.
       expect(href).toMatch(
-        /api\.tilt-us\.com\/downloads\/mira\/.*\/v\d+\.\d+\.\d+\//,
+        /api\.tilt-us\.com\/downloads\/game-sources\/installer\/mira-installer-\d+\.\d+\.\d+-/,
       );
     }
   });
