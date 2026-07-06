@@ -3,10 +3,7 @@ import { Component, signal } from '@angular/core';
 import { DownloadButton } from '../download/download-button/download-button';
 import { Reveal } from '../shared/reveal';
 import { CardCarousel, CarouselCard } from '../shared/card-carousel/card-carousel';
-import {
-  CharacterShowcase,
-  ShowcaseCharacter,
-} from './character-showcase/character-showcase';
+import { CharacterShowcase, ShowcaseCharacter } from './character-showcase/character-showcase';
 import { DISCORD_INVITE_URL } from '../shared/community';
 
 @Component({

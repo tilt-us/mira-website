@@ -49,6 +49,16 @@ export const routes: Routes = [
     },
   },
   {
+    path: 'jobs',
+    component: PlaceholderPage,
+    data: {
+      placeholder: {
+        title: 'Jobs',
+        tagline: 'Want to help build Mira? Open positions will be listed here.',
+      },
+    },
+  },
+  {
     path: 'terms-of-use',
     component: LegalPage,
     data: { slug: 'terms-of-use' },
