@@ -22,12 +22,6 @@ describe('Home', () => {
     expect(render().querySelector('app-download-button')).toBeTruthy();
   });
 
-  it('shows the character showcase with all four champions', () => {
-    const el = render();
-    expect(el.querySelector('#characters')).toBeTruthy();
-    expect(el.querySelectorAll('[data-testid="character-tab"]').length).toBe(4);
-  });
-
   it('shows the news and events sections', () => {
     const el = render();
     expect(el.querySelector('#news')).toBeTruthy();

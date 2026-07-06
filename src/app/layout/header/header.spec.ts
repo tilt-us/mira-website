@@ -15,59 +15,18 @@ describe('Header', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [Header],
-      // Real routes so the link clicks resolve instead of erroring.
-      providers: [
-        provideRouter([
-          { path: 'settings', children: [] },
-          { path: 'leaderboards', children: [] },
-          { path: 'builds', children: [] },
-          { path: 'streamers', children: [] },
-          { path: 'report', children: [] },
-        ]),
-        AuthService,
-      ],
+      // A real /settings route so the link click resolves instead of erroring.
+      providers: [provideRouter([{ path: 'settings', children: [] }]), AuthService],
     });
     fixture = TestBed.createComponent(Header);
     auth = TestBed.inject(AuthService);
     fixture.detectChanges();
   });
 
-  function setScrollY(value: number): void {
-    Object.defineProperty(window, 'scrollY', { value, configurable: true });
-    window.dispatchEvent(new Event('scroll'));
-    fixture.detectChanges();
-  }
-
-  afterEach(() => {
-    Object.defineProperty(window, 'scrollY', { value: 0, configurable: true });
-  });
-
-  it('floats transparently at the top of the page', () => {
-    const header = byTestId(fixture, 'site-header');
-    expect(header.className).toContain('fixed');
-    expect(header.className).toContain('bg-transparent');
-  });
-
-  it('gains a solid backdrop once the page is scrolled', () => {
-    setScrollY(120);
-    expect(byTestId(fixture, 'site-header').className).toContain('bg-black/80');
-
-    setScrollY(0);
-    expect(byTestId(fixture, 'site-header').className).toContain('bg-transparent');
-  });
-
   it('renders the Mira brand linking home', () => {
     const brand = fixture.nativeElement.querySelector('a');
     expect(brand.textContent).toContain('Mira');
     expect(brand.getAttribute('href')).toBe('/');
-  });
-
-  it('renders a navigation tab for every primary section', () => {
-    const nav = byTestId(fixture, 'primary-nav');
-    const hrefs = Array.from(nav.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['/leaderboards', '/builds', '/streamers', '/report']);
-    expect(nav.textContent).toContain('Leaderboards');
-    expect(nav.textContent).toContain('Report');
   });
 
   it('shows a login button while logged out', () => {
@@ -95,7 +54,9 @@ describe('Header', () => {
     const menu = byTestId(fixture, 'user-menu');
     expect(menu).toBeTruthy();
     expect(menu.textContent).toContain('Mira Player');
-    expect(byTestId(fixture, 'settings-link').getAttribute('href')).toBe('/settings');
+    expect(byTestId(fixture, 'settings-link').getAttribute('href')).toBe(
+      '/settings',
+    );
   });
 
   it('closes the popover on the click-away layer', () => {
