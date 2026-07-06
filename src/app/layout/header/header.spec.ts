@@ -15,8 +15,17 @@ describe('Header', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [Header],
-      // A real /settings route so the link click resolves instead of erroring.
-      providers: [provideRouter([{ path: 'settings', children: [] }]), AuthService],
+      // Real routes so the link clicks resolve instead of erroring.
+      providers: [
+        provideRouter([
+          { path: 'settings', children: [] },
+          { path: 'leaderboards', children: [] },
+          { path: 'builds', children: [] },
+          { path: 'streamers', children: [] },
+          { path: 'report', children: [] },
+        ]),
+        AuthService,
+      ],
     });
     fixture = TestBed.createComponent(Header);
     auth = TestBed.inject(AuthService);
@@ -27,6 +36,21 @@ describe('Header', () => {
     const brand = fixture.nativeElement.querySelector('a');
     expect(brand.textContent).toContain('Mira');
     expect(brand.getAttribute('href')).toBe('/');
+  });
+
+  it('renders a navigation tab for every primary section', () => {
+    const nav = byTestId(fixture, 'primary-nav');
+    const hrefs = Array.from(nav.querySelectorAll('a')).map((a) =>
+      a.getAttribute('href'),
+    );
+    expect(hrefs).toEqual([
+      '/leaderboards',
+      '/builds',
+      '/streamers',
+      '/report',
+    ]);
+    expect(nav.textContent).toContain('Leaderboards');
+    expect(nav.textContent).toContain('Report');
   });
 
   it('shows a login button while logged out', () => {
