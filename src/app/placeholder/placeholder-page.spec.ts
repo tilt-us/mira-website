@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, Data } from '@angular/router';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, EMPTY } from 'rxjs';
 
 import { PlaceholderContent, PlaceholderPage } from './placeholder-page';
 
@@ -35,6 +35,19 @@ describe('PlaceholderPage', () => {
     );
     expect(text).toContain('See who is climbing the ranks in Mira.');
     expect(text).toContain('Coming soon.');
+  });
+
+  it('renders nothing until the route data has resolved', () => {
+    TestBed.configureTestingModule({
+      imports: [PlaceholderPage],
+      providers: [{ provide: ActivatedRoute, useValue: { data: EMPTY } }],
+    });
+    const fixture = TestBed.createComponent(PlaceholderPage);
+    fixture.detectChanges();
+
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="placeholder"]'),
+    ).toBeFalsy();
   });
 
   it('updates when the route data changes without re-creating the component', () => {
