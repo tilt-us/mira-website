@@ -1,7 +1,13 @@
-<section class="flex min-h-dvh flex-col items-center justify-center gap-8 p-6 text-center">
+<!-- Cinematic full-viewport hero; the fixed header floats transparently on top. -->
+<section
+  class="relative flex min-h-dvh flex-col items-center justify-center gap-10 px-6 text-center"
+>
   <div appReveal>
-    <h1 class="text-5xl font-bold tracking-tight sm:text-6xl">Mira</h1>
-    <p class="mt-3 text-lg text-white/70">Enter a world of time and magic.</p>
+    <p class="text-xs font-semibold uppercase tracking-[0.4em] text-brand sm:text-sm">
+      A world of time and magic
+    </p>
+    <h1 class="mt-4 text-6xl font-black uppercase tracking-[0.15em] sm:text-8xl">Mira</h1>
+    <p class="mt-4 text-lg text-white/70">Choose your champion. Master the flow of battle.</p>
   </div>
 
   <div appReveal>
@@ -9,16 +15,30 @@
   </div>
 
   <a
-    href="#news"
-    class="mt-6 text-sm text-white/50 transition-colors hover:text-white"
-    aria-label="Scroll to news"
+    href="#characters"
+    class="absolute bottom-8 flex flex-col items-center gap-1 text-xs uppercase tracking-widest text-white/50 transition-colors hover:text-white"
+    aria-label="Scroll to the champions"
   >
-    News &amp; Events ↓
+    Meet the champions
+    <span aria-hidden="true" class="animate-bounce text-base">↓</span>
   </a>
 </section>
 
+<section id="characters" class="mx-auto max-w-6xl px-6 py-24 2xl:max-w-[110rem]">
+  <header appReveal class="mb-10">
+    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Champions</p>
+    <h2 class="mt-2 text-3xl font-semibold sm:text-4xl">Choose who you become</h2>
+  </header>
+  <div appReveal>
+    <app-character-showcase [characters]="characters" />
+  </div>
+</section>
+
 <section id="news" class="mx-auto max-w-6xl px-6 py-24 2xl:max-w-[110rem]">
-  <h2 appReveal class="mb-8 text-3xl font-semibold">News</h2>
+  <header appReveal class="mb-10">
+    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Latest</p>
+    <h2 class="mt-2 text-3xl font-semibold sm:text-4xl">News</h2>
+  </header>
   <div appReveal>
     <app-card-carousel
       [items]="news"
@@ -30,7 +50,10 @@
 </section>
 
 <section id="events" class="mx-auto max-w-6xl px-6 py-24 2xl:max-w-[110rem]">
-  <h2 appReveal class="mb-8 text-3xl font-semibold">Events</h2>
+  <header appReveal class="mb-10">
+    <p class="text-xs font-semibold uppercase tracking-[0.3em] text-brand">What's on</p>
+    <h2 class="mt-2 text-3xl font-semibold sm:text-4xl">Events</h2>
+  </header>
   <div appReveal>
     <app-card-carousel
       [items]="events"
@@ -42,7 +65,8 @@
 </section>
 
 <section class="mx-auto max-w-3xl px-6 py-24 text-center" appReveal>
-  <h2 class="text-3xl font-semibold">Join the community</h2>
+  <p class="text-xs font-semibold uppercase tracking-[0.3em] text-brand">Community</p>
+  <h2 class="mt-2 text-3xl font-semibold sm:text-4xl">Join the community</h2>
   <p class="mt-3 text-white/70">Hang out with other players on our Discord.</p>
   <a
     class="btn-accent mt-6"
