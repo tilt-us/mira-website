@@ -1,0 +1,55 @@
+<div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem]" data-testid="character-showcase">
+  <!-- Portrait stage: all artworks are stacked and cross-faded via opacity. -->
+  <figure
+    class="relative aspect-video overflow-hidden rounded-lg border border-surface-border bg-black/40"
+  >
+    @for (character of characters(); track character.id) {
+      <img
+        [src]="character.image"
+        [alt]="character.name + ' artwork'"
+        class="absolute inset-0 h-full w-full object-cover transition-opacity duration-500"
+        [class.opacity-0]="selected().id !== character.id"
+        [attr.aria-hidden]="selected().id !== character.id"
+        loading="lazy"
+      />
+    }
+
+    <figcaption
+      class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-6 pt-20"
+    >
+      <p class="text-xs font-semibold uppercase tracking-[0.3em] text-brand">
+        {{ selected().epithet }}
+      </p>
+      <h3 class="mt-1 text-3xl font-bold" data-testid="showcase-name">
+        {{ selected().name }}
+      </h3>
+      <p class="mt-2 max-w-xl text-sm text-white/70" data-testid="showcase-description">
+        {{ selected().description }}
+      </p>
+    </figcaption>
+  </figure>
+
+  <ul class="flex flex-wrap gap-3 lg:flex-col">
+    @for (character of characters(); track character.id) {
+      <li class="grow lg:grow-0">
+        <button
+          type="button"
+          class="w-full rounded-lg border px-4 py-3 text-left transition-colors"
+          [class]="
+            selected().id === character.id
+              ? 'border-brand bg-brand/10'
+              : 'border-surface-border bg-surface/60 hover:bg-surface-raised'
+          "
+          [attr.aria-pressed]="selected().id === character.id"
+          data-testid="character-tab"
+          (click)="select(character.id)"
+        >
+          <span class="block text-xs uppercase tracking-widest text-white/50">
+            {{ character.epithet }}
+          </span>
+          <span class="mt-1 block font-semibold">{{ character.name }}</span>
+        </button>
+      </li>
+    }
+  </ul>
+</div>
