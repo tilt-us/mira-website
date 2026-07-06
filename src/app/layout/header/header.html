@@ -1,16 +1,24 @@
-<header class="bg-black">
+<header
+  class="fixed inset-x-0 top-0 z-50 border-b transition-colors duration-300"
+  [class]="
+    scrolled()
+      ? 'border-white/10 bg-black/80 shadow-lg backdrop-blur-md'
+      : 'border-transparent bg-transparent'
+  "
+  data-testid="site-header"
+>
   <div
-    class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-4"
+    class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 px-6 py-3 2xl:max-w-[110rem]"
   >
-    <div class="flex flex-wrap items-center gap-x-6 gap-y-2">
-      <a routerLink="/" class="text-xl font-bold tracking-tight">Mira</a>
+    <div class="flex flex-wrap items-center gap-x-8 gap-y-2">
+      <a routerLink="/" class="text-lg font-bold uppercase tracking-[0.3em]">Mira</a>
 
-      <nav class="flex flex-wrap items-center gap-1" data-testid="primary-nav">
+      <nav class="flex flex-wrap items-center gap-x-6 gap-y-1" data-testid="primary-nav">
         @for (tab of tabs; track tab.path) {
           <a
             [routerLink]="tab.path"
-            routerLinkActive="bg-white/10 !text-white"
-            class="rounded-md px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white"
+            routerLinkActive="!text-brand"
+            class="py-2 text-xs font-semibold uppercase tracking-widest text-white/60 transition-colors hover:text-white"
           >
             {{ tab.label }}
           </a>
@@ -22,7 +30,7 @@
       @if (auth.isLoggedIn(); as loggedIn) {
         <button
           type="button"
-          class="btn-ghost text-sm"
+          class="btn-ghost min-h-0 px-4 py-2 text-sm"
           data-testid="user-menu-button"
           [attr.aria-expanded]="menuOpen()"
           (click)="toggleMenu()"
@@ -74,7 +82,7 @@
       } @else {
         <button
           type="button"
-          class="btn-primary text-sm"
+          class="btn-primary min-h-0 px-5 py-2 text-sm"
           data-testid="login-button"
           (click)="auth.login()"
         >
