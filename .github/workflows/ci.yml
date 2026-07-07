@@ -219,20 +219,32 @@ jobs:
               return s
             }
 
+            function trim_header_token(token) {
+              gsub(/^[[:space:]]+|[[:space:]]+$/, "", token)
+              gsub(/,$/, "", token)
+              return token
+            }
+
+            function token_matches_tilt_us(token) {
+              token = trim_header_token(token)
+              if (token == "") { return 0 }
+              return (token ~ /^(https?:\/\/)?(\*\.)?(www\.)?tilt-us\.com(:[0-9]+)?$/)
+            }
+
             function has_tilt_us_host(line,   header, count, parts, i, token) {
               if (line ~ /^[[:space:]]*#/) { return 0 }
-              if (index(line, "{") == 0) { return 0 }
+              if (index(line, "{") > 0) {
+                header = substr(line, 1, index(line, "{") - 1)
+              } else {
+                header = line
+                sub(/[[:space:]]*#.*$/, "", header)
+              }
+              if (header !~ /(^|[[:space:]]|,)tilt-us\.com([[:space:]]|,|:)/) { return 0 }
 
-              header = substr(line, 1, index(line, "{") - 1)
               count = split(header, parts, /[[:space:]]+/)
               for (i = 1; i <= count; i++) {
                 token = parts[i]
-                gsub(/^[[:space:]]+|[[:space:]]+$/, "", token)
-                gsub(/,$/, "", token)
-                if (token == "") { continue }
-                if (token ~ /^(https?:\/\/)?(\*\.)?(www\.)?tilt-us\.com(:[0-9]+)?$/) {
-                  return 1
-                }
+                if (token_matches_tilt_us(token)) { return 1 }
               }
               return 0
             }
@@ -245,13 +257,6 @@ jobs:
             }
 
             {
-              if (in_managed_block) {
-                if (trim($0) == end) {
-                  in_managed_block = 0
-                }
-                next
-              }
-
               if (in_domain_block) {
                 brace_level += brace_delta($0)
                 if (brace_level <= 0) {
@@ -260,21 +265,50 @@ jobs:
                 next
               }
 
+              if (in_managed_block) {
+                if (trim($0) == end) {
+                  in_managed_block = 0
+                }
+                next
+              }
+
+              if (pending_domain_header) {
+                if ($0 ~ /^[[:space:]]*\{[[:space:]]*$/) {
+                  in_domain_block = 1
+                  brace_level = brace_delta($0)
+                  pending_domain_header = 0
+                  next
+                }
+                print pending_domain_header
+                pending_domain_header = 0
+              }
+
               if (trim($0) == start) {
                 in_managed_block = 1
                 next
               }
 
               if (has_tilt_us_host($0)) {
-                brace_level = brace_delta(substr($0, index($0, "{")))
-                in_domain_block = 1
-                if (brace_level <= 0) {
-                  in_domain_block = 0
+                if ($0 ~ /\{/) {
+                  brace_level = brace_delta(substr($0, index($0, "{")))
+                  in_domain_block = 1
+                  if (brace_level <= 0) {
+                    in_domain_block = 0
+                  }
+                } else {
+                  pending_domain_header = 1
+                  pending_domain_header_line = $0
                 }
                 next
               }
 
               print
+            }
+
+            END {
+              if (pending_domain_header) {
+                print pending_domain_header_line
+              }
             }
           ' "${CADDY_HOST_CONFIG_PATH}" > "${tmp_cfg_file}"
           mv "${tmp_cfg_file}" "${CADDY_HOST_CONFIG_PATH}"
