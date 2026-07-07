@@ -149,5 +149,5 @@ If `DEPLOY_POST_DEPLOY_COMMAND` is not set, the workflow:
 
 1. syncs `dist/mira-website/` to `${DEPLOY_PATH}`
 2. auto-detects or uses `CADDY_HOST_CONFIG_PATH`
-3. injects a managed `tilt-us.com` + `www.tilt-us.com` block into that file once
+3. replaces any existing managed marker block and any existing `tilt-us.com` / `www.tilt-us.com` server blocks in that file, then appends a single managed block,
 4. reloads Caddy via `docker exec <DEPLOY_CADDY_CONTAINER> caddy reload --config <CADDY_CONTAINER_CONFIG_PATH>`.
