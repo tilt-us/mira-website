@@ -183,6 +183,7 @@ jobs:
           CADDY_HOST_CONFIG_PATH="${CADDY_HOST_CONFIG_PATH}"
           CADDY_CONTAINER_USE_SUDO="${CADDY_CONTAINER_USE_SUDO:-false}"
           CADDY_CONFIG_MARKER="${CADDY_CONFIG_MARKER}"
+          CADDY_CONFIG_END_MARKER="${CADDY_CONFIG_MARKER/BEGIN/END}"
           CADDY_CONTAINER_CONFIG_PATH="${CADDY_CONTAINER_CONFIG_PATH}"
           RUN_CMD_PREFIX=""
 
@@ -211,7 +212,18 @@ jobs:
             exit 1
           fi
 
-          if ! grep -Fq "${CADDY_CONFIG_MARKER}" "${CADDY_HOST_CONFIG_PATH}"; then
+          if grep -Fq "${CADDY_CONFIG_MARKER}" "${CADDY_HOST_CONFIG_PATH}"; then
+            tmp_cfg_file="$(mktemp)"
+            awk -v start="${CADDY_CONFIG_MARKER}" -v end="${CADDY_CONFIG_END_MARKER}" '
+              $0 == start {skip=1; next}
+              $0 == end {skip=0; next}
+              !skip
+            ' "${CADDY_HOST_CONFIG_PATH}" > "${tmp_cfg_file}"
+            mv "${tmp_cfg_file}" "${CADDY_HOST_CONFIG_PATH}"
+          fi
+
+          if ! grep -Eq '^[[:space:]]*tilt-us\.com([[:space:]]|:|\{)' "${CADDY_HOST_CONFIG_PATH}" && \
+             ! grep -Eq '^[[:space:]]*www\.tilt-us\.com([[:space:]]|:|\{)' "${CADDY_HOST_CONFIG_PATH}"; then
             {
               echo
               echo "${CADDY_CONFIG_MARKER}"
@@ -224,8 +236,10 @@ jobs:
               echo "www.tilt-us.com {"
               echo "  redir https://tilt-us.com{uri} 302"
               echo "}"
-              echo "## END auto-managed by mira-website"
+              echo "${CADDY_CONFIG_END_MARKER}"
             } | ${RUN_CMD_PREFIX} tee -a "${CADDY_HOST_CONFIG_PATH}" >/dev/null
+          else
+            echo "Caddy config already contains unmanaged tilt-us.com or www.tilt-us.com blocks; skipping managed append."
           fi
 
           ${RUN_CMD_PREFIX} docker exec "${CADDY_CONTAINER}" caddy validate --config "${CADDY_CONTAINER_CONFIG_PATH}"
