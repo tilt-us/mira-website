@@ -239,7 +239,6 @@ jobs:
                 header = line
                 sub(/[[:space:]]*#.*$/, "", header)
               }
-              if (header !~ /(^|[[:space:]]|,)tilt-us\.com([[:space:]]|,|:)/) { return 0 }
 
               count = split(header, parts, /[[:space:]]+/)
               for (i = 1; i <= count; i++) {
