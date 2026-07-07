@@ -310,7 +310,7 @@ jobs:
               }
             }
           ' "${CADDY_HOST_CONFIG_PATH}" > "${tmp_cfg_file}"
-          mv "${tmp_cfg_file}" "${CADDY_HOST_CONFIG_PATH}"
+            cat "${tmp_cfg_file}" > "${CADDY_HOST_CONFIG_PATH}"
 
           {
             echo
