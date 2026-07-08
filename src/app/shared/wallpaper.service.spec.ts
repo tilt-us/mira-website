@@ -74,14 +74,13 @@ describe('WallpaperService', () => {
 
   it('applies wallpaper from server without local persistence', () => {
     const service = TestBed.inject(WallpaperService);
-    const setItemSpy = vi.spyOn(localStorage, 'setItem');
+    const localStorageSetItem = vi.spyOn(localStorage, 'setItem');
 
     service.set('yuna');
     service.setFromServer('ignara');
 
     expect(service.wallpaper()).toBe('ignara');
-    expect(setItemSpy).toHaveBeenCalledTimes(1);
-    expect(setItemSpy).toHaveBeenCalledWith(STORAGE_KEY, 'yuna');
+    expect(localStorageSetItem).not.toHaveBeenCalled();
   });
 
   it('falls back to the default when server value is invalid', () => {

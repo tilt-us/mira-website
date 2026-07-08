@@ -32,6 +32,20 @@ function byTestId(fixture: ComponentFixture<UserSettings>, id: string): HTMLElem
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 }
 
+function castUserSettingsComponent(instance: UserSettings): {
+  displayName: WritableSignal<string>;
+  tagId: WritableSignal<string>;
+  accentColor: WritableSignal<string>;
+  saveProfile: () => Promise<void>;
+} {
+  return instance as unknown as {
+    displayName: WritableSignal<string>;
+    tagId: WritableSignal<string>;
+    accentColor: WritableSignal<string>;
+    saveProfile: () => Promise<void>;
+  };
+}
+
 describe('UserSettings', () => {
   beforeEach(() => {
     localStorage.clear();
@@ -67,12 +81,10 @@ describe('UserSettings', () => {
       logout: vi.fn(),
       saveProfile,
     });
+    const component = castUserSettingsComponent(fixture.componentInstance);
 
-    const displayName = byTestId(fixture, 'display-name') as HTMLInputElement;
-    const tagId = byTestId(fixture, 'tag-id') as HTMLInputElement;
-
-    expect(displayName.value).toBe('Mira Player');
-    expect(tagId.value).toBe('TAG-001');
+    expect(component.displayName()).toBe('Mira Player');
+    expect(component.tagId()).toBe('TAG-001');
   });
 
   it('sends changed fields to auth.saveProfile', async () => {
@@ -90,18 +102,13 @@ describe('UserSettings', () => {
       logout: vi.fn(),
       saveProfile,
     });
+    const component = castUserSettingsComponent(fixture.componentInstance);
 
-    const displayName = byTestId(fixture, 'display-name') as HTMLInputElement;
-    const tagId = byTestId(fixture, 'tag-id') as HTMLInputElement;
-
-    displayName.value = 'Neue Playerin';
-    displayName.dispatchEvent(new Event('input', { bubbles: true }));
-    tagId.value = 'TAG-002';
-    tagId.dispatchEvent(new Event('input', { bubbles: true }));
-
+    component.displayName.set('Neue Playerin');
+    component.tagId.set('TAG-002');
     fixture.detectChanges();
 
-    (byTestId(fixture, 'save-button') as HTMLButtonElement).click();
+    await component.saveProfile();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -126,13 +133,12 @@ describe('UserSettings', () => {
       logout: vi.fn(),
       saveProfile,
     });
+    const component = castUserSettingsComponent(fixture.componentInstance);
 
-    const color = byTestId(fixture, 'accent-color') as HTMLInputElement;
-    color.value = '#ff0000';
-    color.dispatchEvent(new Event('input', { bubbles: true }));
+    component.accentColor.set('#ff0000');
     fixture.detectChanges();
 
-    (byTestId(fixture, 'save-button') as HTMLButtonElement).click();
+    await component.saveProfile();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
@@ -202,13 +208,12 @@ describe('UserSettings', () => {
       logout: vi.fn(),
       saveProfile,
     });
+    const component = castUserSettingsComponent(fixture.componentInstance);
 
-    const displayName = byTestId(fixture, 'display-name') as HTMLInputElement;
-    displayName.value = 'Neue Playerin';
-    displayName.dispatchEvent(new Event('input', { bubbles: true }));
+    component.displayName.set('Neue Playerin');
     fixture.detectChanges();
 
-    (byTestId(fixture, 'save-button') as HTMLButtonElement).click();
+    await component.saveProfile();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();

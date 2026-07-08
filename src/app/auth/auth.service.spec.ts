@@ -21,10 +21,15 @@ describe('AuthService', () => {
   });
 
   it('opens auth route on login', () => {
-    const assignSpy = vi.spyOn(window.location, 'assign');
+    const assignSpy = vi.fn();
+    const locationSpy = vi.spyOn(window, 'location', 'get').mockReturnValue({
+      ...(window.location as Location),
+      assign: assignSpy,
+    } as Location);
 
     service.login();
 
     expect(assignSpy).toHaveBeenCalledWith('/auth');
+    locationSpy.mockRestore();
   });
 });
