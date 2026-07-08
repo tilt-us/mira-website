@@ -87,10 +87,10 @@
         <input
           class="input"
           type="password"
-          name="currentPassword"
           autocomplete="current-password"
           data-testid="current-password"
           [ngModel]="currentPassword()"
+          [ngModelOptions]="{ standalone: true }"
           (ngModelChange)="currentPassword.set($event)"
         />
       </label>
@@ -100,10 +100,10 @@
         <input
           class="input"
           type="password"
-          name="newPassword"
           autocomplete="new-password"
           data-testid="new-password"
           [ngModel]="newPassword()"
+          [ngModelOptions]="{ standalone: true }"
           (ngModelChange)="newPassword.set($event)"
         />
       </label>
@@ -113,10 +113,10 @@
         <input
           class="input"
           type="password"
-          name="confirmPassword"
           autocomplete="new-password"
           data-testid="confirm-password"
           [ngModel]="confirmPassword()"
+          [ngModelOptions]="{ standalone: true }"
           (ngModelChange)="confirmPassword.set($event)"
         />
       </label>
