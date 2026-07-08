@@ -127,15 +127,17 @@ describe('UserSettings', () => {
     const accent = byTestId(fixture, 'accent-color') as HTMLInputElement;
 
     displayName.value = 'Changed Player';
-    displayName.dispatchEvent(new Event('input'));
+    displayName.dispatchEvent(new Event('input', { bubbles: true }));
     tagId.value = 'TAG-007';
-    tagId.dispatchEvent(new Event('input'));
+    tagId.dispatchEvent(new Event('input', { bubbles: true }));
     accent.value = '#123456';
-    accent.dispatchEvent(new Event('input'));
+    accent.dispatchEvent(new Event('input', { bubbles: true }));
     (byTestId(fixture, 'birthday') as HTMLElement).dispatchEvent(
       new CustomEvent('valueChange', { detail: '2000-01-01' }),
     );
 
+    fixture.detectChanges();
+    await fixture.whenStable();
     fixture.detectChanges();
 
     const currentPassword = byTestId(fixture, 'current-password') as HTMLInputElement;

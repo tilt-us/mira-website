@@ -5,7 +5,7 @@
       Ändere deine Profildaten und weitere Einstellungen.
     </p>
 
-    <form class="mt-10 flex flex-col gap-6" (submit)="onProfileSubmit($event)">
+    <form class="mt-10 flex flex-col gap-6" (ngSubmit)="onProfileSubmit($event)">
       <label class="flex flex-col gap-2">
         <span class="text-sm font-medium">Display name</span>
         <input
@@ -14,8 +14,8 @@
           name="displayName"
           autocomplete="nickname"
           data-testid="display-name"
-          [ngModel]="displayName()"
-          (ngModelChange)="displayName.set($event)"
+          [value]="displayName()"
+          (input)="displayName.set($any($event.target).value)"
         />
       </label>
 
@@ -27,8 +27,8 @@
           name="tagId"
           autocomplete="off"
           data-testid="tag-id"
-          [ngModel]="tagId()"
-          (ngModelChange)="tagId.set($event)"
+          [value]="tagId()"
+          (input)="tagId.set($any($event.target).value)"
         />
       </label>
 
@@ -50,8 +50,8 @@
           name="accentColor"
           autocomplete="off"
           data-testid="accent-color"
-          [ngModel]="accentColor()"
-          (ngModelChange)="accentColor.set($event)"
+          [value]="accentColor()"
+          (input)="accentColor.set($any($event.target).value)"
         />
       </label>
 
