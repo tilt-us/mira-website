@@ -36,6 +36,7 @@ yarn.lock
 .sass-cache/
 /connect.lock
 /coverage
+.openapi/
 /libpeerconnection.log
 testem.log
 /typings

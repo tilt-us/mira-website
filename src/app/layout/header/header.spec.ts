@@ -1,8 +1,11 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { WritableSignal, signal } from '@angular/core';
+import { Mock, vi } from 'vitest';
 
 import { Header } from './header';
 import { AuthService } from '../../auth/auth.service';
+import { AuthUser } from '../../auth/auth.types';
 
 function byTestId(fixture: ComponentFixture<Header>, id: string): HTMLElement {
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
@@ -10,12 +13,24 @@ function byTestId(fixture: ComponentFixture<Header>, id: string): HTMLElement {
 
 describe('Header', () => {
   let fixture: ComponentFixture<Header>;
-  let auth: AuthService;
+  let mockAuth: {
+    user: WritableSignal<AuthUser | null>;
+    isLoggedIn: () => boolean;
+    logout: Mock;
+    providers: () => string[];
+  };
+  beforeEach(async () => {
+    const authUser = signal<AuthUser | null>(null);
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
+    mockAuth = {
+      user: authUser,
+      isLoggedIn: () => authUser() !== null,
+      logout: vi.fn(),
+      providers: () => [],
+    };
+
+    await TestBed.configureTestingModule({
       imports: [Header],
-      // Real routes so the link clicks resolve instead of erroring.
       providers: [
         provideRouter([
           { path: 'settings', children: [] },
@@ -23,12 +38,13 @@ describe('Header', () => {
           { path: 'builds', children: [] },
           { path: 'streamers', children: [] },
           { path: 'report', children: [] },
+          { path: 'auth', children: [] },
         ]),
-        AuthService,
+        { provide: AuthService, useValue: mockAuth },
       ],
-    });
+    }).compileComponents();
+
     fixture = TestBed.createComponent(Header);
-    auth = TestBed.inject(AuthService);
     fixture.detectChanges();
   });
 
@@ -36,6 +52,10 @@ describe('Header', () => {
     Object.defineProperty(window, 'scrollY', { value, configurable: true });
     window.dispatchEvent(new Event('scroll'));
     fixture.detectChanges();
+  }
+
+  function component(): Header {
+    return fixture.componentInstance;
   }
 
   afterEach(() => {
@@ -75,17 +95,36 @@ describe('Header', () => {
     expect(byTestId(fixture, 'user-menu-button')).toBeFalsy();
   });
 
-  it('logs in when the login button is clicked', () => {
+  it('opens the auth popup when the login button is clicked', () => {
     byTestId(fixture, 'login-button').click();
     fixture.detectChanges();
 
-    expect(auth.isLoggedIn()).toBe(true);
-    expect(byTestId(fixture, 'user-menu-button')).toBeTruthy();
-    expect(byTestId(fixture, 'login-button')).toBeFalsy();
+    expect(byTestId(fixture, 'auth-popup')).toBeTruthy();
+    expect(byTestId(fixture, 'auth-backdrop')).toBeTruthy();
+  });
+
+  it('closes the auth popup on backdrop click', () => {
+    byTestId(fixture, 'login-button').click();
+    fixture.detectChanges();
+
+    byTestId(fixture, 'auth-backdrop').click();
+    fixture.detectChanges();
+
+    expect(byTestId(fixture, 'auth-popup')).toBeFalsy();
+  });
+
+  it('closes the auth popup when close icon is clicked', () => {
+    byTestId(fixture, 'login-button').click();
+    fixture.detectChanges();
+
+    byTestId(fixture, 'auth-close').click();
+    fixture.detectChanges();
+
+    expect(byTestId(fixture, 'auth-popup')).toBeFalsy();
   });
 
   it('opens a popover with the user and a settings link', () => {
-    auth.login();
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
 
     expect(byTestId(fixture, 'user-menu')).toBeFalsy();
@@ -98,8 +137,213 @@ describe('Header', () => {
     expect(byTestId(fixture, 'settings-link').getAttribute('href')).toBe('/settings');
   });
 
-  it('closes the popover on the click-away layer', () => {
-    auth.login();
+  it('renders a fallback initial when no avatar image is available', () => {
+    mockAuth.user.set({ displayName: 'mira player', email: 'player@tilt-us.com' });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const initial = button.querySelector('[class*="avatar-hexagon-label"]') as HTMLElement;
+
+    expect(initial).toBeTruthy();
+    expect(initial.textContent?.trim()).toBe('M');
+  });
+
+  it('switches to initial fallback when avatar image fails to load', () => {
+    mockAuth.user.set({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+      avatarUrl: '/broken-avatar.png',
+    });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const image = button.querySelector('img') as HTMLImageElement;
+    const errorEvent = new Event('error');
+
+    image.dispatchEvent(errorEvent);
+    fixture.detectChanges();
+
+    const initial = button.querySelector('[class*="avatar-hexagon-label"]') as HTMLElement;
+
+    expect(initial).toBeTruthy();
+    expect(initial.textContent?.trim()).toBe('M');
+  });
+
+  it('uses initial fallback when avatar consent is denied for social avatars', () => {
+    mockAuth.user.set({
+      displayName: 'Google User',
+      email: 'google@tilt-us.com',
+      avatarUrl: 'https://lh3.googleusercontent.com/avatar.png',
+      avatarRightsConsented: false,
+    });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const image = button.querySelector('img');
+    const initial = button.querySelector('[class*="avatar-hexagon-label"]') as HTMLElement;
+
+    expect(image).toBeFalsy();
+    expect(initial).toBeTruthy();
+    expect(initial.textContent?.trim()).toBe('G');
+  });
+
+  it('shows blocked social avatar when consent is granted', () => {
+    mockAuth.user.set({
+      displayName: 'Google User',
+      email: 'google@tilt-us.com',
+      avatarUrl: 'https://lh3.googleusercontent.com/avatar.png',
+      avatarRightsConsented: true,
+    });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const image = button.querySelector('img') as HTMLImageElement;
+    const initial = button.querySelector('[class*="avatar-hexagon-label"]');
+
+    expect(image).toBeTruthy();
+    expect(initial).toBeFalsy();
+  });
+
+  it('resets avatar error state after avatar url changes', () => {
+    mockAuth.user.set({
+      displayName: 'Google User',
+      email: 'google@tilt-us.com',
+      avatarUrl: 'https://example.com/avatar-a.png',
+      avatarRightsConsented: false,
+    });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const image = button.querySelector('img') as HTMLImageElement;
+    expect(image).toBeTruthy();
+
+    image.dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+
+    expect(button.querySelector('[class*="avatar-hexagon-label"]')).toBeTruthy();
+
+    mockAuth.user.set({
+      displayName: 'Google User',
+      email: 'google@tilt-us.com',
+      avatarUrl: 'https://example.com/avatar-b.png',
+      avatarRightsConsented: false,
+    });
+    fixture.detectChanges();
+
+    const reloadedImage = button.querySelector('img') as HTMLImageElement;
+    expect(reloadedImage).toBeTruthy();
+  });
+
+  it('uses transparent menu background and blur before scrolling', () => {
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
+    fixture.detectChanges();
+    byTestId(fixture, 'user-menu-button').click();
+    fixture.detectChanges();
+
+    const menu = byTestId(fixture, 'user-menu');
+    expect(menu.style.backgroundColor.replace(/\s/g, '')).toBe('rgba(0,0,0,0.2)');
+    expect(menu.style.backdropFilter).toBe('blur(8px)');
+  });
+
+  it('removes transparent menu background after scrolling', () => {
+    setScrollY(50);
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
+    fixture.detectChanges();
+    byTestId(fixture, 'user-menu-button').click();
+    fixture.detectChanges();
+
+    const menu = byTestId(fixture, 'user-menu');
+    expect(menu.style.backgroundColor).toBe('');
+    expect(menu.style.backdropFilter).toBe('');
+  });
+
+  it('shows fallback label from email when no display name exists', () => {
+    mockAuth.user.set({
+      displayName: '',
+      preferredUsername: '',
+      email: 'mira@tilt-us.com',
+    });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const initial = button.querySelector('[class*="avatar-hexagon-label"]') as HTMLElement;
+
+    expect(initial).toBeTruthy();
+    expect(initial.textContent?.trim()).toBe('M');
+  });
+
+  it('shows fallback label when names are unavailable and avatar rights consent is denied', () => {
+    mockAuth.user.set({
+      displayName: '   ',
+      preferredUsername: '   ',
+      email: '   ',
+    });
+    fixture.detectChanges();
+
+    expect(component()['avatarLabel']).toBe('P');
+  });
+
+  it('allows avatar URLs to render when social avatar URL is not parseable', () => {
+    mockAuth.user.set({
+      displayName: 'Link User',
+      email: 'link@example.com',
+      avatarUrl: 'not-a-url',
+      avatarRightsConsented: false,
+    });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const image = button.querySelector('img');
+
+    expect(image).toBeTruthy();
+    expect(image?.getAttribute('src')).toBe('not-a-url');
+  });
+
+  it('falls back to a safe avatar state when URL parsing throws', () => {
+    const originalURL = globalThis.URL;
+    const brokenURL = function (..._args: unknown[]) {
+      throw new Error('invalid URL');
+    } as unknown as typeof URL;
+
+    Object.defineProperty(globalThis, 'URL', {
+      configurable: true,
+      value: brokenURL,
+    });
+
+    try {
+      mockAuth.user.set({
+        displayName: 'Bad URL User',
+        email: 'bad@example.com',
+        avatarUrl: 'https://googleusercontent.com/avatar.png',
+        avatarRightsConsented: false,
+      });
+      fixture.detectChanges();
+
+      const button = byTestId(fixture, 'user-menu-button');
+      const image = button.querySelector('img');
+      expect(image).toBeTruthy();
+    } finally {
+      Object.defineProperty(globalThis, 'URL', {
+        configurable: true,
+        value: originalURL,
+      });
+    }
+  });
+
+  it('closes an open auth popup on Escape', () => {
+    byTestId(fixture, 'login-button').click();
+    fixture.detectChanges();
+
+    expect(byTestId(fixture, 'auth-popup')).toBeTruthy();
+
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    fixture.detectChanges();
+
+    expect(byTestId(fixture, 'auth-popup')).toBeFalsy();
+  });
+
+  it('closes a popover on the click-away layer', () => {
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
     byTestId(fixture, 'user-menu-button').click();
     fixture.detectChanges();
@@ -109,8 +353,8 @@ describe('Header', () => {
     expect(byTestId(fixture, 'user-menu')).toBeFalsy();
   });
 
-  it('closes the popover on Escape', () => {
-    auth.login();
+  it('closes a popover on Escape', () => {
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
     byTestId(fixture, 'user-menu-button').click();
     fixture.detectChanges();
@@ -121,7 +365,7 @@ describe('Header', () => {
   });
 
   it('closes the popover when the settings link is chosen', () => {
-    auth.login();
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
     byTestId(fixture, 'user-menu-button').click();
     fixture.detectChanges();
@@ -132,7 +376,7 @@ describe('Header', () => {
   });
 
   it('logs out from the popover', () => {
-    auth.login();
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
     byTestId(fixture, 'user-menu-button').click();
     fixture.detectChanges();
@@ -140,7 +384,6 @@ describe('Header', () => {
     byTestId(fixture, 'logout-button').click();
     fixture.detectChanges();
 
-    expect(auth.isLoggedIn()).toBe(false);
-    expect(byTestId(fixture, 'login-button')).toBeTruthy();
+    expect(mockAuth.logout).toHaveBeenCalled();
   });
 });

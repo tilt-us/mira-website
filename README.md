@@ -71,6 +71,20 @@ pnpm start
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
 
+For local API backends, prefer this:
+
+```bash
+pnpm run start:local
+```
+
+`start:local` refreshes the generated OpenAPI client against local services on `8080/8081/...` and starts `ng serve`.
+
+For remote/dev API mode, use:
+
+```bash
+pnpm run start:dev
+```
+
 ## Code Scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
@@ -94,6 +108,22 @@ ng build
 ```
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
+
+## Generating API Client
+
+To refresh the generated OpenAPI client from the shared API definitions, run:
+
+```bash
+pnpm run generate:api
+```
+
+To use local OpenAPI endpoints (e.g. during backend development), run:
+
+```bash
+pnpm run generate:local:api
+```
+
+Generated clients are written to `src/api`.
 
 ## Running Unit Tests
 
@@ -151,3 +181,4 @@ If `DEPLOY_POST_DEPLOY_COMMAND` is not set, the workflow:
 2. auto-detects or uses `CADDY_HOST_CONFIG_PATH`
 3. replaces any existing managed marker block and any existing `tilt-us.com` / `www.tilt-us.com` server blocks in that file, then appends a single managed block,
 4. reloads Caddy via `docker exec <DEPLOY_CADDY_CONTAINER> caddy reload --config <CADDY_CONTAINER_CONFIG_PATH>`.
+5. 

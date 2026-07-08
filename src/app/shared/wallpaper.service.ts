@@ -3,8 +3,11 @@ import { DOCUMENT, inject, Injectable, signal } from '@angular/core';
 /** Background wallpapers, keyed by champion like the Mira client. */
 export type Wallpaper = 'lira' | 'ignara' | 'yuna' | 'sophia';
 
+export type WallpaperOptionId = Wallpaper;
+export type WallpaperSource = string;
+
 export interface WallpaperOption {
-  readonly id: Wallpaper;
+  readonly id: WallpaperOptionId;
   readonly label: string;
 }
 
@@ -17,6 +20,7 @@ export const WALLPAPERS: readonly WallpaperOption[] = [
 
 const STORAGE_KEY = 'mira-website-wallpaper';
 const DEFAULT_WALLPAPER: Wallpaper = 'lira';
+const KNOWN_WALLPAPERS = new Set<WallpaperOptionId>(WALLPAPERS.map((item) => item.id));
 
 /**
  * Mirrors the client's wallpaper handling: the choice is persisted in
@@ -26,7 +30,7 @@ const DEFAULT_WALLPAPER: Wallpaper = 'lira';
 @Injectable({ providedIn: 'root' })
 export class WallpaperService {
   private readonly document = inject(DOCUMENT);
-  private readonly current = signal<Wallpaper>(this.readStored());
+  private readonly current = signal<WallpaperSource>(this.readStored());
 
   readonly wallpaper = this.current.asReadonly();
 
@@ -35,15 +39,30 @@ export class WallpaperService {
   }
 
   set(wallpaper: Wallpaper): void {
-    this.current.set(wallpaper);
-    this.apply(wallpaper);
+    const normalized = this.normalize(wallpaper);
+    this.current.set(normalized);
+    this.apply(normalized);
   }
 
-  private apply(wallpaper: Wallpaper): void {
+  setFromServer(wallpaper?: string | null): void {
+    const normalized = this.normalize(wallpaper);
+
+    if (normalized !== this.current()) {
+      this.current.set(normalized);
+      this.apply(normalized, false);
+    }
+  }
+
+  private apply(wallpaper: WallpaperSource, persist = true): void {
     this.document.documentElement.style.setProperty(
       '--app-background-wallpaper',
-      `url('/${wallpaper}-wallpaper.png')`,
+      this.resolveWallpaperUrl(wallpaper),
     );
+
+    if (!persist) {
+      return;
+    }
+
     try {
       this.document.defaultView?.localStorage.setItem(STORAGE_KEY, wallpaper);
     } catch {
@@ -51,14 +70,30 @@ export class WallpaperService {
     }
   }
 
-  private readStored(): Wallpaper {
+  private readStored(): WallpaperSource {
     try {
       const stored = this.document.defaultView?.localStorage.getItem(STORAGE_KEY);
-      return WALLPAPERS.some((option) => option.id === stored)
-        ? (stored as Wallpaper)
-        : DEFAULT_WALLPAPER;
+      return this.normalize(stored);
     } catch {
       return DEFAULT_WALLPAPER;
     }
+  }
+
+  private normalize(wallpaper: unknown): WallpaperSource {
+    if (this.isKnownWallpaper(wallpaper)) {
+      return wallpaper;
+    }
+
+    return DEFAULT_WALLPAPER;
+  }
+
+  private isKnownWallpaper(wallpaper: unknown): wallpaper is Wallpaper {
+    return typeof wallpaper === 'string' && KNOWN_WALLPAPERS.has(wallpaper as Wallpaper);
+  }
+
+  private resolveWallpaperUrl(wallpaper: WallpaperSource): string {
+    return this.isKnownWallpaper(wallpaper)
+      ? `url('/${wallpaper}-wallpaper.png')`
+      : `url('${wallpaper}')`;
   }
 }
