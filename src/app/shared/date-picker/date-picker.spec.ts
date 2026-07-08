@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { DatePicker, DatePickerLocale } from './date-picker';
 
@@ -58,13 +59,13 @@ describe('DatePicker', () => {
   });
 
   it('detects the browser language as default locale', () => {
-    const language = spyOnProperty(navigator, 'language', 'get');
+    const language = vi.spyOn(navigator, 'language', 'get');
 
-    language.and.returnValue('de-AT');
+    language.mockReturnValue('de-AT');
     create(undefined, '2001-03-15');
     expect(byTestId(fixture, 'date-picker-display').textContent).toContain('15.03.2001');
 
-    language.and.returnValue(undefined as unknown as string);
+    language.mockReturnValue(undefined as unknown as string);
     TestBed.resetTestingModule();
     create(undefined, '2001-03-15');
     expect(byTestId(fixture, 'date-picker-display').textContent).toContain('03/15/2001');

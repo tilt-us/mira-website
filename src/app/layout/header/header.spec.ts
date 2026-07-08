@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { WritableSignal, signal } from '@angular/core';
+import { Mock, vi } from 'vitest';
 
 import { Header } from './header';
 import { AuthService } from '../../auth/auth.service';
@@ -15,7 +16,7 @@ describe('Header', () => {
   let mockAuth: {
     user: WritableSignal<AuthUser | null>;
     isLoggedIn: () => boolean;
-    logout: jasmine.Spy;
+    logout: Mock;
     providers: () => string[];
   };
   beforeEach(async () => {
@@ -24,7 +25,7 @@ describe('Header', () => {
     mockAuth = {
       user: authUser,
       isLoggedIn: () => authUser() !== null,
-      logout: jasmine.createSpy('logout'),
+      logout: vi.fn(),
       providers: () => [],
     };
 

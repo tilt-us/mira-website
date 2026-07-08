@@ -36,7 +36,6 @@
     "@angular/compiler-cli": "^22.0.0",
     "@hey-api/openapi-ts": "^0.98.2",
     "@playwright/test": "^1.61.1",
-    "@types/jasmine": "^6.0.0",
     "@types/node": "^26.0.1",
     "@vitest/coverage-v8": "^4.0.8",
     "autoprefixer": "^10.5.2",

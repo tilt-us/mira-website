@@ -1,5 +1,6 @@
 import { DOCUMENT } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { WallpaperService } from './wallpaper.service';
 
@@ -73,7 +74,7 @@ describe('WallpaperService', () => {
 
   it('applies wallpaper from server without local persistence', () => {
     const service = TestBed.inject(WallpaperService);
-    const setItemSpy = spyOn(localStorage, 'setItem');
+    const setItemSpy = vi.spyOn(localStorage, 'setItem');
 
     service.set('yuna');
     service.setFromServer('ignara');

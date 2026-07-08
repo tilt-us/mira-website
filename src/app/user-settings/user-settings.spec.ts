@@ -1,6 +1,7 @@
 import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { Mock, vi } from 'vitest';
 
 import { AuthService } from '../auth/auth.service';
 import { AuthUser } from '../auth/auth.types';
@@ -10,9 +11,9 @@ import { UserSettings } from './user-settings';
 function setup(mockAuth: {
   user: WritableSignal<AuthUser | null>;
   isLoggedIn: () => boolean;
-  login: jasmine.Spy;
-  logout: jasmine.Spy;
-  saveProfile: jasmine.Spy;
+  login: Mock;
+  logout: Mock;
+  saveProfile: Mock;
 }): ComponentFixture<UserSettings> {
   TestBed.configureTestingModule({
     imports: [UserSettings],
@@ -38,12 +39,12 @@ describe('UserSettings', () => {
 
   it('prompts to log in when the user is signed out', () => {
     const authUser = signal<AuthUser | null>(null);
-    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const saveProfile = vi.fn().mockResolvedValue(undefined);
     const fixture = setup({
       user: authUser,
       isLoggedIn: () => false,
-      login: jasmine.createSpy('login').and.callFake(() => undefined),
-      logout: jasmine.createSpy('logout'),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn(),
       saveProfile,
     });
 
@@ -58,12 +59,12 @@ describe('UserSettings', () => {
       tagId: 'TAG-001',
     });
 
-    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const saveProfile = vi.fn().mockResolvedValue(undefined);
     const fixture = setup({
       user: authUser,
       isLoggedIn: () => true,
-      login: jasmine.createSpy('login'),
-      logout: jasmine.createSpy('logout'),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn(),
       saveProfile,
     });
 
@@ -81,12 +82,12 @@ describe('UserSettings', () => {
       tagId: 'TAG-001',
     });
 
-    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const saveProfile = vi.fn().mockResolvedValue(undefined);
     const fixture = setup({
       user: authUser,
       isLoggedIn: () => true,
-      login: jasmine.createSpy('login'),
-      logout: jasmine.createSpy('logout'),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn(),
       saveProfile,
     });
 
@@ -117,12 +118,12 @@ describe('UserSettings', () => {
       email: 'player@tilt-us.com',
     });
 
-    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const saveProfile = vi.fn().mockResolvedValue(undefined);
     const fixture = setup({
       user: authUser,
       isLoggedIn: () => true,
-      login: jasmine.createSpy('login'),
-      logout: jasmine.createSpy('logout'),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn(),
       saveProfile,
     });
 
@@ -147,12 +148,12 @@ describe('UserSettings', () => {
       email: 'player@tilt-us.com',
     });
 
-    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const saveProfile = vi.fn().mockResolvedValue(undefined);
     const fixture = setup({
       user: authUser,
       isLoggedIn: () => true,
-      login: jasmine.createSpy('login'),
-      logout: jasmine.createSpy('logout'),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn(),
       saveProfile,
     });
 
@@ -175,12 +176,12 @@ describe('UserSettings', () => {
       email: 'player@tilt-us.com',
     });
 
-    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const saveProfile = vi.fn().mockResolvedValue(undefined);
     const fixture = setup({
       user: authUser,
       isLoggedIn: () => true,
-      login: jasmine.createSpy('login'),
-      logout: jasmine.createSpy('logout'),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn(),
       saveProfile,
     });
 
@@ -192,13 +193,13 @@ describe('UserSettings', () => {
       displayName: 'Mira Player',
       email: 'player@tilt-us.com',
     });
-    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const saveProfile = vi.fn().mockResolvedValue(undefined);
 
     const fixture = setup({
       user: authUser,
       isLoggedIn: () => true,
-      login: jasmine.createSpy('login'),
-      logout: jasmine.createSpy('logout'),
+      login: vi.fn().mockResolvedValue(undefined),
+      logout: vi.fn(),
       saveProfile,
     });
 
