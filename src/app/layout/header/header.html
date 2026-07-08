@@ -89,6 +89,9 @@
 
           <div
             class="user-menu-card absolute right-0 z-[60] mt-2 rounded-lg border border-surface-border p-3"
+            [style.background-color]="!scrolled() ? 'rgba(0, 0, 0, 0.2)' : ''"
+            [style.backdrop-filter]="!scrolled() ? 'blur(8px)' : ''"
+            [style.webkitBackdropFilter]="!scrolled() ? 'blur(8px)' : ''"
             role="menu"
             data-testid="user-menu"
           >

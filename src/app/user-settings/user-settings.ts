@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../auth/auth.service';
 import { DatePicker } from '../shared/date-picker/date-picker';
 import { WallpaperPicker } from '../shared/wallpaper-picker/wallpaper-picker';
+import { ThemeService } from '../shared/theme.service';
+import { WallpaperService } from '../shared/wallpaper.service';
 import { ACCOUNT_PROVIDERS } from './account-providers';
 import { normalizeLoginError } from '../auth/auth.service';
 
@@ -14,6 +16,8 @@ import { normalizeLoginError } from '../auth/auth.service';
 })
 export class UserSettings {
   protected readonly auth = inject(AuthService);
+  protected readonly themeService = inject(ThemeService);
+  protected readonly wallpaperService = inject(WallpaperService);
   protected readonly providers = ACCOUNT_PROVIDERS;
   protected readonly isSaving = signal(false);
   protected readonly saveError = signal('');
@@ -23,8 +27,9 @@ export class UserSettings {
   // Persisted via the backend when changed.
   protected readonly displayName = linkedSignal(() => this.auth.user()?.displayName ?? '');
   protected readonly tagId = linkedSignal(() => this.auth.user()?.tagId ?? '');
+  protected readonly accentColor = linkedSignal(() => this.themeService.accent());
   protected readonly birthday = signal('');
-  protected readonly phone = signal('');
+  protected readonly selectedWallpaper = signal(this.wallpaperService.wallpaper());
 
   // Change-password form — placeholder only, nothing is sent anywhere yet.
   protected readonly currentPassword = signal('');
@@ -37,15 +42,19 @@ export class UserSettings {
 
     const nextDisplayName = this.displayName().trim();
     const nextTagId = this.tagId().trim();
+    const nextAccentColor = this.accentColor().trim().toLowerCase();
+    const nextWallpaper = this.wallpaperService.wallpaper();
     const currentDisplayName = this.auth.user()?.displayName ?? '';
     const currentTagId = this.auth.user()?.tagId ?? '';
+    const currentAccentColor = this.themeService.accent();
+    const currentWallpaper = this.selectedWallpaper();
 
-    if (!nextDisplayName && !nextTagId) {
-      this.saveError.set('Bitte mindestens einen Wert speichern.');
-      return;
-    }
-
-    if (nextDisplayName === currentDisplayName && nextTagId === currentTagId) {
+    if (
+      nextDisplayName === currentDisplayName &&
+      nextTagId === currentTagId &&
+      nextAccentColor === currentAccentColor &&
+      nextWallpaper === currentWallpaper
+    ) {
       this.saveStatus.set('Keine Änderungen vorhanden.');
       return;
     }
@@ -56,7 +65,11 @@ export class UserSettings {
       await this.auth.saveProfile({
         ...(nextDisplayName !== currentDisplayName ? { displayName: nextDisplayName } : {}),
         ...(nextTagId !== currentTagId ? { tagId: nextTagId } : {}),
+        ...(nextAccentColor !== currentAccentColor ? { accentColor: nextAccentColor } : {}),
+        ...(nextWallpaper !== currentWallpaper ? { background: nextWallpaper } : {}),
       });
+
+      this.selectedWallpaper.set(nextWallpaper);
 
       this.saveStatus.set('Änderungen gespeichert.');
     } catch (error: unknown) {

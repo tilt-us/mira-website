@@ -4,6 +4,7 @@ import { provideRouter } from '@angular/router';
 
 import { AuthService } from '../auth/auth.service';
 import { AuthUser } from '../auth/auth.types';
+import { WallpaperService } from '../shared/wallpaper.service';
 import { UserSettings } from './user-settings';
 
 function setup(mockAuth: {
@@ -31,6 +32,10 @@ function byTestId(fixture: ComponentFixture<UserSettings>, id: string): HTMLElem
 }
 
 describe('UserSettings', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
   it('prompts to log in when the user is signed out', () => {
     const authUser = signal<AuthUser | null>(null);
     const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
@@ -104,6 +109,82 @@ describe('UserSettings', () => {
       displayName: 'Neue Playerin',
       tagId: 'TAG-002',
     });
+  });
+
+  it('sends accent color updates from the picker input', async () => {
+    const authUser = signal<AuthUser | null>({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+    });
+
+    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const fixture = setup({
+      user: authUser,
+      isLoggedIn: () => true,
+      login: jasmine.createSpy('login'),
+      logout: jasmine.createSpy('logout'),
+      saveProfile,
+    });
+
+    const color = byTestId(fixture, 'accent-color') as HTMLInputElement;
+    color.value = '#ff0000';
+    color.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.detectChanges();
+
+    (byTestId(fixture, 'save-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(saveProfile).toHaveBeenCalledWith({
+      accentColor: '#ff0000',
+    });
+  });
+
+  it('sends wallpaper updates to auth.saveProfile', async () => {
+    const authUser = signal<AuthUser | null>({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+    });
+
+    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const fixture = setup({
+      user: authUser,
+      isLoggedIn: () => true,
+      login: jasmine.createSpy('login'),
+      logout: jasmine.createSpy('logout'),
+      saveProfile,
+    });
+
+    TestBed.inject(WallpaperService).set('yuna');
+    fixture.detectChanges();
+
+    (byTestId(fixture, 'save-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
+
+    expect(saveProfile).toHaveBeenCalledWith({
+      background: 'yuna',
+    });
+  });
+
+  it('does not show phone number field anymore', () => {
+    const authUser = signal<AuthUser | null>({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+    });
+
+    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const fixture = setup({
+      user: authUser,
+      isLoggedIn: () => true,
+      login: jasmine.createSpy('login'),
+      logout: jasmine.createSpy('logout'),
+      saveProfile,
+    });
+
+    expect(byTestId(fixture, 'phone')).toBeFalsy();
   });
 
   it('shows a visible success status after save', async () => {

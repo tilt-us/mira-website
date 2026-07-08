@@ -70,4 +70,25 @@ describe('WallpaperService', () => {
 
     expect(TestBed.inject(WallpaperService).wallpaper()).toBe('lira');
   });
+
+  it('applies wallpaper from server without local persistence', () => {
+    const service = TestBed.inject(WallpaperService);
+    const setItemSpy = spyOn(localStorage, 'setItem');
+
+    service.set('yuna');
+    service.setFromServer('ignara');
+
+    expect(service.wallpaper()).toBe('ignara');
+    expect(setItemSpy).toHaveBeenCalledTimes(1);
+    expect(setItemSpy).toHaveBeenCalledWith(STORAGE_KEY, 'yuna');
+  });
+
+  it('falls back to the default when server value is invalid', () => {
+    const service = TestBed.inject(WallpaperService);
+
+    service.set('yuna');
+    service.setFromServer('not-a-wallpaper');
+
+    expect(service.wallpaper()).toBe('lira');
+  });
 });

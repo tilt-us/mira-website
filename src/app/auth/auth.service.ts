@@ -18,6 +18,7 @@ import {
   saveTokens,
 } from './storage';
 import { ThemeService } from '../shared/theme.service';
+import { WallpaperService } from '../shared/wallpaper.service';
 import { AuthUser, RegisterPayload } from './auth.types';
 import {
   getSettings,
@@ -25,6 +26,7 @@ import {
   logout as apiLogout,
   me,
   register,
+  updateSettings,
   updateTagId,
   updateUsername,
 } from '../../api/sdk.gen';
@@ -64,6 +66,7 @@ function normalizeLoginError(error: unknown) {
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly themeService = inject(ThemeService);
+  private readonly wallpaperService = inject(WallpaperService);
   private readonly currentUser = signal<AuthUser | null>(null);
   private readonly providerState = signal<string[]>([]);
   private readonly initialized = signal(false);
@@ -184,6 +187,7 @@ export class AuthService {
     try {
       const settings = (await getSettings({ throwOnError: true })).data;
       this.themeService.applyAccent(settings?.accentColor);
+      this.wallpaperService.setFromServer(settings?.background);
     } catch {
       this.themeService.applyDefaults();
     }
@@ -278,6 +282,8 @@ export class AuthService {
   async saveProfile(options: {
     displayName?: string;
     tagId?: string;
+    accentColor?: string;
+    background?: string;
   }): Promise<void> {
     this.loadingState.set(true);
 
@@ -287,9 +293,22 @@ export class AuthService {
 
       if (
         !this.isLoggedIn() ||
-        (options.displayName === undefined && options.tagId === undefined)
+        (options.displayName === undefined &&
+          options.tagId === undefined &&
+          options.accentColor === undefined &&
+          options.background === undefined)
       ) {
         return;
+      }
+
+      const payload: { accentColor?: string; background?: string } = {};
+
+      if (options.accentColor !== undefined) {
+        payload.accentColor = options.accentColor;
+      }
+
+      if (options.background !== undefined) {
+        payload.background = options.background;
       }
 
       if (options.displayName !== undefined && options.displayName !== currentDisplayName) {
@@ -306,6 +325,13 @@ export class AuthService {
           body: {
             tagId: options.tagId,
           },
+          throwOnError: true,
+        });
+      }
+
+      if (payload.accentColor !== undefined || payload.background !== undefined) {
+        await updateSettings({
+          body: payload,
           throwOnError: true,
         });
       }

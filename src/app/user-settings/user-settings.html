@@ -43,15 +43,15 @@
       </div>
 
       <label class="flex flex-col gap-2">
-        <span class="text-sm font-medium">Phone number</span>
+        <span class="text-sm font-medium">Accent color</span>
         <input
-          class="input"
-          type="tel"
-          name="phone"
-          autocomplete="tel"
-          data-testid="phone"
-          [ngModel]="phone()"
-          (ngModelChange)="phone.set($event)"
+          class="input h-10 w-16 p-1"
+          type="color"
+          name="accentColor"
+          autocomplete="off"
+          data-testid="accent-color"
+          [ngModel]="accentColor()"
+          (ngModelChange)="accentColor.set($event)"
         />
       </label>
 
@@ -74,9 +74,7 @@
     </form>
 
     <h2 class="mt-14 text-2xl font-semibold">Appearance</h2>
-    <p class="mt-1 text-sm text-white/50">
-      Choose the background wallpaper. Your option is saved on this device.
-    </p>
+    <p class="mt-1 text-sm text-white/50">Choose the background wallpaper.</p>
     <div class="mt-4 flex flex-col gap-2">
       <span class="text-sm font-medium">Background</span>
       <app-wallpaper-picker />

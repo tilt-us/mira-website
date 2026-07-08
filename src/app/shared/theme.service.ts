@@ -1,4 +1,4 @@
-import { DOCUMENT, Injectable, inject } from '@angular/core';
+import { DOCUMENT, Injectable, inject, signal } from '@angular/core';
 
 const DEFAULT_ACCENT_COLOR = '#f2c45b';
 const DEFAULT_ACCENT_HOVER_COLOR = '#f4cf78';
@@ -59,6 +59,9 @@ function getContrastTextColor(background: string): HexCode {
 @Injectable({ providedIn: 'root' })
 export class ThemeService {
   private readonly document = inject(DOCUMENT);
+  private readonly accentColor = signal(DEFAULT_ACCENT_COLOR);
+
+  readonly accent = this.accentColor.asReadonly();
 
   applyDefaults(): void {
     this.applyAccent(DEFAULT_ACCENT_COLOR);
@@ -76,5 +79,7 @@ export class ThemeService {
     style.setProperty('--app-brand', accent);
     style.setProperty('--app-brand-hover', hover);
     style.setProperty('--app-brand-fg', accentForeground);
+
+    this.accentColor.set(accent);
   }
 }
