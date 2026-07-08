@@ -1,7 +1,6 @@
 import { DOCUMENT, Injectable, inject, signal } from '@angular/core';
 
 const DEFAULT_ACCENT_COLOR = '#f2c45b';
-const DEFAULT_ACCENT_HOVER_COLOR = '#f4cf78';
 
 type HexCode = `#${string}`;
 

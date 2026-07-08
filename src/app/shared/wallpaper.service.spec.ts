@@ -14,6 +14,7 @@ function cssVar(): string {
 
 describe('WallpaperService', () => {
   beforeEach(() => {
+    vi.restoreAllMocks();
     localStorage.clear();
     document.documentElement.style.removeProperty('--app-background-wallpaper');
     TestBed.configureTestingModule({ providers: [WallpaperService] });
@@ -72,14 +73,53 @@ describe('WallpaperService', () => {
     expect(TestBed.inject(WallpaperService).wallpaper()).toBe('lira');
   });
 
+  it('ignores persistence failures when setting wallpaper', () => {
+    const failingDocument = {
+      documentElement: { style: { setProperty: () => undefined } },
+      defaultView: {
+        localStorage: {
+          getItem: () => null,
+          setItem: () => {
+            throw new Error('storage blocked');
+          },
+        },
+      },
+    };
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [WallpaperService, { provide: DOCUMENT, useValue: failingDocument }],
+    });
+
+    const service = TestBed.inject(WallpaperService);
+    service.set('yuna');
+
+    expect(service.wallpaper()).toBe('yuna');
+  });
+
   it('applies wallpaper from server without local persistence', () => {
     const service = TestBed.inject(WallpaperService);
     const localStorageSetItem = vi.spyOn(localStorage, 'setItem');
 
     service.set('yuna');
+    localStorageSetItem.mockClear();
+
     service.setFromServer('ignara');
 
     expect(service.wallpaper()).toBe('ignara');
+    expect(localStorageSetItem).not.toHaveBeenCalled();
+  });
+
+  it('does not reapply wallpaper when server value is already current', () => {
+    const service = TestBed.inject(WallpaperService);
+    const localStorageSetItem = vi.spyOn(localStorage, 'setItem');
+
+    service.set('yuna');
+    localStorageSetItem.mockClear();
+
+    service.setFromServer('yuna');
+
+    expect(service.wallpaper()).toBe('yuna');
     expect(localStorageSetItem).not.toHaveBeenCalled();
   });
 
