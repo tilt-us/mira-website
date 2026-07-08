@@ -58,18 +58,16 @@ describe('DatePicker', () => {
   });
 
   it('detects the browser language as default locale', () => {
-    const language = vi.spyOn(navigator, 'language', 'get');
+    const language = spyOnProperty(navigator, 'language', 'get');
 
-    language.mockReturnValue('de-AT');
+    language.and.returnValue('de-AT');
     create(undefined, '2001-03-15');
     expect(byTestId(fixture, 'date-picker-display').textContent).toContain('15.03.2001');
 
-    language.mockReturnValue(undefined as unknown as string);
+    language.and.returnValue(undefined as unknown as string);
     TestBed.resetTestingModule();
     create(undefined, '2001-03-15');
     expect(byTestId(fixture, 'date-picker-display').textContent).toContain('03/15/2001');
-
-    language.mockRestore();
   });
 
   it('opens on the month of the selected date with a localized header', () => {
