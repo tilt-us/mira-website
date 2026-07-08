@@ -1,12 +1,15 @@
 import { vi } from 'vitest';
 
-const setConfigMock = vi.fn();
+import { client } from '../api/client.gen';
+import {
+  reconfigureClientConfig,
+  resetApiClientMode,
+  setApiAccessToken,
+  setApiClientMode,
+  getApiBaseUrl,
+} from './api-client';
 
-vi.mock('../api/client.gen', () => ({
-  client: {
-    setConfig: setConfigMock,
-  },
-}));
+const setConfigMock = vi.spyOn(client, 'setConfig');
 
 function setWindowHostname(hostname: string): void {
   Object.defineProperty(window, 'location', {
@@ -22,23 +25,21 @@ function setWindowHostname(hostname: string): void {
 async function loadApiClient(mode: 'dev' | 'local', hostname = 'localhost') {
   setWindowHostname(hostname);
   setConfigMock.mockClear();
-  vi.resetModules();
-  vi.doMock('./api-runtime.config', () => ({
-    API_CLIENT_MODE: mode,
-  }));
+  resetApiClientMode();
+  setApiClientMode(mode);
+  reconfigureClientConfig();
 
-  return import('./api-client');
+  return { getApiBaseUrl, setApiAccessToken };
 }
 
 async function loadApiClientWithRawMode(modeValue: string, hostname = 'localhost') {
   setWindowHostname(hostname);
   setConfigMock.mockClear();
-  vi.resetModules();
-  vi.doMock('./api-runtime.config', () => ({
-    API_CLIENT_MODE: modeValue,
-  }));
+  resetApiClientMode();
+  setApiClientMode(modeValue);
+  reconfigureClientConfig();
 
-  return import('./api-client');
+  return { getApiBaseUrl, setApiAccessToken };
 }
 
 describe('api-client', () => {

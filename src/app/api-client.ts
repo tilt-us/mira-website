@@ -5,6 +5,7 @@ const LOCAL_API_BASE_URL = "http://localhost:8080";
 const DEV_API_BASE_URL = "https://api.tilt-us.com";
 
 const PROD_API_HOST = "api.tilt-us.com";
+let runtimeApiClientMode: string = API_CLIENT_MODE;
 
 function isLocalBackendHost() {
   const host =
@@ -14,17 +15,23 @@ function isLocalBackendHost() {
 }
 
 function resolveConfiguredApiMode(): 'local' | 'dev' {
-  if (API_CLIENT_MODE === 'local') {
+  if (runtimeApiClientMode === 'local') {
     return 'local';
   }
 
-  if (API_CLIENT_MODE === 'dev') {
-    // When running from localhost while the repo is still in "dev" client mode,
-    // prefer local services so OAuth and API calls work together.
+  if (runtimeApiClientMode === 'dev') {
     return isLocalBackendHost() ? 'local' : 'dev';
   }
 
   return isLocalBackendHost() ? 'local' : 'dev';
+}
+
+export function setApiClientMode(mode: string): void {
+  runtimeApiClientMode = mode;
+}
+
+export function resetApiClientMode(): void {
+  runtimeApiClientMode = API_CLIENT_MODE;
 }
 
 function normalizeApiBaseUrl(rawBaseUrl: string) {
@@ -49,9 +56,17 @@ function resolveApiBaseUrl() {
   return normalizeApiBaseUrl(baseUrl);
 }
 
-client.setConfig({
-  baseUrl: resolveApiBaseUrl(),
-});
+function configureClient(): void {
+  client.setConfig({
+    baseUrl: resolveApiBaseUrl(),
+  });
+}
+
+configureClient();
+
+export function reconfigureClientConfig(): void {
+  configureClient();
+}
 
 export function getApiBaseUrl() {
   return resolveApiBaseUrl();

@@ -143,15 +143,16 @@ describe('UserSettings', () => {
     const confirmPassword = byTestId(fixture, 'confirm-password') as HTMLInputElement;
 
     currentPassword.value = 'old-password';
-    currentPassword.dispatchEvent(new Event('input'));
+    currentPassword.dispatchEvent(new Event('input', { bubbles: true }));
     newPassword.value = 'new-password';
-    newPassword.dispatchEvent(new Event('input'));
+    newPassword.dispatchEvent(new Event('input', { bubbles: true }));
     confirmPassword.value = 'new-password';
-    confirmPassword.dispatchEvent(new Event('input'));
+    confirmPassword.dispatchEvent(new Event('input', { bubbles: true }));
+    await fixture.whenStable();
     fixture.detectChanges();
 
     (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
-      new Event('submit'),
+      new Event('submit', { bubbles: true }),
     );
     fixture.detectChanges();
     await fixture.whenStable();

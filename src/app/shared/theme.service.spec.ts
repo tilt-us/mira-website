@@ -40,7 +40,7 @@ describe('ThemeService', () => {
   it('normalizes 3-digit hex codes and defaults invalid values', () => {
     service.applyAccent('#f8a');
     expect(styleVar('--app-accent')).toBe('#ff88aa');
-    expect(styleVar('--app-accent-hover')).toBe('#ffaa1e');
+    expect(styleVar('--app-accent-hover')).toBe('#ff94b6');
 
     service.applyAccent('#123456');
     expect(styleVar('--app-accent')).toBe('#123456');
