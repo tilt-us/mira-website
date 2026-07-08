@@ -78,6 +78,10 @@
               "lcov",
               "json-summary"
             ],
+            "coverageExclude": [
+              "src/api/**/*",
+              "src/app/auth/**/*"
+            ],
             "exclude": [
               "src/e2e/**/*.ts"
             ]
