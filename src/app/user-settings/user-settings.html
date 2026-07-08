@@ -5,7 +5,7 @@
       Ändere deine Profildaten und weitere Einstellungen.
     </p>
 
-    <form class="mt-10 flex flex-col gap-6" (ngSubmit)="saveProfile()">
+    <form class="mt-10 flex flex-col gap-6" (submit)="onProfileSubmit($event)">
       <label class="flex flex-col gap-2">
         <span class="text-sm font-medium">Display name</span>
         <input

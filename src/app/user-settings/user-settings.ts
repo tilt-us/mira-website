@@ -79,6 +79,11 @@ export class UserSettings {
     }
   }
 
+  protected onProfileSubmit(event: Event): void {
+    event.preventDefault();
+    void this.saveProfile();
+  }
+
   protected isLinkableProvider(providerId: string): boolean {
     return this.socialProviderIds.includes(providerId);
   }
