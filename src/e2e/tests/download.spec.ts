@@ -30,9 +30,10 @@ test.describe('Download game button', () => {
       els.map((el) => el.getAttribute('href') ?? ''),
     );
     for (const href of hrefs) {
-      // Every link points at a versioned installer on the download server.
+      // Links should point at the installer endpoint and include either a versioned installer
+      // filename or the macOS install script.
       expect(href).toMatch(
-        /api\.tilt-us\.com\/downloads\/game-sources\/installer\/mira-installer-\d+\.\d+\.\d+-/,
+        /api\.tilt-us\.com\/downloads\/game-sources\/installer\/(install-macos\.sh|mira-installer-\d+\.\d+\.\d+-)/,
       );
     }
   });

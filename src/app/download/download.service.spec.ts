@@ -151,6 +151,19 @@ describe('DownloadService', () => {
       expect(result).toBe('6.0.0');
     });
 
+    it('falls back to the hardcoded version when both endpoints fail', () => {
+      let result: string | undefined;
+      service.getLatestVersion().subscribe((v) => (result = v));
+
+      const manifestReq = http.expectOne(RELEASE_URL);
+      manifestReq.flush('boom', { status: 500, statusText: 'Server Error' });
+
+      const fallbackReq = http.expectOne(FALLBACK_RELEASE_URL);
+      fallbackReq.flush('boom', { status: 500, statusText: 'Server Error' });
+
+      expect(result).toBe(FALLBACK_VERSION);
+    });
+
     it('uses the tag field as a fallback when version is not available', () => {
       let result: string | undefined;
       service.getLatestVersion().subscribe((v) => (result = v));

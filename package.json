@@ -5,6 +5,7 @@
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200",
     "start:ci": "ng serve --host 0.0.0.0 --port 4200 --watch=false",
+    "start:e2e": "ng serve --host 0.0.0.0 --port 5000 --watch=false",
     "build": "ng build",
     "build:prod": "ng build --configuration production",
     "watch": "ng build --watch --configuration development",
