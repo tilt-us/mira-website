@@ -211,6 +211,12 @@ describe('DownloadService', () => {
       ).toBe('linux-fedora');
     });
 
+    it('returns null when detectLinuxTarget is used with non-Linux user agent', () => {
+      expect(service.detectLinuxTarget('Mozilla/5.0 (Windows NT 10.0; Win64)')).toBe(
+        null,
+      );
+    });
+
     it('falls back to AppImage for unknown Linux when distro is not identified', () => {
       expect(
         service.detectLinuxTarget('Mozilla/5.0 (X11; Linux x86_64)'),
