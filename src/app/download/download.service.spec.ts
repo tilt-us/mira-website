@@ -8,8 +8,9 @@ import {
 
 import { DownloadService, FALLBACK_VERSION } from './download.service';
 
-const LATEST_URL =
-  'https://api.tilt-us.com/downloads/game-sources/latest.json';
+const RELEASE_URL =
+  'https://api.tilt-us.com/downloads/game-sources/installer/manifest.json';
+const FALLBACK_RELEASE_URL = 'https://api.tilt-us.com/downloads/game-sources/latest.json';
 const DL_BASE = 'https://api.tilt-us.com/downloads/game-sources/installer';
 
 describe('DownloadService', () => {
@@ -93,16 +94,16 @@ describe('DownloadService', () => {
       );
     });
 
-    it('builds the macOS DMG URL', () => {
+    it('builds the macOS installer script URL', () => {
       expect(service.buildDownloadUrl('mac', '1.2.3')).toBe(
-        `${DL_BASE}/mira-installer-1.2.3-macos-Mira-Installer_1.2.3_aarch64.dmg`,
+        `${DL_BASE}/install-macos.sh`,
       );
     });
 
-    it('maps the version from latest.json and strips any leading "v"', () => {
+    it('maps the release tag and strips the leading "v"', () => {
       let result: string | undefined;
       service.getLatestVersion().subscribe((v) => (result = v));
-      http.expectOne(LATEST_URL).flush({ version: 'v2.3.4' });
+      http.expectOne(RELEASE_URL).flush({ tag_name: 'v2.3.4' });
       expect(result).toBe('2.3.4');
     });
 
@@ -110,15 +111,15 @@ describe('DownloadService', () => {
       let result: string | undefined;
       service.getLatestVersion().subscribe((v) => (result = v));
       http
-        .expectOne(LATEST_URL)
+        .expectOne(RELEASE_URL)
         .flush('boom', { status: 500, statusText: 'Server Error' });
       expect(result).toBe(FALLBACK_VERSION);
     });
 
-    it('falls back when the version is missing', () => {
+    it('falls back when the tag is missing', () => {
       let result: string | undefined;
       service.getLatestVersion().subscribe((v) => (result = v));
-      http.expectOne(LATEST_URL).flush({});
+      http.expectOne(RELEASE_URL).flush({});
       expect(result).toBe(FALLBACK_VERSION);
     });
 
@@ -126,7 +127,80 @@ describe('DownloadService', () => {
       service.getLatestVersion().subscribe();
       service.getLatestVersion().subscribe();
       // Only one HTTP request is expected thanks to shareReplay.
-      http.expectOne(LATEST_URL).flush({ version: '1.0.0' });
+      http.expectOne(RELEASE_URL).flush({ tag_name: 'v1.0.0' });
+    });
+
+    it('reads the version field from the latest JSON payload', () => {
+      let result: string | undefined;
+      service.getLatestVersion().subscribe((v) => (result = v));
+      http.expectOne(RELEASE_URL).flush({ version: '3.0.0' });
+      expect(result).toBe('3.0.0');
+    });
+
+    it('falls back to the latest endpoint when the manifest endpoint fails', () => {
+      let result: string | undefined;
+      service.getLatestVersion().subscribe((v) => (result = v));
+
+      const manifestReq = http.expectOne(RELEASE_URL);
+      manifestReq.flush('boom', { status: 500, statusText: 'Server Error' });
+
+      const fallbackReq = http.expectOne(FALLBACK_RELEASE_URL);
+      fallbackReq.flush({ tag: 'v6.0.0' });
+
+      expect(result).toBe('6.0.0');
+    });
+
+    it('uses the tag field as a fallback when version is not available', () => {
+      let result: string | undefined;
+      service.getLatestVersion().subscribe((v) => (result = v));
+      http.expectOne(RELEASE_URL).flush({ tag: 'v4.0.0' });
+      expect(result).toBe('4.0.0');
+    });
+
+    it('detects Arch Linux users', () => {
+      expect(
+        service.detectLinuxTarget(
+          'Mozilla/5.0 (X11; Linux x86_64; Arch Linux)',
+        ),
+      ).toBe('linux-arch');
+    });
+
+    it('detects Debian Linux users', () => {
+      expect(
+        service.detectLinuxTarget(
+          'Mozilla/5.0 (X11; Linux x86_64; Ubuntu',
+        ),
+      ).toBe('linux-debian');
+    });
+
+    it('detects Linux Mint users as Debian-based', () => {
+      expect(
+        service.detectLinuxTarget(
+          'Mozilla/5.0 (X11; Linux x86_64) Linux Mint/21.2',
+        ),
+      ).toBe('linux-debian');
+    });
+
+    it('detects Pop!_OS users as Debian-based', () => {
+      expect(
+        service.detectLinuxTarget(
+          'Mozilla/5.0 (X11; Linux x86_64) pop!_os 22.04',
+        ),
+      ).toBe('linux-debian');
+    });
+
+    it('detects Fedora Linux users', () => {
+      expect(
+        service.detectLinuxTarget(
+          'Mozilla/5.0 (X11; Linux x86_64; Fedora)',
+        ),
+      ).toBe('linux-fedora');
+    });
+
+    it('falls back to AppImage for unknown Linux when distro is not identified', () => {
+      expect(
+        service.detectLinuxTarget('Mozilla/5.0 (X11; Linux x86_64)'),
+      ).toBe('linux-arch');
     });
   });
 

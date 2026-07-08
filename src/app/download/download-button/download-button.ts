@@ -4,7 +4,6 @@ import { DownloadService, FALLBACK_VERSION } from '../download.service';
 import {
   DOWNLOAD_OPTIONS,
   DownloadOption,
-  LINUX_DOWNLOAD_OPTIONS,
 } from '../download.types';
 import { OsModal } from '../os-modal/os-modal';
 
@@ -40,16 +39,23 @@ export class DownloadButton {
   }
 
   protected onPrimaryClick(): void {
-    // Linux distro and unknown platforms can't map to a single installer.
     if (this.os === 'windows' || this.os === 'mac') {
       this.downloads.triggerDownload(
         this.downloads.buildDownloadUrl(this.os, this.version()),
       );
       return;
     }
-    // Linux narrows to its three distro installers; unknown shows them all.
+
+    if (this.os === 'linux') {
+      const linuxTarget = this.downloads.detectLinuxTarget() ?? 'linux-arch';
+      this.downloads.triggerDownload(
+        this.downloads.buildDownloadUrl(linuxTarget, this.version()),
+      );
+      return;
+    }
+
     this.openModal(
-      this.os === 'linux' ? LINUX_DOWNLOAD_OPTIONS : DOWNLOAD_OPTIONS,
+      DOWNLOAD_OPTIONS,
     );
   }
 
