@@ -113,6 +113,7 @@ describe('DownloadService', () => {
       http
         .expectOne(RELEASE_URL)
         .flush('boom', { status: 500, statusText: 'Server Error' });
+      http.expectOne(FALLBACK_RELEASE_URL).flush({});
       expect(result).toBe(FALLBACK_VERSION);
     });
 
@@ -205,9 +206,16 @@ describe('DownloadService', () => {
   });
 
   describe('triggerDownload', () => {
+    let calls: string[];
+
+    beforeEach(() => {
+      TestBed.resetTestingModule();
+      calls = [];
+    });
+
     it('navigates the window to the given URL', () => {
       const assign = (url: string) => calls.push(url);
-      const calls: string[] = [];
+
       TestBed.configureTestingModule({
         providers: [
           DownloadService,
@@ -216,6 +224,7 @@ describe('DownloadService', () => {
           { provide: DOCUMENT, useValue: { defaultView: { location: { assign } } } },
         ],
       });
+
       TestBed.inject(DownloadService).triggerDownload('https://x/file.exe');
       expect(calls).toEqual(['https://x/file.exe']);
     });
@@ -229,13 +238,17 @@ describe('DownloadService', () => {
           { provide: DOCUMENT, useValue: { defaultView: null } },
         ],
       });
+
       const service = TestBed.inject(DownloadService);
       expect(() => service.triggerDownload('https://x/file.exe')).not.toThrow();
     });
   });
 
   describe('detectOs default argument', () => {
-    it('returns unknown when there is no browser window', () => {
+    let service: DownloadService;
+
+    beforeEach(() => {
+      TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         providers: [
           DownloadService,
@@ -244,7 +257,11 @@ describe('DownloadService', () => {
           { provide: DOCUMENT, useValue: { defaultView: null } },
         ],
       });
-      expect(TestBed.inject(DownloadService).detectOs()).toBe('unknown');
+      service = TestBed.inject(DownloadService);
+    });
+
+    it('returns unknown when there is no browser window', () => {
+      expect(service.detectOs()).toBe('unknown');
     });
   });
 });
