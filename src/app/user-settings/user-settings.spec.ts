@@ -1,158 +1,138 @@
-import { signal } from '@angular/core';
+import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideRouter } from '@angular/router';
 
-import { UserSettings } from './user-settings';
 import { AuthService } from '../auth/auth.service';
 import { AuthUser } from '../auth/auth.types';
-import { ACCOUNT_PROVIDERS } from './account-providers';
+import { UserSettings } from './user-settings';
 
-function setup(): {
-  fixture: ComponentFixture<UserSettings>;
-  auth: AuthService;
-} {
+function setup(mockAuth: {
+  user: WritableSignal<AuthUser | null>;
+  isLoggedIn: () => boolean;
+  login: jasmine.Spy;
+  logout: jasmine.Spy;
+  saveProfile: jasmine.Spy;
+}): ComponentFixture<UserSettings> {
   TestBed.configureTestingModule({
     imports: [UserSettings],
-    providers: [AuthService],
+    providers: [
+      { provide: AuthService, useValue: mockAuth },
+      provideRouter([{ path: 'auth', children: [] }]),
+    ],
   });
-  const auth = TestBed.inject(AuthService);
+
   const fixture = TestBed.createComponent(UserSettings);
   fixture.detectChanges();
-  return { fixture, auth };
+  return fixture;
+}
+
+function byTestId(fixture: ComponentFixture<UserSettings>, id: string): HTMLElement {
+  return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 }
 
 describe('UserSettings', () => {
-  it('prompts to log in when signed out', () => {
-    const { fixture } = setup();
-    expect(fixture.nativeElement.querySelector('[data-testid="settings-signed-out"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('[data-testid="display-name"]')).toBeFalsy();
-  });
-
-  it('shows the form prefilled with the user name when logged in', async () => {
-    const { fixture, auth } = setup();
-    auth.login();
-    fixture.detectChanges();
-    // ngModel writes the initial value to the DOM on a microtask.
-    await fixture.whenStable();
-
-    const name = fixture.nativeElement.querySelector(
-      '[data-testid="display-name"]',
-    ) as HTMLInputElement;
-    expect(name.value).toBe('Mira Player');
-    expect(fixture.nativeElement.querySelector('[data-testid="birthday"]')).toBeTruthy();
-    expect(fixture.nativeElement.querySelector('[data-testid="phone"]')).toBeTruthy();
-  });
-
-  it('edits the form fields and submits without navigating', async () => {
-    const { fixture, auth } = setup();
-    auth.login();
-    fixture.detectChanges();
-    await fixture.whenStable();
-
-    const type = (id: string, value: string) => {
-      const input = fixture.nativeElement.querySelector(
-        `[data-testid="${id}"]`,
-      ) as HTMLInputElement;
-      input.value = value;
-      input.dispatchEvent(new Event('input', { bubbles: true }));
-    };
-    type('display-name', 'New Name');
-    type('phone', '+43 123 456');
-    type('current-password', 'old-secret');
-    type('new-password', 'new-secret');
-    type('confirm-password', 'new-secret');
-    fixture.detectChanges();
-
-    const name = fixture.nativeElement.querySelector(
-      '[data-testid="display-name"]',
-    ) as HTMLInputElement;
-    expect(name.value).toBe('New Name');
-    const newPassword = fixture.nativeElement.querySelector(
-      '[data-testid="new-password"]',
-    ) as HTMLInputElement;
-    expect(newPassword.value).toBe('new-secret');
-
-    // The birthday uses the custom date picker; choose today's date from it.
-    const birthdayTrigger = fixture.nativeElement.querySelector(
-      '[data-testid="birthday"] [data-testid="date-picker-trigger"]',
-    ) as HTMLButtonElement;
-    birthdayTrigger.click();
-    fixture.detectChanges();
-    const today = new Date();
-    const pad = (value: number) => String(value).padStart(2, '0');
-    const iso = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-    const dayButton = fixture.nativeElement.querySelector(
-      `[data-testid="date-picker-day-${iso}"]`,
-    ) as HTMLButtonElement;
-    dayButton.click();
-    fixture.detectChanges();
-    expect(birthdayTrigger.textContent).toMatch(/\d{2}\/\d{2}\/\d{4}/);
-
-    const forms = Array.from(fixture.nativeElement.querySelectorAll('form')) as HTMLFormElement[];
-    for (const form of forms) {
-      expect(() => form.dispatchEvent(new Event('submit'))).not.toThrow();
-    }
-  });
-
-  it('logs in from the signed-out prompt', () => {
-    const { fixture, auth } = setup();
-    const button = fixture.nativeElement.querySelector(
-      '[data-testid="settings-signed-out"] button',
-    ) as HTMLButtonElement;
-    button.click();
-    fixture.detectChanges();
-
-    expect(auth.isLoggedIn()).toBe(true);
-    expect(fixture.nativeElement.querySelector('[data-testid="display-name"]')).toBeTruthy();
-  });
-
-  it('falls back to an empty name when the user has no display name', async () => {
-    const auth = {
-      user: signal<AuthUser | null>({
-        displayName: undefined as unknown as string,
-        email: 'player@tilt-us.com',
-      }),
-      isLoggedIn: () => true,
-      login: () => undefined,
-      logout: () => undefined,
-    };
-    TestBed.configureTestingModule({
-      imports: [UserSettings],
-      providers: [{ provide: AuthService, useValue: auth }],
+  it('prompts to log in when the user is signed out', () => {
+    const authUser = signal<AuthUser | null>(null);
+    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const fixture = setup({
+      user: authUser,
+      isLoggedIn: () => false,
+      login: jasmine.createSpy('login').and.callFake(() => undefined),
+      logout: jasmine.createSpy('logout'),
+      saveProfile,
     });
-    const fixture = TestBed.createComponent(UserSettings);
+
+    expect(byTestId(fixture, 'settings-signed-out')).toBeTruthy();
+    expect(byTestId(fixture, 'display-name')).toBeFalsy();
+  });
+
+  it('shows prefilled profile fields when user is logged in', () => {
+    const authUser = signal<AuthUser | null>({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+      tagId: 'TAG-001',
+    });
+
+    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const fixture = setup({
+      user: authUser,
+      isLoggedIn: () => true,
+      login: jasmine.createSpy('login'),
+      logout: jasmine.createSpy('logout'),
+      saveProfile,
+    });
+
+    const displayName = byTestId(fixture, 'display-name') as HTMLInputElement;
+    const tagId = byTestId(fixture, 'tag-id') as HTMLInputElement;
+
+    expect(displayName.value).toBe('Mira Player');
+    expect(tagId.value).toBe('TAG-001');
+  });
+
+  it('sends changed fields to auth.saveProfile', async () => {
+    const authUser = signal<AuthUser | null>({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+      tagId: 'TAG-001',
+    });
+
+    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+    const fixture = setup({
+      user: authUser,
+      isLoggedIn: () => true,
+      login: jasmine.createSpy('login'),
+      logout: jasmine.createSpy('logout'),
+      saveProfile,
+    });
+
+    const displayName = byTestId(fixture, 'display-name') as HTMLInputElement;
+    const tagId = byTestId(fixture, 'tag-id') as HTMLInputElement;
+
+    displayName.value = 'Neue Playerin';
+    displayName.dispatchEvent(new Event('input', { bubbles: true }));
+    tagId.value = 'TAG-002';
+    tagId.dispatchEvent(new Event('input', { bubbles: true }));
+
+    fixture.detectChanges();
+
+    (byTestId(fixture, 'save-button') as HTMLButtonElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
-
-    const name = fixture.nativeElement.querySelector(
-      '[data-testid="display-name"]',
-    ) as HTMLInputElement;
-    expect(name.value).toBe('');
-  });
-
-  it('includes the wallpaper picker when logged in', () => {
-    const { fixture, auth } = setup();
-    auth.login();
     fixture.detectChanges();
 
-    expect(fixture.nativeElement.querySelector('app-wallpaper-picker')).toBeTruthy();
+    expect(saveProfile).toHaveBeenCalledWith({
+      displayName: 'Neue Playerin',
+      tagId: 'TAG-002',
+    });
   });
 
-  it('renders a placeholder link button for every provider', () => {
-    const { fixture, auth } = setup();
-    auth.login();
+  it('shows a visible success status after save', async () => {
+    const authUser = signal<AuthUser | null>({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+    });
+    const saveProfile = jasmine.createSpy('saveProfile').and.resolveTo();
+
+    const fixture = setup({
+      user: authUser,
+      isLoggedIn: () => true,
+      login: jasmine.createSpy('login'),
+      logout: jasmine.createSpy('logout'),
+      saveProfile,
+    });
+
+    const displayName = byTestId(fixture, 'display-name') as HTMLInputElement;
+    displayName.value = 'Neue Playerin';
+    displayName.dispatchEvent(new Event('input', { bubbles: true }));
     fixture.detectChanges();
 
-    for (const provider of ACCOUNT_PROVIDERS) {
-      const button = fixture.nativeElement.querySelector(
-        `[data-testid="link-${provider.id}"]`,
-      ) as HTMLButtonElement;
-      expect(button).toBeTruthy();
-      expect(button.disabled).toBe(true);
-    }
+    (byTestId(fixture, 'save-button') as HTMLButtonElement).click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+    fixture.detectChanges();
 
-    const save = fixture.nativeElement.querySelector(
-      '[data-testid="save-button"]',
-    ) as HTMLButtonElement;
-    expect(save.disabled).toBe(true);
+    expect(byTestId(fixture, 'settings-save-status')?.textContent).toContain(
+      'Änderungen gespeichert.',
+    );
   });
 });

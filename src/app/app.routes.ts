@@ -3,10 +3,12 @@ import { Routes } from '@angular/router';
 import { Home } from './home/home';
 import { LegalPage } from './legal/legal-page/legal-page';
 import { PlaceholderPage } from './placeholder/placeholder-page';
+import { AuthPage } from './auth/auth-page';
 import { UserSettings } from './user-settings/user-settings';
 
 export const routes: Routes = [
   { path: '', component: Home },
+  { path: 'auth', component: AuthPage },
   { path: 'settings', component: UserSettings },
   {
     path: 'leaderboards',

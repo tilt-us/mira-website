@@ -7,13 +7,13 @@ module.exports = {
       colors: {
         // Primary action = the client's gold accent (dark text on gold).
         brand: {
-          DEFAULT: '#f2c45b',
-          hover: '#f4cf78',
-          fg: '#101216',
+          DEFAULT: 'var(--app-brand, #f2c45b)',
+          hover: 'var(--app-brand-hover, #f4cf78)',
+          fg: 'var(--app-brand-fg, #101216)',
         },
         accent: {
-          DEFAULT: '#f2c45b',
-          hover: '#f4cf78',
+          DEFAULT: 'var(--app-accent, #f2c45b)',
+          hover: 'var(--app-accent-hover, #f4cf78)',
         },
         surface: {
           DEFAULT: '#101216',

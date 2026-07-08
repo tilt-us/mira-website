@@ -1,4 +1,5 @@
 import { TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import { AuthService } from './auth.service';
 
@@ -6,7 +7,10 @@ describe('AuthService', () => {
   let service: AuthService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [AuthService] });
+    TestBed.configureTestingModule({
+      imports: [RouterTestingModule],
+      providers: [AuthService],
+    });
     service = TestBed.inject(AuthService);
   });
 
@@ -15,17 +19,11 @@ describe('AuthService', () => {
     expect(service.user()).toBeNull();
   });
 
-  it('logs in a mock user', () => {
-    service.login();
-    expect(service.isLoggedIn()).toBe(true);
-    expect(service.user()?.displayName).toBeTruthy();
-    expect(service.user()?.email).toContain('@');
-  });
+  it('opens auth route on login', () => {
+    const assignSpy = spyOn(window.location, 'assign');
 
-  it('logs out again', () => {
     service.login();
-    service.logout();
-    expect(service.isLoggedIn()).toBe(false);
-    expect(service.user()).toBeNull();
+
+    expect(assignSpy).toHaveBeenCalledWith('/auth');
   });
 });

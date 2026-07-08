@@ -2,10 +2,10 @@
   <section class="mx-auto max-w-2xl px-6 py-24">
     <h1 class="text-4xl font-bold tracking-tight">User settings</h1>
     <p class="mt-2 text-sm text-white/50">
-      Changes aren't saved yet — the backend endpoint is still to come.
+      Ändere deine Profildaten und weitere Einstellungen.
     </p>
 
-    <form class="mt-10 flex flex-col gap-6" (ngSubmit)="$event.preventDefault()">
+    <form class="mt-10 flex flex-col gap-6" (ngSubmit)="saveProfile()">
       <label class="flex flex-col gap-2">
         <span class="text-sm font-medium">Display name</span>
         <input
@@ -16,6 +16,19 @@
           data-testid="display-name"
           [ngModel]="displayName()"
           (ngModelChange)="displayName.set($event)"
+        />
+      </label>
+
+      <label class="flex flex-col gap-2">
+        <span class="text-sm font-medium">Tag ID</span>
+        <input
+          class="input"
+          type="text"
+          name="tagId"
+          autocomplete="off"
+          data-testid="tag-id"
+          [ngModel]="tagId()"
+          (ngModelChange)="tagId.set($event)"
         />
       </label>
 
@@ -42,14 +55,27 @@
         />
       </label>
 
-      <button type="submit" class="btn-primary self-start" data-testid="save-button" disabled>
+      <button
+        type="submit"
+        class="btn-primary self-start"
+        data-testid="save-button"
+        [disabled]="isSaving()"
+      >
         Save changes
       </button>
+
+      @if (saveError()) {
+        <p class="text-sm text-red-300" data-testid="settings-save-error">{{ saveError() }}</p>
+      }
+
+      @if (saveStatus()) {
+        <p class="text-sm text-green-200" data-testid="settings-save-status">{{ saveStatus() }}</p>
+      }
     </form>
 
     <h2 class="mt-14 text-2xl font-semibold">Appearance</h2>
     <p class="mt-1 text-sm text-white/50">
-      Choose the background wallpaper. Your choice is saved on this device.
+      Choose the background wallpaper. Your option is saved on this device.
     </p>
     <div class="mt-4 flex flex-col gap-2">
       <span class="text-sm font-medium">Background</span>
@@ -120,11 +146,70 @@
           <span>{{ provider.label }}</span>
           <button
             type="button"
-            class="btn-ghost text-sm"
+            class="btn-ghost"
+            [class]="getSocialButtonClasses(provider.id)"
             [attr.data-testid]="'link-' + provider.id"
-            disabled
+            [attr.aria-label]="provider.label"
+            [disabled]="!isLinkableProvider(provider.id)"
+            (click)="linkProvider(provider.id)"
+            [title]="provider.label"
           >
-            Link
+            @if (isLinkableProvider(provider.id)) {
+              @if (provider.id === 'google') {
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4"
+                  focusable="false"
+                  viewBox="0 0 18 18"
+                >
+                  <path
+                    d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"
+                    fill="#4285f4"
+                  />
+                  <path
+                    d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.35 0-4.34-1.58-5.05-3.72H.93v2.33A9 9 0 0 0 9 18Z"
+                    fill="#34a853"
+                  />
+                  <path
+                    d="M3.95 10.7A5.41 5.41 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.93A9 9 0 0 0 0 9c0 1.45.34 2.82.93 4.03l3.02-2.33Z"
+                    fill="#fbbc05"
+                  />
+                  <path
+                    d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8.65 8.65 0 0 0 9 0 9 9 0 0 0 .93 4.97L3.95 7.3C4.66 5.16 6.65 3.58 9 3.58Z"
+                    fill="#ea4335"
+                  />
+                </svg>
+              }
+              @if (provider.id === 'discord') {
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4"
+                  focusable="false"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M19.54 5.23a18.88 18.88 0 0 0-4.68-1.46 12.96 12.96 0 0 0-.6 1.24 17.5 17.5 0 0 0-5.19 0 12.1 12.1 0 0 0-.61-1.24 18.8 18.8 0 0 0-4.68 1.46C.82 9.65.02 13.95.42 18.19a18.93 18.93 0 0 0 5.74 2.9c.46-.62.87-1.28 1.22-1.97-.67-.25-1.31-.56-1.92-.92l.47-.37c3.7 1.71 7.72 1.71 11.38 0l.47.37c-.61.36-1.25.67-1.92.92.35.69.76 1.35 1.22 1.97a18.87 18.87 0 0 0 5.74-2.9c.48-4.91-.82-9.17-3.28-12.96ZM8.09 15.59c-1.12 0-2.04-1.03-2.04-2.29 0-1.26.9-2.29 2.04-2.29 1.14 0 2.06 1.04 2.04 2.29 0 1.26-.9 2.29-2.04 2.29Zm7.53 0c-1.12 0-2.04-1.03-2.04-2.29 0-1.26.9-2.29 2.04-2.29 1.14 0 2.06 1.04 2.04 2.29 0 1.26-.9 2.29-2.04 2.29Z"
+                    fill="#ffffff"
+                  />
+                </svg>
+              }
+              @if (provider.id === 'github') {
+                <svg
+                  aria-hidden="true"
+                  class="h-4 w-4"
+                  focusable="false"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.38.97.11-.75.41-1.27.74-1.56-2.57-.29-5.27-1.28-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.07 0 0 .98-.31 3.18 1.19a11.05 11.05 0 0 1 5.8 0c2.2-1.5 3.17-1.19 3.17-1.19.64 1.6.24 2.78.12 3.07.74.81 1.19 1.85 1.19 3.11 0 4.45-2.7 5.43-5.28 5.72.42.36.79 1.07.79 2.16v3.04c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
+                    fill="#ffffff"
+                  />
+                </svg>
+              }
+              <span class="sr-only">{{ provider.label }}</span>
+            } @else {
+              <span class="text-xs">Bald</span>
+            }
           </button>
         </li>
       }

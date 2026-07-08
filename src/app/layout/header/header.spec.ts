@@ -1,8 +1,10 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { WritableSignal, signal } from '@angular/core';
 
 import { Header } from './header';
 import { AuthService } from '../../auth/auth.service';
+import { AuthUser } from '../../auth/auth.types';
 
 function byTestId(fixture: ComponentFixture<Header>, id: string): HTMLElement {
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
@@ -10,12 +12,24 @@ function byTestId(fixture: ComponentFixture<Header>, id: string): HTMLElement {
 
 describe('Header', () => {
   let fixture: ComponentFixture<Header>;
-  let auth: AuthService;
+  let mockAuth: {
+    user: WritableSignal<AuthUser | null>;
+    isLoggedIn: () => boolean;
+    logout: jasmine.Spy;
+    providers: () => string[];
+  };
+  beforeEach(async () => {
+    const authUser = signal<AuthUser | null>(null);
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
+    mockAuth = {
+      user: authUser,
+      isLoggedIn: () => authUser() !== null,
+      logout: jasmine.createSpy('logout'),
+      providers: () => [],
+    };
+
+    await TestBed.configureTestingModule({
       imports: [Header],
-      // Real routes so the link clicks resolve instead of erroring.
       providers: [
         provideRouter([
           { path: 'settings', children: [] },
@@ -23,12 +37,13 @@ describe('Header', () => {
           { path: 'builds', children: [] },
           { path: 'streamers', children: [] },
           { path: 'report', children: [] },
+          { path: 'auth', children: [] },
         ]),
-        AuthService,
+        { provide: AuthService, useValue: mockAuth },
       ],
-    });
+    }).compileComponents();
+
     fixture = TestBed.createComponent(Header);
-    auth = TestBed.inject(AuthService);
     fixture.detectChanges();
   });
 
@@ -75,17 +90,36 @@ describe('Header', () => {
     expect(byTestId(fixture, 'user-menu-button')).toBeFalsy();
   });
 
-  it('logs in when the login button is clicked', () => {
+  it('opens the auth popup when the login button is clicked', () => {
     byTestId(fixture, 'login-button').click();
     fixture.detectChanges();
 
-    expect(auth.isLoggedIn()).toBe(true);
-    expect(byTestId(fixture, 'user-menu-button')).toBeTruthy();
-    expect(byTestId(fixture, 'login-button')).toBeFalsy();
+    expect(byTestId(fixture, 'auth-popup')).toBeTruthy();
+    expect(byTestId(fixture, 'auth-backdrop')).toBeTruthy();
+  });
+
+  it('closes the auth popup on backdrop click', () => {
+    byTestId(fixture, 'login-button').click();
+    fixture.detectChanges();
+
+    byTestId(fixture, 'auth-backdrop').click();
+    fixture.detectChanges();
+
+    expect(byTestId(fixture, 'auth-popup')).toBeFalsy();
+  });
+
+  it('closes the auth popup when close icon is clicked', () => {
+    byTestId(fixture, 'login-button').click();
+    fixture.detectChanges();
+
+    byTestId(fixture, 'auth-close').click();
+    fixture.detectChanges();
+
+    expect(byTestId(fixture, 'auth-popup')).toBeFalsy();
   });
 
   it('opens a popover with the user and a settings link', () => {
-    auth.login();
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
 
     expect(byTestId(fixture, 'user-menu')).toBeFalsy();
@@ -98,8 +132,58 @@ describe('Header', () => {
     expect(byTestId(fixture, 'settings-link').getAttribute('href')).toBe('/settings');
   });
 
-  it('closes the popover on the click-away layer', () => {
-    auth.login();
+  it('renders a fallback initial when no avatar image is available', () => {
+    mockAuth.user.set({ displayName: 'mira player', email: 'player@tilt-us.com' });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const initial = button.querySelector('[class*="avatar-hexagon-label"]') as HTMLElement;
+
+    expect(initial).toBeTruthy();
+    expect(initial.textContent?.trim()).toBe('M');
+  });
+
+  it('switches to initial fallback when avatar image fails to load', () => {
+    mockAuth.user.set({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+      avatarUrl: '/broken-avatar.png',
+    });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const image = button.querySelector('img') as HTMLImageElement;
+    const errorEvent = new Event('error');
+
+    image.dispatchEvent(errorEvent);
+    fixture.detectChanges();
+
+    const initial = button.querySelector('[class*="avatar-hexagon-label"]') as HTMLElement;
+
+    expect(initial).toBeTruthy();
+    expect(initial.textContent?.trim()).toBe('M');
+  });
+
+  it('uses initial fallback when avatar consent is denied for social avatars', () => {
+    mockAuth.user.set({
+      displayName: 'Google User',
+      email: 'google@tilt-us.com',
+      avatarUrl: 'https://lh3.googleusercontent.com/avatar.png',
+      avatarRightsConsented: false,
+    });
+    fixture.detectChanges();
+
+    const button = byTestId(fixture, 'user-menu-button');
+    const image = button.querySelector('img');
+    const initial = button.querySelector('[class*="avatar-hexagon-label"]') as HTMLElement;
+
+    expect(image).toBeFalsy();
+    expect(initial).toBeTruthy();
+    expect(initial.textContent?.trim()).toBe('G');
+  });
+
+  it('closes a popover on the click-away layer', () => {
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
     byTestId(fixture, 'user-menu-button').click();
     fixture.detectChanges();
@@ -109,8 +193,8 @@ describe('Header', () => {
     expect(byTestId(fixture, 'user-menu')).toBeFalsy();
   });
 
-  it('closes the popover on Escape', () => {
-    auth.login();
+  it('closes a popover on Escape', () => {
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
     byTestId(fixture, 'user-menu-button').click();
     fixture.detectChanges();
@@ -121,7 +205,7 @@ describe('Header', () => {
   });
 
   it('closes the popover when the settings link is chosen', () => {
-    auth.login();
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
     byTestId(fixture, 'user-menu-button').click();
     fixture.detectChanges();
@@ -132,7 +216,7 @@ describe('Header', () => {
   });
 
   it('logs out from the popover', () => {
-    auth.login();
+    mockAuth.user.set({ displayName: 'Mira Player', email: 'player@tilt-us.com' });
     fixture.detectChanges();
     byTestId(fixture, 'user-menu-button').click();
     fixture.detectChanges();
@@ -140,7 +224,6 @@ describe('Header', () => {
     byTestId(fixture, 'logout-button').click();
     fixture.detectChanges();
 
-    expect(auth.isLoggedIn()).toBe(false);
-    expect(byTestId(fixture, 'login-button')).toBeTruthy();
+    expect(mockAuth.logout).toHaveBeenCalled();
   });
 });
