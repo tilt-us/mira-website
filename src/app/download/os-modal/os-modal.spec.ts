@@ -34,11 +34,11 @@ describe('OsModal', () => {
 
     expect(links.length).toBe(5);
     const hrefs = links.map((a) => a.getAttribute('href') ?? '');
-    expect(hrefs.every((h) => h.includes('/v3.2.1/'))).toBe(true);
+    expect(hrefs.filter((h) => h.includes('mira-installer-3.2.1')).length).toBe(4);
     expect(hrefs.some((h) => h.endsWith('-windows-mira-installer.exe'))).toBe(
       true,
     );
-    expect(hrefs.some((h) => h.endsWith('_aarch64.dmg'))).toBe(true);
+    expect(hrefs.some((h) => h.endsWith('install-macos.sh'))).toBe(true);
   });
 
   it('emits close on backdrop click', () => {
