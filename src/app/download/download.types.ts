@@ -14,7 +14,7 @@ export interface DownloadOption {
 
 export const DOWNLOAD_OPTIONS: readonly DownloadOption[] = [
   { target: 'windows', label: 'Windows (.exe)' },
-  { target: 'mac', label: 'macOS · Install Script (.sh)' },
+  { target: 'mac', label: 'macOS · Apple Silicon (.dmg)' },
   { target: 'linux-debian', label: 'Linux · Debian / Ubuntu (.deb)' },
   { target: 'linux-fedora', label: 'Linux · Fedora (.rpm)' },
   { target: 'linux-arch', label: 'Linux · Arch / universal (.AppImage)' },

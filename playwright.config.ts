@@ -32,10 +32,10 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   webServer: {
-    command: 'pnpm run start:e2e',
+    command: 'pnpm run start:ci',
     url: 'http://127.0.0.1:5000',
     reuseExistingServer: !process.env.CI,
-    timeout: 180000,
+    timeout: 120000,
   },
 
   /* Configure projects for major browsers */
