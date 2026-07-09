@@ -300,11 +300,29 @@
       focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand;
   }
 
+  // Hidden until the carousel is hovered or focused (see .event-carousel rules).
   .event-carousel-nav {
-    @apply inline-flex h-11 w-11 items-center justify-center rounded-full border
-      border-surface-border bg-surface/60 text-white backdrop-blur transition-colors
-      enabled:hover:bg-surface-raised disabled:cursor-not-allowed disabled:opacity-40
+    @apply pointer-events-none absolute top-1/2 z-20 inline-flex h-11 w-11 -translate-y-1/2
+      items-center justify-center rounded-full border border-surface-border bg-surface/80
+      text-white opacity-0 backdrop-blur transition hover:bg-surface-raised
       focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+  }
+
+  .event-carousel-nav-prev {
+    @apply left-2;
+  }
+
+  .event-carousel-nav-next {
+    @apply right-2;
+  }
+
+  .event-carousel-dot {
+    @apply h-2.5 w-2.5 rounded-full bg-white/25 transition-colors hover:bg-white/50
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+
+    &.is-active {
+      @apply bg-brand;
+    }
   }
 }
 
@@ -368,11 +386,15 @@
   }
 }
 
-// Centered event carousel: the active card sits scaled-up on top while its
-// neighbours peek from both sides, tucked underneath via the negative margins.
+// Centered, endlessly looping event carousel: the active card sits scaled-up
+// on top, the neighbours peek from both sides tucked underneath, and cards
+// further out are parked invisibly at the edges. Every card is positioned by
+// its circular offset from the active one, so all visible cards travel
+// together while the card crossing the seam jumps while it cannot be seen.
 .event-carousel {
-  --event-card-width: 18rem;
-  --event-card-overlap: 1.25rem;
+  --event-card-width: min(24rem, 80vw);
+  --event-card-height: 13rem;
+  --event-card-overlap: 1.5rem;
   // Cards overlap on purpose, so one navigation step is less than a full card.
   --event-card-step: calc(var(--event-card-width) - var(--event-card-overlap));
   // Keeps vertical page scrolling working while horizontal drags become swipes.
@@ -380,10 +402,16 @@
   outline: none;
 }
 
+.event-carousel-frame {
+  position: relative;
+}
+
 .event-carousel-viewport {
+  position: relative;
   overflow: hidden;
-  // Vertical room so the scaled-up active card is not clipped.
-  padding-block: 1.5rem;
+  // Fixed height because the cards are absolutely positioned; extra room so
+  // the scaled-up active card is not clipped.
+  height: calc(var(--event-card-height) + 3rem);
   user-select: none;
   -webkit-mask-image: linear-gradient(
     to right,
@@ -395,21 +423,20 @@
   mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
 
-.event-carousel-track {
-  display: flex;
-  width: max-content;
-  // Centers card 0 in the viewport; the transform then shifts the whole track
-  // one step per active index so all cards travel together.
-  margin-left: calc(50% - var(--event-card-width) / 2 + var(--event-card-overlap) / 2);
-  transform: translateX(calc(-1 * var(--carousel-index, 0) * var(--event-card-step)));
-  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+.event-carousel-stage {
+  position: absolute;
+  inset: 0;
 }
 
 .event-carousel-card {
-  position: relative;
-  flex: 0 0 var(--event-card-width);
-  margin-inline: calc(var(--event-card-overlap) / -2);
-  transform: scale(0.92);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--event-card-width);
+  height: var(--event-card-height);
+  margin-left: calc(var(--event-card-width) / -2);
+  margin-top: calc(var(--event-card-height) / -2);
+  transform: translateX(calc(var(--card-offset, 0) * var(--event-card-step))) scale(0.92);
   opacity: 0.55;
   cursor: pointer;
   transition:
@@ -419,14 +446,29 @@
 
 .event-carousel-card.is-active {
   z-index: 10;
-  transform: scale(1.05);
+  transform: translateX(calc(var(--card-offset, 0) * var(--event-card-step))) scale(1.05);
   opacity: 1;
   cursor: default;
   filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
 }
 
+.event-carousel-card.is-far {
+  opacity: 0;
+  pointer-events: none;
+}
+
+// Seam-crossing cards teleport to their new edge but may still fade.
+.event-carousel-card.is-wrapping {
+  transition: opacity 0.55s ease;
+}
+
+.event-carousel:hover .event-carousel-nav,
+.event-carousel:focus-within .event-carousel-nav {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .event-carousel-track,
   .event-carousel-card {
     transition: none;
   }

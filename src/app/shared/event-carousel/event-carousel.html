@@ -10,34 +10,37 @@
   (pointerdown)="onPointerDown($event)"
   (pointerup)="onPointerUp($event)"
 >
-  <div class="event-carousel-viewport">
-    <ul class="event-carousel-track" [style.--carousel-index]="activeIndex()">
-      @for (card of items(); track card.id; let i = $index) {
-        <li
-          class="event-carousel-card"
-          [class.is-active]="i === activeIndex()"
-          role="group"
-          aria-roledescription="slide"
-          [attr.aria-label]="i + 1 + ' of ' + items().length"
-          (click)="onCardClick(i)"
-        >
-          <article
-            class="h-full rounded-lg border border-surface-border bg-surface/60 p-6 backdrop-blur"
+  <div class="event-carousel-frame">
+    <div class="event-carousel-viewport">
+      <ul class="event-carousel-stage">
+        @for (card of items(); track card.id; let i = $index) {
+          <li
+            class="event-carousel-card"
+            [style.--card-offset]="offsetFor(i)"
+            [class.is-active]="i === activeIndex()"
+            [class.is-far]="isFar(i)"
+            [class.is-wrapping]="isWrapping(card.id)"
+            role="group"
+            aria-roledescription="slide"
+            [attr.aria-label]="i + 1 + ' of ' + items().length"
+            [attr.aria-hidden]="isFar(i) ? 'true' : null"
+            (click)="onCardClick(i)"
           >
-            <h3 class="text-lg font-semibold">{{ card.title }}</h3>
-            <p class="mt-2 text-sm text-white/70">{{ card.body }}</p>
-          </article>
-        </li>
-      }
-    </ul>
-  </div>
+            <article
+              class="flex h-full flex-col justify-center overflow-hidden rounded-lg border border-surface-border bg-surface/60 p-8 backdrop-blur"
+            >
+              <h3 class="text-xl font-semibold">{{ card.title }}</h3>
+              <p class="mt-3 text-base text-white/70">{{ card.body }}</p>
+            </article>
+          </li>
+        }
+      </ul>
+    </div>
 
-  <div class="mt-2 flex justify-center gap-3">
     <button
       type="button"
-      class="event-carousel-nav"
+      class="event-carousel-nav event-carousel-nav-prev"
       aria-label="Show previous event"
-      [disabled]="!canGoBack()"
       (click)="previous()"
     >
       <svg
@@ -55,9 +58,8 @@
     </button>
     <button
       type="button"
-      class="event-carousel-nav"
+      class="event-carousel-nav event-carousel-nav-next"
       aria-label="Show next event"
-      [disabled]="!canGoForward()"
       (click)="next()"
     >
       <svg
@@ -73,5 +75,18 @@
         <path d="m9 18 6-6-6-6" />
       </svg>
     </button>
+  </div>
+
+  <div class="mt-4 flex justify-center gap-2">
+    @for (card of items(); track card.id; let i = $index) {
+      <button
+        type="button"
+        class="event-carousel-dot"
+        [class.is-active]="i === activeIndex()"
+        [attr.aria-label]="'Go to event ' + (i + 1)"
+        [attr.aria-current]="i === activeIndex() ? 'true' : null"
+        (click)="select(i)"
+      ></button>
+    }
   </div>
 </div>
