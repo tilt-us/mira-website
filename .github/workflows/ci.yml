@@ -230,7 +230,6 @@ jobs:
 
           ${RUN_CMD_PREFIX} docker exec "${CADDY_CONTAINER}" caddy validate --config "${CADDY_CONTAINER_CONFIG_PATH}"
           ${RUN_CMD_PREFIX} docker exec "${CADDY_CONTAINER}" caddy reload --config "${CADDY_CONTAINER_CONFIG_PATH}"
-          REMOTE_SCRIPT
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
