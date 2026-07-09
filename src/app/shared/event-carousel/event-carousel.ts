@@ -11,7 +11,7 @@ const SWIPE_THRESHOLD_PX = 40;
 
 // Signed circular distance from a reference index: 0 is the active card,
 // ±1 the visible side peeks, anything further is parked at the edges.
-function circularOffset(index: number, reference: number, length: number): number {
+export function circularOffset(index: number, reference: number, length: number): number {
   if (length <= 0) {
     return 0;
   }

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { CarouselCard, EventCarousel } from './event-carousel';
+import { CarouselCard, circularOffset, EventCarousel } from './event-carousel';
 
 describe('EventCarousel', () => {
   const items: CarouselCard[] = [
@@ -157,6 +157,20 @@ describe('EventCarousel', () => {
     cards(fixture)[3].dispatchEvent(new MouseEvent('click', { bubbles: true }));
     fixture.detectChanges();
     expect(activeFlags(fixture)).toEqual([false, false, false, true, false]);
+  });
+
+  it('renders no slides or dots and ignores navigation without items', () => {
+    const fixture = create([]);
+    expect(cards(fixture).length).toBe(0);
+    expect(dots(fixture).length).toBe(0);
+
+    button(fixture, 'Show next event').click();
+    fixture.detectChanges();
+    expect(cards(fixture).length).toBe(0);
+  });
+
+  it('treats every offset as centred when the list is empty', () => {
+    expect(circularOffset(3, 0, 0)).toBe(0);
   });
 
   it('clamps the active card when the items shrink', () => {
