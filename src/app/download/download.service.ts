@@ -5,11 +5,11 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 
 import { DownloadTarget, Os } from './download.types';
 
-const GITHUB_LATEST_RELEASE_URL =
-  'https://api.github.com/repos/tilt-us/mira-clients/releases/latest';
+const INSTALLER_MANIFEST_URL =
+  'https://api.tilt-us.com/downloads/game-sources/installer/manifest.json';
+const GAME_SOURCES_LATEST_URL = 'https://api.tilt-us.com/downloads/game-sources/latest.json';
 
-const DOWNLOAD_BASE =
-  'https://api.tilt-us.com/downloads/mira/game-sources/installer/releases';
+const DOWNLOAD_BASE = 'https://api.tilt-us.com/downloads/game-sources/installer';
 
 export const FALLBACK_VERSION = '1.0.0';
 
@@ -40,11 +40,58 @@ export class DownloadService {
     return 'unknown';
   }
 
+  detectLinuxTarget(
+    userAgent: string = this.document.defaultView?.navigator.userAgent ?? '',
+  ): DownloadTarget | null {
+    const ua = userAgent.toLowerCase();
+
+    if (!/linux/.test(ua)) {
+      return null;
+    }
+
+    if (
+      /debian|ubuntu|linux\s*mint|pop[!_\s-]*os|kubuntu|xubuntu|lubuntu|neon|elementary/.test(
+        ua,
+      )
+    ) {
+      return 'linux-debian';
+    }
+
+    if (/fedora|rhel|centos|rocky|almalinux/.test(ua)) {
+      return 'linux-fedora';
+    }
+
+    if (/arch|manjaro|garuda|artix|endeavouros/.test(ua)) {
+      return 'linux-arch';
+    }
+
+    // Unknown Linux variants (or generic UAs without distro token) fall back to
+    // AppImage, which is the most compatible universal Linux installer.
+    return 'linux-arch';
+  }
+
   getLatestVersion(): Observable<string> {
     this.version$ ??= this.http
-      .get<{ tag_name?: string | null }>(GITHUB_LATEST_RELEASE_URL)
+      .get<{
+        version?: string | null;
+        tag?: string | null;
+        tag_name?: string | null;
+      }>(INSTALLER_MANIFEST_URL)
       .pipe(
-        map((release) => this.normaliseVersion(release.tag_name)),
+        catchError(() =>
+          this.http.get<{
+            version?: string | null;
+            tag?: string | null;
+            tag_name?: string | null;
+          }>(GAME_SOURCES_LATEST_URL),
+        ),
+      )
+      .pipe(
+        map((release) =>
+          this.normaliseVersion(
+            release.version ?? release.tag ?? release.tag_name,
+          ),
+        ),
         catchError(() => of(FALLBACK_VERSION)),
         shareReplay({ bufferSize: 1, refCount: false }),
       );
@@ -52,7 +99,7 @@ export class DownloadService {
   }
 
   buildDownloadUrl(target: DownloadTarget, version: string): string {
-    return `${DOWNLOAD_BASE}/v${version}/${this.fileName(target, version)}`;
+    return `${DOWNLOAD_BASE}/${this.fileName(target, version)}`;
   }
 
   triggerDownload(url: string): void {
@@ -75,7 +122,7 @@ export class DownloadService {
       case 'linux-debian':
         return `mira-installer-${v}-linux-Mira-Installer_${v}_amd64.deb`;
       case 'mac':
-        return `mira-installer-${v}-macos-Mira-Installer_${v}_aarch64.dmg`;
+        return 'install-macos.sh';
     }
   }
 }
