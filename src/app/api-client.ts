@@ -40,13 +40,9 @@ function normalizeApiBaseUrl(rawBaseUrl: string) {
   try {
     const parsed = new URL(rawBaseUrl);
     const isProdHost = parsed.hostname === PROD_API_HOST;
-    const browserProtocol =
-      typeof window === "undefined"
-        ? "https:"
-        : window.location.protocol;
 
     if (isProdHost) {
-      parsed.protocol = browserProtocol || parsed.protocol || "https:";
+      parsed.protocol = 'https:';
     }
 
     // The generated OpenAPI paths are absolute ("/api/..."), so strip any base-path
