@@ -13,20 +13,28 @@ function byTestId(fixture: ComponentFixture<Header>, id: string): HTMLElement {
 
 describe('Header', () => {
   let fixture: ComponentFixture<Header>;
+  let authPopupOpen: WritableSignal<boolean>;
   let mockAuth: {
     user: WritableSignal<AuthUser | null>;
     isLoggedIn: () => boolean;
     logout: Mock;
     providers: () => string[];
+    isLoginPopupOpen: () => boolean;
+    openLoginPopup: Mock;
+    closeLoginPopup: Mock;
   };
   beforeEach(async () => {
     const authUser = signal<AuthUser | null>(null);
+    authPopupOpen = signal(false);
 
     mockAuth = {
       user: authUser,
       isLoggedIn: () => authUser() !== null,
       logout: vi.fn(),
       providers: () => [],
+      isLoginPopupOpen: () => authPopupOpen(),
+      openLoginPopup: vi.fn(() => authPopupOpen.set(true)),
+      closeLoginPopup: vi.fn(() => authPopupOpen.set(false)),
     };
 
     await TestBed.configureTestingModule({
@@ -38,7 +46,6 @@ describe('Header', () => {
           { path: 'builds', children: [] },
           { path: 'streamers', children: [] },
           { path: 'report', children: [] },
-          { path: 'auth', children: [] },
         ]),
         { provide: AuthService, useValue: mockAuth },
       ],

@@ -8,7 +8,8 @@ export type KeycloakRuntimeConfig = {
 };
 
 const LOCAL_KEYCLOAK_BASE_URL = "http://localhost:8081";
-const DEV_KEYCLOAK_BASE_URL = "https://api.tilt-us.com/keycloak";
+const DEV_KEYCLOAK_BASE_URL =
+  `${typeof window === "undefined" ? "https:" : window.location.protocol}//api.tilt-us.com/keycloak`;
 const LOCAL_KEYCLOAK_CLIENT_ID = "mira-bevy";
 const LOCAL_KEYCLOAK_PASSWORD_CLIENT_ID = "mira-e2e";
 const DEV_KEYCLOAK_CLIENT_ID = "mira-web";
@@ -90,7 +91,7 @@ function getBrowserRedirectUri() {
     return "";
   }
 
-  return `${window.location.origin}/auth`;
+  return window.location.origin;
 }
 
 function getBrowserPostLogoutRedirectUri() {

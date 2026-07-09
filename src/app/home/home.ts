@@ -1,4 +1,7 @@
-import { Component } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
+import { ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { mapAuthErrorMessage } from '../auth/auth.service';
 
 import { DownloadButton } from '../download/download-button/download-button';
 import { Reveal } from '../shared/reveal';
@@ -13,6 +16,12 @@ import { DISCORD_INVITE_URL } from '../shared/community';
 })
 export class Home {
   protected readonly discordUrl = DISCORD_INVITE_URL;
+  private readonly route = inject(ActivatedRoute, { optional: true });
+  private readonly destroyRef = inject(DestroyRef);
+  protected readonly authErrorMessage = signal('');
+  protected readonly authErrorPinned = signal(false);
+  private authErrorDismissTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly OAUTH_ERROR_STORAGE_KEY = 'mira.auth.oauthError';
 
   // Reuses the approved client wallpapers; bios are placeholder copy
   // until real lore exists (tracked in the wiki).
@@ -69,4 +78,147 @@ export class Home {
     { id: 'event-5', title: 'Dev streams', body: 'Live sessions with the team soon.' },
   ];
 
+  constructor() {
+    this.route?.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((queryParams) => {
+      const hasQueryError =
+        queryParams.has('kc_error') ||
+        queryParams.has('error') ||
+        queryParams.has('error_description');
+
+      const message = hasQueryError
+        ? this.getQueryAuthErrorMessage(queryParams)
+        : this.getStoredOAuthErrorMessage();
+
+      if (!message) {
+        this.clearAuthErrorMessage();
+        return;
+      }
+
+      this.showAuthErrorToast(message);
+      if (hasQueryError) {
+        this.clearOAuthQueryParams();
+      }
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.clearAuthErrorTimer();
+    });
+  }
+
+  private clearOAuthQueryParams(): void {
+    const url = new URL(window.location.href);
+    if (url.pathname !== '/' && url.pathname !== '/auth') {
+      return;
+    }
+
+    if (!url.searchParams.has('kc_error') && !url.searchParams.has('error') && !url.searchParams.has('error_description')) {
+      return;
+    }
+
+    url.searchParams.delete('kc_error');
+    url.searchParams.delete('error');
+    url.searchParams.delete('error_description');
+    url.searchParams.delete('mira_error_redirected');
+    url.searchParams.delete('code');
+    url.searchParams.delete('state');
+    url.searchParams.delete('session_state');
+
+    const search = url.searchParams.toString();
+    const nextUrl = `${url.pathname}${search ? `?${search}` : ''}`;
+    window.history.replaceState({}, document.title, nextUrl);
+  }
+
+  private getQueryAuthErrorMessage(queryParams: ActivatedRoute['snapshot']['queryParamMap']): string {
+    const error = queryParams.get('error_description') ?? queryParams.get('error');
+
+    if (error) {
+      return mapAuthErrorMessage(error);
+    }
+
+    if (queryParams.get('kc_error') === '1') {
+      return 'Der Login wurde abgebrochen.';
+    }
+
+    return 'Unbekannter Fehler bitte erneut versuchen';
+  }
+
+  private getStoredOAuthErrorMessage(): string {
+    try {
+      const raw = sessionStorage.getItem(Home.OAUTH_ERROR_STORAGE_KEY);
+
+      if (!raw) {
+        return '';
+      }
+
+      sessionStorage.removeItem(Home.OAUTH_ERROR_STORAGE_KEY);
+      const parsed = JSON.parse(raw) as {
+        code?: string | null;
+        description?: string | null;
+        kcError?: boolean;
+      };
+
+      if (parsed.description || parsed.code) {
+        return mapAuthErrorMessage(parsed.description ?? parsed.code ?? '');
+      }
+
+      if (parsed.kcError) {
+        return 'Der Login wurde abgebrochen.';
+      }
+
+      return 'Unbekannter Fehler bitte erneut versuchen';
+    } catch {
+      return '';
+    }
+  }
+
+  private showAuthErrorToast(message: string): void {
+    this.clearAuthErrorTimer();
+    this.authErrorPinned.set(false);
+    this.authErrorMessage.set(message);
+
+    this.scheduleAuthErrorDismiss();
+  }
+
+  protected dismissAuthErrorMessage(): void {
+    this.clearAuthErrorMessage();
+  }
+
+  protected toggleAuthErrorPin(): void {
+    this.authErrorPinned.update((pinned) => {
+      const nextPinned = !pinned;
+
+      if (nextPinned) {
+        this.clearAuthErrorTimer();
+      } else {
+        this.scheduleAuthErrorDismiss();
+      }
+
+      return nextPinned;
+    });
+  }
+
+  private scheduleAuthErrorDismiss(): void {
+    if (this.authErrorPinned()) {
+      return;
+    }
+
+    this.authErrorDismissTimer = setTimeout(() => {
+      this.authErrorMessage.set('');
+      this.authErrorPinned.set(false);
+      this.authErrorDismissTimer = null;
+    }, 5000);
+  }
+
+  private clearAuthErrorTimer(): void {
+    if (this.authErrorDismissTimer !== null) {
+      clearTimeout(this.authErrorDismissTimer);
+      this.authErrorDismissTimer = null;
+    }
+  }
+
+  private clearAuthErrorMessage(): void {
+    this.clearAuthErrorTimer();
+    this.authErrorPinned.set(false);
+    this.authErrorMessage.set('');
+  }
 }

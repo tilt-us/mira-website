@@ -28,11 +28,11 @@
       </nav>
     </div>
 
-    <div class="user-menu-root relative" [class.user-menu-open]="menuOpen()">
+    <div class="user-menu-root relative inline-block" [class.user-menu-open]="menuOpen()">
       @if (auth.isLoggedIn()) {
         <button
           type="button"
-          class="user-menu-trigger btn-ghost h-auto min-h-0 px-3 py-2 text-sm"
+          class="user-menu-trigger btn-ghost h-auto min-h-0 w-fit min-w-[250px] px-2.5 py-2 text-sm"
           data-testid="user-menu-button"
           [attr.aria-expanded]="menuOpen()"
           (click)="toggleMenu()"
@@ -88,15 +88,15 @@
           ></button>
 
           <div
-            class="user-menu-card absolute right-0 z-[60] mt-2 rounded-lg border border-surface-border p-3"
+            class="user-menu-card absolute right-0 left-0 z-[60] mt-[25px] w-full rounded-lg border border-surface-border p-2.5"
             [style.background-color]="!scrolled() ? 'rgba(0, 0, 0, 0.2)' : ''"
             [style.backdrop-filter]="!scrolled() ? 'blur(8px)' : ''"
             [style.webkitBackdropFilter]="!scrolled() ? 'blur(8px)' : ''"
             role="menu"
             data-testid="user-menu"
           >
-            <p class="px-1 text-sm font-medium">{{ auth.user()?.displayName }}</p>
-            <p class="truncate px-1 text-xs text-white/50">
+            <p class="text-sm font-medium">{{ auth.user()?.displayName }}</p>
+            <p class="truncate text-xs text-white/50">
               {{ auth.user()?.email }}
             </p>
 
@@ -130,7 +130,7 @@
           Login
         </button>
 
-        @if (authPopupOpen()) {
+        @if (auth.isLoginPopupOpen()) {
           <button
             type="button"
             class="fixed inset-0 z-30 cursor-default bg-black/45"
