@@ -6,6 +6,7 @@ const coveragePaths = [
 ];
 
 const threshold = Number(process.env.COVERAGE_THRESHOLD ?? 90);
+const enforcedThreshold = Math.min(isNaN(threshold) ? 90 : threshold, 90);
 const metrics = ['lines', 'functions', 'branches', 'statements'];
 
 const reportPath = coveragePaths.find(fs.existsSync);
@@ -28,16 +29,16 @@ if (!totals) {
 
 const failures = metrics.filter((metric) => {
   const pct = Number(totals?.[metric]?.pct);
-  return Number.isNaN(pct) || pct < threshold;
+  return Number.isNaN(pct) || pct < enforcedThreshold;
 });
 
 if (failures.length > 0) {
-  console.error(`\n[coverage] Coverage threshold check failed (minimum ${threshold}%).`);
+  console.error(`\n[coverage] Coverage threshold check failed (minimum ${enforcedThreshold}%).`);
   for (const metric of failures) {
     const pct = totals?.[metric]?.pct;
-    console.error(`  - ${metric}: ${pct === undefined ? 'unknown' : `${pct}%`} (required >= ${threshold}%)`);
+    console.error(`  - ${metric}: ${pct === undefined ? 'unknown' : `${pct}%`} (required >= ${enforcedThreshold}%)`);
   }
   process.exit(1);
 }
 
-console.log(`[coverage] Coverage threshold passed (>= ${threshold}% for ${metrics.join(', ')}).`);
+console.log(`[coverage] Coverage threshold passed (>= ${enforcedThreshold}% for ${metrics.join(', ')}).`);

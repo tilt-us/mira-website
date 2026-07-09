@@ -10,6 +10,7 @@ import { DownloadTarget, Os } from '../download.types';
 class StubDownloadService {
   os: Os = 'windows';
   readonly triggered: string[] = [];
+  linuxTarget: DownloadTarget | null = null;
 
   detectOs(): Os {
     return this.os;
@@ -19,6 +20,9 @@ class StubDownloadService {
   }
   buildDownloadUrl(target: DownloadTarget, version: string): string {
     return `https://dl/${target}/${version}`;
+  }
+  detectLinuxTarget() {
+    return this.linuxTarget;
   }
   triggerDownload(url: string): void {
     this.triggered.push(url);
@@ -62,21 +66,25 @@ describe('DownloadButton', () => {
     expect(stub.triggered).toEqual(['https://dl/mac/9.9.9']);
   });
 
-  it('opens the modal with only the three Linux installers on Linux', () => {
+  it('downloads the default Linux AppImage target when distro is not detected', () => {
     const { fixture, stub } = createFixture('linux');
     expect(byTestId(fixture, 'primary-download').textContent).toContain('Linux');
 
     byTestId(fixture, 'primary-download').click();
     fixture.detectChanges();
 
-    expect(stub.triggered).toEqual([]);
-    expect(fixture.nativeElement.querySelector('app-os-modal')).toBeTruthy();
+    expect(stub.triggered).toEqual(['https://dl/linux-arch/9.9.9']);
+    expect(fixture.nativeElement.querySelector('app-os-modal')).toBeFalsy();
+  });
 
-    const hrefs = Array.from(
-      fixture.nativeElement.querySelectorAll('app-os-modal a[href]'),
-    ).map((a) => (a as HTMLAnchorElement).getAttribute('href') ?? '');
-    expect(hrefs.length).toBe(3);
-    expect(hrefs.every((h) => h.includes('/linux-'))).toBe(true);
+  it('downloads direct for detected Arch Linux', () => {
+    const { fixture, stub } = createFixture('linux');
+    stub.linuxTarget = 'linux-arch';
+
+    byTestId(fixture, 'primary-download').click();
+
+    expect(stub.triggered).toEqual(['https://dl/linux-arch/9.9.9']);
+    expect(fixture.nativeElement.querySelector('app-os-modal')).toBeFalsy();
   });
 
   it('shows a generic label and opens the modal for an unknown OS', () => {
