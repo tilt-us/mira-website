@@ -34,40 +34,30 @@ describe('Home', () => {
     expect(el.querySelector('#events')).toBeTruthy();
   });
 
+  it('shows a carousel with a card per placeholder entry in both sections', () => {
+    const el = render();
+    expect(el.querySelectorAll('#news .event-carousel-card').length).toBe(5);
+    expect(el.querySelectorAll('#events .event-carousel-card').length).toBe(5);
+  });
+
   it('shows a Discord link', () => {
     expect(render().querySelector('[data-testid="discord-link"]')).toBeTruthy();
   });
 
-  it('pauses both carousels in sync when one is hovered', () => {
+  it('navigates the news carousel independently of the events carousel', () => {
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
-    const marquees = el.querySelectorAll('.marquee');
-    expect(marquees.length).toBe(2);
-
-    marquees[0].dispatchEvent(new MouseEvent('mouseenter'));
+    const newsNext = el.querySelector('#news [aria-label="Show next event"]') as HTMLElement;
+    newsNext.click();
     fixture.detectChanges();
 
-    const tracks = Array.from(el.querySelectorAll('.marquee-track'));
-    expect(tracks.every((track) => track.classList.contains('is-paused'))).toBe(true);
-  });
-
-  it('resumes both carousels when the hover ends', () => {
-    const fixture = TestBed.createComponent(Home);
-    fixture.detectChanges();
-    const el = fixture.nativeElement as HTMLElement;
-    const marquees = el.querySelectorAll('.marquee');
-
-    // Hover the second carousel, then leave it again.
-    marquees[1].dispatchEvent(new MouseEvent('mouseenter'));
-    fixture.detectChanges();
-    let tracks = Array.from(el.querySelectorAll('.marquee-track'));
-    expect(tracks.every((track) => track.classList.contains('is-paused'))).toBe(true);
-
-    marquees[1].dispatchEvent(new MouseEvent('mouseleave'));
-    fixture.detectChanges();
-    tracks = Array.from(el.querySelectorAll('.marquee-track'));
-    expect(tracks.some((track) => track.classList.contains('is-paused'))).toBe(false);
+    const activeIn = (section: string) =>
+      Array.from(el.querySelectorAll(`${section} .event-carousel-card`)).findIndex((card) =>
+        card.classList.contains('is-active'),
+      );
+    expect(activeIn('#news')).toBe(1);
+    expect(activeIn('#events')).toBe(0);
   });
 });

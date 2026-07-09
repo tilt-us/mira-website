@@ -299,6 +299,31 @@
       placeholder:text-white/30 transition-colors focus:outline-none
       focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand;
   }
+
+  // Hidden until the carousel is hovered or focused (see .event-carousel rules).
+  .event-carousel-nav {
+    @apply pointer-events-none absolute top-1/2 z-20 inline-flex h-11 w-11 -translate-y-1/2
+      items-center justify-center rounded-full border border-surface-border bg-surface/80
+      text-white opacity-0 backdrop-blur transition hover:bg-surface-raised
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+  }
+
+  .event-carousel-nav-prev {
+    @apply left-2;
+  }
+
+  .event-carousel-nav-next {
+    @apply right-2;
+  }
+
+  .event-carousel-dot {
+    @apply h-2.5 w-2.5 rounded-full bg-white/25 transition-colors hover:bg-white/50
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+
+    &.is-active {
+      @apply bg-brand;
+    }
+  }
 }
 
 .reveal {
@@ -323,40 +348,90 @@
   }
 }
 
-.marquee {
+// Centered, endlessly looping event carousel: the active card sits scaled-up
+// on top, the neighbours peek from both sides tucked underneath, and cards
+// further out are parked invisibly at the edges. Every card is positioned by
+// its circular offset from the active one, so all visible cards travel
+// together while the card crossing the seam jumps while it cannot be seen.
+.event-carousel {
+  --event-card-width: min(24rem, 80vw);
+  --event-card-height: 13rem;
+  --event-card-overlap: 1.5rem;
+  // Cards overlap on purpose, so one navigation step is less than a full card.
+  --event-card-step: calc(var(--event-card-width) - var(--event-card-overlap));
+  // Keeps vertical page scrolling working while horizontal drags become swipes.
+  touch-action: pan-y;
+  outline: none;
+}
+
+.event-carousel-frame {
+  position: relative;
+}
+
+.event-carousel-viewport {
+  position: relative;
   overflow: hidden;
+  // Fixed height because the cards are absolutely positioned; extra room so
+  // the scaled-up active card is not clipped.
+  height: calc(var(--event-card-height) + 3rem);
+  user-select: none;
   -webkit-mask-image: linear-gradient(
     to right,
     transparent,
-    black 6%,
-    black 94%,
+    black 8%,
+    black 92%,
     transparent
   );
-  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
 
-.marquee-track {
-  display: flex;
-  width: max-content;
-  gap: 1.5rem;
-  animation: marquee-scroll var(--marquee-duration, 30s) linear infinite;
+.event-carousel-stage {
+  position: absolute;
+  inset: 0;
 }
 
-.marquee-track.is-paused {
-  animation-play-state: paused;
+.event-carousel-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--event-card-width);
+  height: var(--event-card-height);
+  margin-left: calc(var(--event-card-width) / -2);
+  margin-top: calc(var(--event-card-height) / -2);
+  transform: translateX(calc(var(--card-offset, 0) * var(--event-card-step))) scale(0.92);
+  opacity: 0.55;
+  cursor: pointer;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.55s ease;
 }
 
-@keyframes marquee-scroll {
-  from {
-    transform: translateX(-50%);
-  }
-  to {
-    transform: translateX(0);
-  }
+.event-carousel-card.is-active {
+  z-index: 10;
+  transform: translateX(calc(var(--card-offset, 0) * var(--event-card-step))) scale(1.05);
+  opacity: 1;
+  cursor: default;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
+}
+
+.event-carousel-card.is-far {
+  opacity: 0;
+  pointer-events: none;
+}
+
+// Seam-crossing cards teleport to their new edge but may still fade.
+.event-carousel-card.is-wrapping {
+  transition: opacity 0.55s ease;
+}
+
+.event-carousel:hover .event-carousel-nav,
+.event-carousel:focus-within .event-carousel-nav {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
+  .event-carousel-card {
+    transition: none;
   }
 }
