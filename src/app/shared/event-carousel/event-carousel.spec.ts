@@ -1,7 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { EventCarousel } from './event-carousel';
-import { CarouselCard } from '../card-carousel/card-carousel';
+import { CarouselCard, EventCarousel } from './event-carousel';
 
 describe('EventCarousel', () => {
   const items: CarouselCard[] = [

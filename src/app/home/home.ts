@@ -1,22 +1,18 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 
 import { DownloadButton } from '../download/download-button/download-button';
 import { Reveal } from '../shared/reveal';
-import { CardCarousel, CarouselCard } from '../shared/card-carousel/card-carousel';
-import { EventCarousel } from '../shared/event-carousel/event-carousel';
+import { CarouselCard, EventCarousel } from '../shared/event-carousel/event-carousel';
 import { CharacterShowcase, ShowcaseCharacter } from './character-showcase/character-showcase';
 import { DISCORD_INVITE_URL } from '../shared/community';
 
 @Component({
   selector: 'app-home',
-  imports: [DownloadButton, Reveal, CardCarousel, EventCarousel, CharacterShowcase],
+  imports: [DownloadButton, Reveal, EventCarousel, CharacterShowcase],
   templateUrl: './home.html',
 })
 export class Home {
   protected readonly discordUrl = DISCORD_INVITE_URL;
-
-  // Pauses the news marquee while it is hovered.
-  protected readonly newsPaused = signal(false);
 
   // Reuses the approved client wallpapers; bios are placeholder copy
   // until real lore exists (tracked in the wiki).
@@ -73,7 +69,4 @@ export class Home {
     { id: 'event-5', title: 'Dev streams', body: 'Live sessions with the team soon.' },
   ];
 
-  protected setNewsPaused(paused: boolean): void {
-    this.newsPaused.set(paused);
-  }
 }

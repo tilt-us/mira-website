@@ -1,6 +1,10 @@
 import { Component, computed, input, signal } from '@angular/core';
 
-import { CarouselCard } from '../card-carousel/card-carousel';
+export interface CarouselCard {
+  id: string;
+  title: string;
+  body: string;
+}
 
 // Minimum horizontal drag distance before a pointer gesture counts as a swipe.
 const SWIPE_THRESHOLD_PX = 40;

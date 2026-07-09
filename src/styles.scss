@@ -348,44 +348,6 @@
   }
 }
 
-.marquee {
-  overflow: hidden;
-  -webkit-mask-image: linear-gradient(
-    to right,
-    transparent,
-    black 6%,
-    black 94%,
-    transparent
-  );
-  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
-}
-
-.marquee-track {
-  display: flex;
-  width: max-content;
-  gap: 1.5rem;
-  animation: marquee-scroll var(--marquee-duration, 30s) linear infinite;
-}
-
-.marquee-track.is-paused {
-  animation-play-state: paused;
-}
-
-@keyframes marquee-scroll {
-  from {
-    transform: translateX(-50%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
-  }
-}
-
 // Centered, endlessly looping event carousel: the active card sits scaled-up
 // on top, the neighbours peek from both sides tucked underneath, and cards
 // further out are parked invisibly at the edges. Every card is positioned by

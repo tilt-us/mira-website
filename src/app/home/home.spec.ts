@@ -34,31 +34,30 @@ describe('Home', () => {
     expect(el.querySelector('#events')).toBeTruthy();
   });
 
-  it('shows the event carousel with a card per placeholder event', () => {
+  it('shows a carousel with a card per placeholder entry in both sections', () => {
     const el = render();
-    expect(el.querySelector('app-event-carousel')).toBeTruthy();
-    expect(el.querySelectorAll('.event-carousel-card').length).toBe(5);
+    expect(el.querySelectorAll('#news .event-carousel-card').length).toBe(5);
+    expect(el.querySelectorAll('#events .event-carousel-card').length).toBe(5);
   });
 
   it('shows a Discord link', () => {
     expect(render().querySelector('[data-testid="discord-link"]')).toBeTruthy();
   });
 
-  it('pauses the news marquee while it is hovered and resumes afterwards', () => {
+  it('navigates the news carousel independently of the events carousel', () => {
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
-    const marquees = el.querySelectorAll('.marquee');
-    expect(marquees.length).toBe(1);
-
-    marquees[0].dispatchEvent(new MouseEvent('mouseenter'));
+    const newsNext = el.querySelector('#news [aria-label="Show next event"]') as HTMLElement;
+    newsNext.click();
     fixture.detectChanges();
-    const track = el.querySelector('.marquee-track') as HTMLElement;
-    expect(track.classList.contains('is-paused')).toBe(true);
 
-    marquees[0].dispatchEvent(new MouseEvent('mouseleave'));
-    fixture.detectChanges();
-    expect(track.classList.contains('is-paused')).toBe(false);
+    const activeIn = (section: string) =>
+      Array.from(el.querySelectorAll(`${section} .event-carousel-card`)).findIndex((card) =>
+        card.classList.contains('is-active'),
+      );
+    expect(activeIn('#news')).toBe(1);
+    expect(activeIn('#events')).toBe(0);
   });
 });
