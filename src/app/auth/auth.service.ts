@@ -55,15 +55,20 @@ function mapApiUser(profile: {
 }
 
 function normalizeLoginError(error: unknown) {
+  const fallbackMessage = 'Unbekannter Fehler bitte erneut versuchen';
+
   if (error instanceof Error) {
-    return mapAuthErrorMessage(error.message);
+    const mapped = mapAuthErrorMessage(error.message);
+
+    return mapped === fallbackMessage ? error.message : mapped;
   }
 
   if (typeof error === 'string') {
-    return mapAuthErrorMessage(error);
+    const mapped = mapAuthErrorMessage(error);
+    return mapped === fallbackMessage ? error : mapped;
   }
 
-  return 'Unbekannter Fehler bitte erneut versuchen';
+  return fallbackMessage;
 }
 
 function mapAuthErrorMessage(message: string): string {

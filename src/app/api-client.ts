@@ -4,9 +4,7 @@ import { getValidAccessToken } from "./auth/keycloak";
 import { API_CLIENT_MODE } from "./api-runtime.config";
 
 const LOCAL_API_BASE_URL = "http://localhost:8080";
-const DEV_API_BASE_URL = `${
-  typeof window === "undefined" ? "https:" : window.location.protocol
-}//api.tilt-us.com`;
+const DEV_API_BASE_URL = 'https://api.tilt-us.com';
 
 const PROD_API_HOST = "api.tilt-us.com";
 let runtimeApiClientMode: string = API_CLIENT_MODE;
