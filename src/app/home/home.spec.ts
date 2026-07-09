@@ -34,40 +34,31 @@ describe('Home', () => {
     expect(el.querySelector('#events')).toBeTruthy();
   });
 
+  it('shows the event carousel with a card per placeholder event', () => {
+    const el = render();
+    expect(el.querySelector('app-event-carousel')).toBeTruthy();
+    expect(el.querySelectorAll('.event-carousel-card').length).toBe(5);
+  });
+
   it('shows a Discord link', () => {
     expect(render().querySelector('[data-testid="discord-link"]')).toBeTruthy();
   });
 
-  it('pauses both carousels in sync when one is hovered', () => {
+  it('pauses the news marquee while it is hovered and resumes afterwards', () => {
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
     const marquees = el.querySelectorAll('.marquee');
-    expect(marquees.length).toBe(2);
+    expect(marquees.length).toBe(1);
 
     marquees[0].dispatchEvent(new MouseEvent('mouseenter'));
     fixture.detectChanges();
+    const track = el.querySelector('.marquee-track') as HTMLElement;
+    expect(track.classList.contains('is-paused')).toBe(true);
 
-    const tracks = Array.from(el.querySelectorAll('.marquee-track'));
-    expect(tracks.every((track) => track.classList.contains('is-paused'))).toBe(true);
-  });
-
-  it('resumes both carousels when the hover ends', () => {
-    const fixture = TestBed.createComponent(Home);
+    marquees[0].dispatchEvent(new MouseEvent('mouseleave'));
     fixture.detectChanges();
-    const el = fixture.nativeElement as HTMLElement;
-    const marquees = el.querySelectorAll('.marquee');
-
-    // Hover the second carousel, then leave it again.
-    marquees[1].dispatchEvent(new MouseEvent('mouseenter'));
-    fixture.detectChanges();
-    let tracks = Array.from(el.querySelectorAll('.marquee-track'));
-    expect(tracks.every((track) => track.classList.contains('is-paused'))).toBe(true);
-
-    marquees[1].dispatchEvent(new MouseEvent('mouseleave'));
-    fixture.detectChanges();
-    tracks = Array.from(el.querySelectorAll('.marquee-track'));
-    expect(tracks.some((track) => track.classList.contains('is-paused'))).toBe(false);
+    expect(track.classList.contains('is-paused')).toBe(false);
   });
 });

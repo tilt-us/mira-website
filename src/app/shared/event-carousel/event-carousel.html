@@ -1,0 +1,77 @@
+<div
+  class="event-carousel"
+  role="region"
+  aria-roledescription="carousel"
+  [attr.aria-label]="label()"
+  tabindex="0"
+  data-testid="event-carousel"
+  (keydown.arrowleft)="previous()"
+  (keydown.arrowright)="next()"
+  (pointerdown)="onPointerDown($event)"
+  (pointerup)="onPointerUp($event)"
+>
+  <div class="event-carousel-viewport">
+    <ul class="event-carousel-track" [style.--carousel-index]="activeIndex()">
+      @for (card of items(); track card.id; let i = $index) {
+        <li
+          class="event-carousel-card"
+          [class.is-active]="i === activeIndex()"
+          role="group"
+          aria-roledescription="slide"
+          [attr.aria-label]="i + 1 + ' of ' + items().length"
+          (click)="onCardClick(i)"
+        >
+          <article
+            class="h-full rounded-lg border border-surface-border bg-surface/60 p-6 backdrop-blur"
+          >
+            <h3 class="text-lg font-semibold">{{ card.title }}</h3>
+            <p class="mt-2 text-sm text-white/70">{{ card.body }}</p>
+          </article>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="mt-2 flex justify-center gap-3">
+    <button
+      type="button"
+      class="event-carousel-nav"
+      aria-label="Show previous event"
+      [disabled]="!canGoBack()"
+      (click)="previous()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        class="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m15 18-6-6 6-6" />
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="event-carousel-nav"
+      aria-label="Show next event"
+      [disabled]="!canGoForward()"
+      (click)="next()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        class="h-5 w-5"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="m9 18 6-6-6-6" />
+      </svg>
+    </button>
+  </div>
+</div>

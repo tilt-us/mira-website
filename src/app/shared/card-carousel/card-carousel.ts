@@ -15,7 +15,7 @@ export class CardCarousel {
   readonly durationSeconds = input(30);
   readonly paused = input(false);
 
-  // Reports hover so a parent can pause both carousels together and keep them in sync.
+  // Reports hover so a parent can pause the marquee while it is being read.
   readonly hoveredChange = output<boolean>();
 
   // Items are duplicated so the marquee animation can loop seamlessly.

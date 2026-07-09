@@ -299,6 +299,13 @@
       placeholder:text-white/30 transition-colors focus:outline-none
       focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand;
   }
+
+  .event-carousel-nav {
+    @apply inline-flex h-11 w-11 items-center justify-center rounded-full border
+      border-surface-border bg-surface/60 text-white backdrop-blur transition-colors
+      enabled:hover:bg-surface-raised disabled:cursor-not-allowed disabled:opacity-40
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+  }
 }
 
 .reveal {
@@ -358,5 +365,69 @@
 @media (prefers-reduced-motion: reduce) {
   .marquee-track {
     animation: none;
+  }
+}
+
+// Centered event carousel: the active card sits scaled-up on top while its
+// neighbours peek from both sides, tucked underneath via the negative margins.
+.event-carousel {
+  --event-card-width: 18rem;
+  --event-card-overlap: 1.25rem;
+  // Cards overlap on purpose, so one navigation step is less than a full card.
+  --event-card-step: calc(var(--event-card-width) - var(--event-card-overlap));
+  // Keeps vertical page scrolling working while horizontal drags become swipes.
+  touch-action: pan-y;
+  outline: none;
+}
+
+.event-carousel-viewport {
+  overflow: hidden;
+  // Vertical room so the scaled-up active card is not clipped.
+  padding-block: 1.5rem;
+  user-select: none;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 8%,
+    black 92%,
+    transparent
+  );
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+.event-carousel-track {
+  display: flex;
+  width: max-content;
+  // Centers card 0 in the viewport; the transform then shifts the whole track
+  // one step per active index so all cards travel together.
+  margin-left: calc(50% - var(--event-card-width) / 2 + var(--event-card-overlap) / 2);
+  transform: translateX(calc(-1 * var(--carousel-index, 0) * var(--event-card-step)));
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.event-carousel-card {
+  position: relative;
+  flex: 0 0 var(--event-card-width);
+  margin-inline: calc(var(--event-card-overlap) / -2);
+  transform: scale(0.92);
+  opacity: 0.55;
+  cursor: pointer;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.55s ease;
+}
+
+.event-carousel-card.is-active {
+  z-index: 10;
+  transform: scale(1.05);
+  opacity: 1;
+  cursor: default;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .event-carousel-track,
+  .event-carousel-card {
+    transition: none;
   }
 }
