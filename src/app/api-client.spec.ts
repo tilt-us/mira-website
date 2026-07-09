@@ -42,7 +42,31 @@ async function loadApiClientWithRawMode(modeValue: string, hostname = 'localhost
   return { getApiBaseUrl, setApiAccessToken };
 }
 
+function createJwtWithIssuer(issuer: string): string {
+  const payload = btoa(`{"iss":"${issuer}"}`);
+  const encodedPayload = payload.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+
+  return `eyJhbGciOiJub25lIn0.${encodedPayload}.`;
+}
+
+function setStoredAccessToken(issuer: string) {
+  localStorage.setItem(
+    'mira.auth.tokens',
+    JSON.stringify({
+      accessToken: createJwtWithIssuer(issuer),
+    }),
+  );
+}
+
 describe('api-client', () => {
+  function getRequestInterceptor() {
+    return client.interceptors.request.fns[client.interceptors.request.fns.length - 1]!;
+  }
+
+  function getResponseInterceptor() {
+    return client.interceptors.response.fns[client.interceptors.response.fns.length - 1]!;
+  }
+
   it('uses localhost API when mode is local', async () => {
     const { getApiBaseUrl, setApiAccessToken } = await loadApiClient('local', 'app.local');
     expect(getApiBaseUrl()).toBe('http://localhost:8080');
@@ -126,5 +150,111 @@ describe('api-client', () => {
     });
 
     expect(noToken).toBeDefined();
+  });
+
+  it('adds auth headers when a token is available in request interceptor', async () => {
+    const { getApiBaseUrl } = await loadApiClient('dev', 'example.com');
+    const token = createJwtWithIssuer('https://auth.tilt-us.com/realms/mira');
+    setStoredAccessToken('https://auth.tilt-us.com/realms/mira');
+    setConfigMock.mockClear();
+    const request = new Request('https://example.com');
+    const result = await getRequestInterceptor()(request, {} as never);
+
+    expect(result.headers.get('Authorization')).toBe(`Bearer ${token}`);
+    expect(result.headers.get('X-Device-Type')).toBe('Web');
+    expect(localStorage.getItem('mira.auth.tokens')).toBeTruthy();
+    expect(setConfigMock).toHaveBeenLastCalledWith({
+      baseUrl: getApiBaseUrl(),
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'X-Device-Type': 'Web',
+      },
+    });
+  });
+
+  it('clears tokens and auth headers when no token is available in request interceptor', async () => {
+    const { getApiBaseUrl } = await loadApiClient('dev', 'example.com');
+    localStorage.setItem(
+      'mira.auth.tokens',
+      JSON.stringify({
+        refreshToken: 'refresh-only',
+      }),
+    );
+    setConfigMock.mockClear();
+    const request = new Request('https://example.com', {
+      headers: {
+        Authorization: 'Bearer old-token',
+        'X-Device-Type': 'Web',
+      },
+    });
+    const result = await getRequestInterceptor()(request, {} as never);
+
+    expect(localStorage.getItem('mira.auth.tokens')).toBeNull();
+    expect(result.headers.get('Authorization')).toBeNull();
+    expect(result.headers.get('X-Device-Type')).toBeNull();
+    expect(setConfigMock).toHaveBeenLastCalledWith({
+      baseUrl: getApiBaseUrl(),
+      headers: {},
+    });
+  });
+
+  it('clears auth state when request interceptor token lookup fails', async () => {
+    const { getApiBaseUrl } = await loadApiClient('dev', 'example.com');
+    setStoredAccessToken('https://invalid.issuer');
+    setConfigMock.mockClear();
+    const request = new Request('https://example.com');
+    const result = await getRequestInterceptor()(request, {} as never);
+
+    expect(localStorage.getItem('mira.auth.tokens')).toBeNull();
+    expect(result.headers.get('Authorization')).toBeNull();
+    expect(result.headers.get('X-Device-Type')).toBeNull();
+    expect(setConfigMock).toHaveBeenLastCalledWith({
+      baseUrl: getApiBaseUrl(),
+      headers: {},
+    });
+  });
+
+  it('dispatches auth-required event for unauthorized responses', async () => {
+    const { getApiBaseUrl } = await loadApiClient('dev', 'example.com');
+    setStoredAccessToken('https://auth.tilt-us.com/realms/mira');
+    const authRequiredSpy = vi.fn();
+
+    window.addEventListener('mira:auth-required', authRequiredSpy);
+
+    setConfigMock.mockClear();
+    const response = new Response(null, { status: 401 });
+    const interceptor = getResponseInterceptor();
+    const updatedResponse = await interceptor(
+      response,
+      new Request('https://example.com'),
+      {} as never,
+    );
+
+    expect(localStorage.getItem('mira.auth.tokens')).toBeNull();
+    expect(updatedResponse).toBe(response);
+    expect(authRequiredSpy).toHaveBeenCalledTimes(1);
+    expect(setConfigMock).toHaveBeenLastCalledWith({
+      baseUrl: getApiBaseUrl(),
+      headers: {},
+    });
+
+    window.removeEventListener('mira:auth-required', authRequiredSpy);
+  });
+
+  it('does not modify client for successful responses', async () => {
+    const { getApiBaseUrl } = await loadApiClient('dev', 'example.com');
+    setStoredAccessToken('https://auth.tilt-us.com/realms/mira');
+    const response = new Response(JSON.stringify({ status: 'ok' }), {
+      status: 200,
+    });
+
+    setConfigMock.mockClear();
+    const interceptor = getResponseInterceptor();
+    const updatedResponse = await interceptor(response, new Request('https://example.com'), {} as never);
+
+    expect(localStorage.getItem('mira.auth.tokens')).toBeTruthy();
+    expect(updatedResponse).toBe(response);
+    expect(setConfigMock).not.toHaveBeenCalled();
+    expect(getApiBaseUrl()).toBe('https://api.tilt-us.com');
   });
 });
