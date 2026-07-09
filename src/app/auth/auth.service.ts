@@ -31,6 +31,9 @@ import {
   updateUsername,
 } from '../../api/sdk.gen';
 
+const OAUTH_ERROR_STORAGE_KEY = "mira.auth.oauthError";
+const OAUTH_ERROR_REDIRECT_FLAG = "mira_error_redirected";
+
 function mapApiUser(profile: {
   avatarUrl?: string;
   displayName?: string;
@@ -53,14 +56,32 @@ function mapApiUser(profile: {
 
 function normalizeLoginError(error: unknown) {
   if (error instanceof Error) {
-    return error.message;
+    return mapAuthErrorMessage(error.message);
   }
 
   if (typeof error === 'string') {
-    return error;
+    return mapAuthErrorMessage(error);
   }
 
-  return 'Die Authentifizierung ist fehlgeschlagen.';
+  return 'Unbekannter Fehler bitte erneut versuchen';
+}
+
+function mapAuthErrorMessage(message: string): string {
+  const lower = message.toLowerCase();
+
+  if (
+    lower.includes('resource owner') ||
+    lower.includes('resource_owner') ||
+    lower.includes('resourceowner')
+  ) {
+    return 'Diese Email wird schon von einen Anderen Provider genutzt';
+  }
+
+  if (lower.includes('invalid user') || lower.includes('invalid password') || lower.includes('invalid credentials')) {
+    return 'Fehler in deinen Anmeldedaten';
+  }
+
+  return 'Unbekannter Fehler bitte erneut versuchen';
 }
 
 @Injectable({ providedIn: 'root' })
@@ -71,6 +92,7 @@ export class AuthService {
   private readonly providerState = signal<string[]>([]);
   private readonly initialized = signal(false);
   private readonly loadingState = signal(false);
+  private readonly loginPopupOpen = signal(false);
   private readonly bootstrapPromise: Promise<void>;
   private readonly router = inject(Router);
 
@@ -80,6 +102,7 @@ export class AuthService {
   readonly initializedResult = this.initialized.asReadonly();
   readonly isLoading = this.loadingState.asReadonly();
   readonly isInitialized = this.initialized.asReadonly();
+  readonly isLoginPopupOpen = this.loginPopupOpen.asReadonly();
 
   constructor() {
     setApiAccessToken(undefined);
@@ -105,23 +128,89 @@ export class AuthService {
     const currentUrl = new URL(window.location.href);
     const hasOAuthResponse =
       currentUrl.searchParams.has('code') ||
+      currentUrl.searchParams.has('kc_error') ||
       currentUrl.searchParams.has('error') ||
       currentUrl.searchParams.has('error_description');
+    const hasOAuthError =
+      currentUrl.searchParams.has('kc_error') ||
+      currentUrl.searchParams.has('error') ||
+      currentUrl.searchParams.has('error_description');
+    const hasHandledOAuthError = currentUrl.searchParams.get(OAUTH_ERROR_REDIRECT_FLAG) === '1';
+    const returnToMainPage = () => {
+      window.location.replace('/');
+    };
+    const returnToOAuthErrorPage = () => {
+      const returnUrl = new URL("/", window.location.origin);
+      const errorCode = currentUrl.searchParams.get('error');
+      const errorDescription = currentUrl.searchParams.get('error_description');
+      const kcError = currentUrl.searchParams.get('kc_error');
+
+      if (errorCode) {
+        returnUrl.searchParams.set('error', errorCode);
+      }
+      if (errorDescription) {
+        returnUrl.searchParams.set('error_description', errorDescription);
+      }
+      returnUrl.searchParams.set('kc_error', kcError ?? '1');
+      returnUrl.searchParams.set(OAUTH_ERROR_REDIRECT_FLAG, '1');
+      window.location.replace(`${returnUrl.pathname}?${returnUrl.searchParams.toString()}`);
+    };
+    const resetOAuthUiState = () => {
+      this.closeLoginPopup();
+    };
+    const persistOAuthError = () => {
+      if (!hasOAuthError) {
+        if (sessionStorage.getItem(OAUTH_ERROR_STORAGE_KEY)) {
+          sessionStorage.removeItem(OAUTH_ERROR_STORAGE_KEY);
+        }
+
+        return;
+      }
+
+      const error = {
+        kcError: currentUrl.searchParams.get('kc_error') === '1',
+        code: currentUrl.searchParams.get('error'),
+        description: currentUrl.searchParams.get('error_description'),
+      };
+
+      try {
+        sessionStorage.setItem(OAUTH_ERROR_STORAGE_KEY, JSON.stringify(error));
+      } catch {
+        // ignore storage failures
+      }
+    };
 
     try {
       if (hasOAuthResponse) {
+        resetOAuthUiState();
+        persistOAuthError();
+
+        if (hasOAuthError) {
+          clearOAuthRequest();
+          this.currentUser.set(null);
+          this.themeService.applyDefaults();
+
+          if (!hasHandledOAuthError) {
+            returnToOAuthErrorPage();
+          }
+
+          return;
+        }
+
         const tokens = await completeRedirectLogin();
 
         if (!tokens) {
           clearOAuthRequest();
           this.currentUser.set(null);
           this.themeService.applyDefaults();
+          returnToMainPage();
           return;
         }
 
         saveTokens(tokens);
         setApiAccessToken(tokens.accessToken);
         await this.loadProfile();
+        returnToMainPage();
         return;
       }
 
@@ -142,6 +231,10 @@ export class AuthService {
       setApiAccessToken(undefined);
       this.currentUser.set(null);
       this.themeService.applyDefaults();
+      if (hasOAuthResponse) {
+        persistOAuthError();
+        returnToMainPage();
+      }
     }
   }
 
@@ -197,7 +290,15 @@ export class AuthService {
    * Opens the auth page in-browser. This method is intentionally side-effect-only.
    */
   login(): void {
-    window.location.assign('/auth');
+    this.openLoginPopup();
+  }
+
+  openLoginPopup(): void {
+    this.loginPopupOpen.set(true);
+  }
+
+  closeLoginPopup(): void {
+    this.loginPopupOpen.set(false);
   }
 
   async registerAccount(payload: RegisterPayload): Promise<void> {
@@ -383,4 +484,4 @@ export class AuthService {
   }
 }
 
-export { normalizeLoginError };
+export { mapAuthErrorMessage, normalizeLoginError };

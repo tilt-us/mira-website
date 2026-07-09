@@ -17,5 +17,5 @@ tilt-us.com {
 
 # Optional redirect keeps old host behavior consistent.
 www.tilt-us.com {
-  redir https://tilt-us.com{uri} 302
+  redir http://tilt-us.com{uri} 302
 }

@@ -20,16 +20,11 @@ describe('AuthService', () => {
     expect(service.user()).toBeNull();
   });
 
-  it('opens auth route on login', () => {
-    const assignSpy = vi.fn();
-    const locationSpy = vi.spyOn(window, 'location', 'get').mockReturnValue({
-      ...(window.location as Location),
-      assign: assignSpy,
-    } as Location);
+  it('opens the auth popup on login', () => {
+    const openPopupSpy = vi.spyOn(service, 'openLoginPopup');
 
     service.login();
 
-    expect(assignSpy).toHaveBeenCalledWith('/auth');
-    locationSpy.mockRestore();
+    expect(openPopupSpy).toHaveBeenCalled();
   });
 });

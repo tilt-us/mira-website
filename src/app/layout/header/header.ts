@@ -32,13 +32,10 @@ export class Header {
 
   // Controls the small "logged-in" popover anchored to the user button.
   protected readonly menuOpen = signal(false);
-  protected readonly authPopupOpen = signal(false);
   private readonly blockedSocialDomains = [
     'googleusercontent.com',
     'discordapp.com',
     'discord.com',
-    'githubusercontent.com',
-    'github.com',
   ];
 
   constructor() {
@@ -68,7 +65,7 @@ export class Header {
   }
 
   protected closeAuthPopup(): void {
-    this.authPopupOpen.set(false);
+    this.auth.closeLoginPopup();
   }
 
   protected closeOverlays(): void {
@@ -122,7 +119,7 @@ export class Header {
   }
 
   protected openAuth(): void {
-    this.authPopupOpen.set(true);
+    this.auth.openLoginPopup();
     this.menuOpen.set(false);
   }
 

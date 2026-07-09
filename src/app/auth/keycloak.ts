@@ -242,16 +242,28 @@ function mapOAuthProvider(provider: OAuthProvider) {
   return { provider, state, codeVerifier };
 }
 
+function getProviderErrorRedirectUri() {
+  const redirectUri = new URL(getRedirectUri());
+  redirectUri.searchParams.set("kc_error", "1");
+
+  return redirectUri.toString();
+}
+
 async function startProviderLogin(provider: OAuthProvider) {
   const { state, codeVerifier } = mapOAuthProvider(provider);
   const codeChallenge = await createCodeChallenge(codeVerifier);
   const redirectUri = getRedirectUri();
+  const errorRedirectUri = getProviderErrorRedirectUri();
   const searchParams = new URLSearchParams({
     client_id: KEYCLOAK_CLIENT_ID,
     code_challenge: codeChallenge,
     code_challenge_method: "S256",
     kc_idp_hint: provider.idpHint,
     redirect_uri: redirectUri,
+    kc_error_redirect_uri: errorRedirectUri,
+    error_redirect_uri: errorRedirectUri,
+    fallback_uri: errorRedirectUri,
+    returnTo: errorRedirectUri,
     response_type: "code",
     scope: "openid email profile",
     state,
@@ -366,23 +378,41 @@ export async function getValidAccessToken() {
   return refreshedTokens?.accessToken ?? tokens.accessToken;
 }
 
+function shouldPreserveOAuthError(url: URL) {
+  return (
+    url.searchParams.get("kc_error") === "1" ||
+    url.searchParams.has("error") ||
+    url.searchParams.has("error_description")
+  );
+}
+
 export function completeRedirectLogin(callbackUrl?: string) {
   const url = new URL(callbackUrl ?? window.location.href);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
   const error =
     url.searchParams.get("error_description") ?? url.searchParams.get("error");
+  const shouldPreserveError = shouldPreserveOAuthError(url);
 
   if (error) {
     clearOAuthRequest();
-    if (!callbackUrl) {
+    if (!callbackUrl && !shouldPreserveError) {
       window.history.replaceState({}, document.title, getRedirectUri());
+    }
+
+    if (shouldPreserveError) {
+      return undefined;
     }
 
     throw new Error(error);
   }
 
   if (!code || !state) {
+    clearOAuthRequest();
+    if (!callbackUrl && !shouldPreserveError) {
+      window.history.replaceState({}, document.title, getRedirectUri());
+    }
+
     return undefined;
   }
 
