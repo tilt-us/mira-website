@@ -9,6 +9,7 @@ import {
 } from "./storage";
 import {
   getCurrentKeycloakAuthUrl,
+  getCurrentKeycloakIssuerUrl,
   getCurrentKeycloakTokenUrl,
   getCurrentKeycloakLogoutUrl,
   getRedirectUri,
@@ -33,6 +34,8 @@ type OAuthProvider = {
 type OAuthLoginOptions = {
   kcAction?: string;
 };
+
+const linkActionPrefix = "idp_link:";
 
 const accessTokenRefreshMarginMs = 60_000;
 
@@ -128,6 +131,56 @@ function getTokenPayload(token?: string) {
   } catch {
     return undefined;
   }
+}
+
+function extractIdpFromKcAction(action?: string) {
+  if (!action || !action.startsWith(linkActionPrefix)) {
+    return undefined;
+  }
+
+  const providerAlias = action.slice(linkActionPrefix.length).trim();
+
+  return providerAlias || undefined;
+}
+
+async function createSha256Base64Url(value: string) {
+  const data = new TextEncoder().encode(value);
+  const digest = await crypto.subtle.digest("SHA-256", data);
+  return base64UrlEncode(new Uint8Array(digest));
+}
+
+async function buildLegacyLinkUrl(providerAlias: string, redirectUri: string) {
+  const accessToken = readTokens()?.accessToken;
+
+  if (!accessToken) {
+    return undefined;
+  }
+
+  const payload = getTokenPayload(accessToken);
+  const sessionState = typeof (payload?.["sid"] as unknown) === "string"
+    ? (payload?.["sid"] as string)
+    : typeof (payload?.["session_state"] as unknown) === "string"
+    ? (payload?.["session_state"] as string)
+    : undefined;
+  const issuedFor = typeof (payload?.["azp"] as unknown) === "string"
+    ? (payload?.["azp"] as string)
+    : KEYCLOAK_CLIENT_ID;
+
+  if (!sessionState) {
+    return undefined;
+  }
+
+  const nonce = createRandomString(16);
+  const hash = await createSha256Base64Url(
+    `${nonce}${sessionState}${issuedFor}${providerAlias}`,
+  );
+  const linkUrl = new URL(`${getCurrentKeycloakIssuerUrl()}/broker/${providerAlias}/link`);
+  linkUrl.searchParams.set("client_id", KEYCLOAK_CLIENT_ID);
+  linkUrl.searchParams.set("redirect_uri", redirectUri);
+  linkUrl.searchParams.set("nonce", nonce);
+  linkUrl.searchParams.set("hash", hash);
+
+  return linkUrl.toString();
 }
 
 function getTokenExp(token?: string) {
@@ -262,6 +315,18 @@ async function startProviderLogin(provider: OAuthProvider, options?: OAuthLoginO
   const codeChallenge = await createCodeChallenge(codeVerifier);
   const redirectUri = getRedirectUri();
   const errorRedirectUri = getProviderErrorRedirectUri();
+  const linkedProvider = extractIdpFromKcAction(options?.kcAction);
+  const effectiveProviderAlias = linkedProvider ?? provider.idpHint;
+
+  if (linkedProvider === provider.idpHint) {
+    const legacyLinkUrl = await buildLegacyLinkUrl(effectiveProviderAlias, redirectUri);
+
+    if (legacyLinkUrl) {
+      window.location.assign(legacyLinkUrl);
+      return;
+    }
+  }
+
   const searchParams = new URLSearchParams({
     client_id: KEYCLOAK_CLIENT_ID,
     code_challenge: codeChallenge,
