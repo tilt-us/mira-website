@@ -30,6 +30,10 @@ type OAuthProvider = {
   googleLanguage?: true;
 };
 
+type OAuthLoginOptions = {
+  kcAction?: string;
+};
+
 const accessTokenRefreshMarginMs = 60_000;
 
 let refreshPromise: Promise<AuthTokens | undefined> | undefined;
@@ -253,7 +257,7 @@ function getProviderErrorRedirectUri() {
   return redirectUri.toString();
 }
 
-async function startProviderLogin(provider: OAuthProvider) {
+async function startProviderLogin(provider: OAuthProvider, options?: OAuthLoginOptions) {
   const { state, codeVerifier } = mapOAuthProvider(provider);
   const codeChallenge = await createCodeChallenge(codeVerifier);
   const redirectUri = getRedirectUri();
@@ -277,6 +281,10 @@ async function startProviderLogin(provider: OAuthProvider) {
     searchParams.set("prompt", provider.prompt);
   }
 
+  if (options?.kcAction) {
+    searchParams.set("kc_action", options.kcAction);
+  }
+
   if (provider.googleLanguage) {
     searchParams.set("hl", "en");
   }
@@ -290,28 +298,37 @@ async function startProviderLogin(provider: OAuthProvider) {
   window.location.assign(createValidatedProviderLoginUrl(authUrl, searchParams));
 }
 
-export function startGoogleLogin() {
-  return startProviderLogin({
-    googleLanguage: true,
-    idpHint: "google",
-    name: "Google",
-    prompt: "select_account",
-  });
+export function startGoogleLogin(options?: OAuthLoginOptions) {
+  return startProviderLogin(
+    {
+      googleLanguage: true,
+      idpHint: "google",
+      name: "Google",
+      prompt: "select_account",
+    },
+    options,
+  );
 }
 
-export function startGithubLogin() {
-  return startProviderLogin({
-    idpHint: "github",
-    name: "GitHub",
-    prompt: "select_account",
-  });
+export function startGithubLogin(options?: OAuthLoginOptions) {
+  return startProviderLogin(
+    {
+      idpHint: "github",
+      name: "GitHub",
+      prompt: "select_account",
+    },
+    options,
+  );
 }
 
-export function startDiscordLogin() {
-  return startProviderLogin({
-    idpHint: "discord",
-    name: "Discord",
-  });
+export function startDiscordLogin(options?: OAuthLoginOptions) {
+  return startProviderLogin(
+    {
+      idpHint: "discord",
+      name: "Discord",
+    },
+    options,
+  );
 }
 
 function shouldRefreshAccessToken(tokens: AuthTokens) {
