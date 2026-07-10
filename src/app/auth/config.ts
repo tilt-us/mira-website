@@ -82,8 +82,12 @@ export function getCurrentKeycloakBaseUrl() {
   return normalizeKeycloakBaseUrl(KEYCLOAK_BASE_URL);
 }
 
-function getCurrentKeycloakIssuerUrl() {
+function getCurrentKeycloakIssuerUrlValue() {
   return `${getCurrentKeycloakBaseUrl()}/realms/${KEYCLOAK_REALM}`;
+}
+
+export function getCurrentKeycloakIssuerUrl() {
+  return getCurrentKeycloakIssuerUrlValue();
 }
 
 function getBrowserRedirectUri() {
@@ -107,7 +111,7 @@ export function getRedirectUri() {
 }
 
 function getKeycloakAuthUrl() {
-  return `${getCurrentKeycloakIssuerUrl()}/protocol/openid-connect/auth`;
+  return `${getCurrentKeycloakIssuerUrlValue()}/protocol/openid-connect/auth`;
 }
 
 export function getCurrentKeycloakAuthUrl() {
@@ -115,7 +119,7 @@ export function getCurrentKeycloakAuthUrl() {
 }
 
 function getKeycloakIssuerUrl() {
-  return getCurrentKeycloakIssuerUrl();
+  return getCurrentKeycloakIssuerUrlValue();
 }
 
 function getKeycloakTokenUrl() {
