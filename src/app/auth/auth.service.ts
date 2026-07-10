@@ -33,6 +33,23 @@ import {
 
 const OAUTH_ERROR_STORAGE_KEY = "mira.auth.oauthError";
 const OAUTH_ERROR_REDIRECT_FLAG = "mira_error_redirected";
+function getLocationParams(url = window.location.href) {
+  const currentUrl = new URL(url);
+  const merged = new URLSearchParams(currentUrl.search);
+
+  const hash = currentUrl.hash.startsWith("#")
+    ? currentUrl.hash.substring(1)
+    : currentUrl.hash;
+
+  const hashParams = new URLSearchParams(hash);
+  hashParams.forEach((value, key) => {
+    if (!merged.has(key)) {
+      merged.set(key, value);
+    }
+  });
+
+  return merged;
+}
 
 function mapApiUser(profile: {
   avatarUrl?: string;
@@ -130,25 +147,25 @@ export class AuthService {
   }
 
   private async syncAccessToken() {
-    const currentUrl = new URL(window.location.href);
+    const currentParams = getLocationParams(window.location.href);
     const hasOAuthResponse =
-      currentUrl.searchParams.has('code') ||
-      currentUrl.searchParams.has('kc_error') ||
-      currentUrl.searchParams.has('error') ||
-      currentUrl.searchParams.has('error_description');
+      currentParams.has('code') ||
+      currentParams.has('kc_error') ||
+      currentParams.has('error') ||
+      currentParams.has('error_description');
     const hasOAuthError =
-      currentUrl.searchParams.has('kc_error') ||
-      currentUrl.searchParams.has('error') ||
-      currentUrl.searchParams.has('error_description');
-    const hasHandledOAuthError = currentUrl.searchParams.get(OAUTH_ERROR_REDIRECT_FLAG) === '1';
+      currentParams.has('kc_error') ||
+      currentParams.has('error') ||
+      currentParams.has('error_description');
+    const hasHandledOAuthError = currentParams.get(OAUTH_ERROR_REDIRECT_FLAG) === '1';
     const returnToMainPage = () => {
       window.location.replace('/');
     };
     const returnToOAuthErrorPage = () => {
       const returnUrl = new URL("/", window.location.origin);
-      const errorCode = currentUrl.searchParams.get('error');
-      const errorDescription = currentUrl.searchParams.get('error_description');
-      const kcError = currentUrl.searchParams.get('kc_error');
+      const errorCode = currentParams.get('error');
+      const errorDescription = currentParams.get('error_description');
+      const kcError = currentParams.get('kc_error');
 
       if (errorCode) {
         returnUrl.searchParams.set('error', errorCode);
@@ -173,9 +190,9 @@ export class AuthService {
       }
 
       const error = {
-        kcError: currentUrl.searchParams.get('kc_error') === '1',
-        code: currentUrl.searchParams.get('error'),
-        description: currentUrl.searchParams.get('error_description'),
+        kcError: currentParams.get('kc_error') === '1',
+        code: currentParams.get('error'),
+        description: currentParams.get('error_description'),
       };
 
       try {
@@ -476,16 +493,28 @@ export class AuthService {
     }
   }
 
-  startGoogleLogin() {
-    return startGoogleLogin();
+  startGoogleLogin(linkExisting = false) {
+    return startGoogleLogin(
+      linkExisting
+        ? { kcAction: "idp_link:google" }
+        : undefined,
+    );
   }
 
-  startGithubLogin() {
-    return startGithubLogin();
+  startGithubLogin(linkExisting = false) {
+    return startGithubLogin(
+      linkExisting
+        ? { kcAction: "idp_link:github" }
+        : undefined,
+    );
   }
 
-  startDiscordLogin() {
-    return startDiscordLogin();
+  startDiscordLogin(linkExisting = false) {
+    return startDiscordLogin(
+      linkExisting
+        ? { kcAction: "idp_link:discord" }
+        : undefined,
+    );
   }
 }
 

@@ -339,6 +339,10 @@ describe('UserSettings', () => {
     expect(startDiscordLogin).toHaveBeenCalledTimes(1);
     expect(startGithubLogin).toHaveBeenCalledTimes(1);
 
+    expect(startGoogleLogin).toHaveBeenCalledWith(true);
+    expect(startDiscordLogin).toHaveBeenCalledWith(true);
+    expect(startGithubLogin).toHaveBeenCalledWith(true);
+
     const gitlabButton = byTestId(fixture, 'link-gitlab');
     expect(gitlabButton.hasAttribute('disabled')).toBe(true);
     expect(gitlabButton.textContent).toContain('Bald');

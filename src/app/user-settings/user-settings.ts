@@ -94,16 +94,16 @@ export class UserSettings {
     }
 
     if (providerId === 'google') {
-      this.auth.startGoogleLogin();
+      this.auth.startGoogleLogin(true);
       return;
     }
 
     if (providerId === 'discord') {
-      this.auth.startDiscordLogin();
+      this.auth.startDiscordLogin(true);
       return;
     }
 
-    this.auth.startGithubLogin();
+    this.auth.startGithubLogin(true);
   }
 
   protected getSocialButtonClasses(providerId: string): string {
