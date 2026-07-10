@@ -243,7 +243,11 @@ function mapOAuthProvider(provider: OAuthProvider) {
 }
 
 function getProviderErrorRedirectUri() {
-  const redirectUri = new URL(getRedirectUri());
+  const callbackUrl = new URL(getRedirectUri());
+  const errorRedirectHost = callbackUrl.hostname.toLowerCase() === "api.tilt-us.com"
+    ? "tilt-us.com"
+    : callbackUrl.hostname;
+  const redirectUri = new URL("/", `${callbackUrl.protocol}//${errorRedirectHost}${callbackUrl.port ? `:${callbackUrl.port}` : ""}`);
   redirectUri.searchParams.set("kc_error", "1");
 
   return redirectUri.toString();
