@@ -1,5 +1,6 @@
 import { WritableSignal, signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { By } from '@angular/platform-browser';
 import { provideRouter } from '@angular/router';
 import { Mock, vi } from 'vitest';
 
@@ -17,6 +18,7 @@ function setup(mockAuth: {
   startGoogleLogin: Mock;
   startGithubLogin: Mock;
   startDiscordLogin: Mock;
+  startPasswordUpdate: Mock;
 }): ComponentFixture<UserSettings> {
   TestBed.configureTestingModule({
     imports: [UserSettings],
@@ -35,13 +37,16 @@ function byTestId(fixture: ComponentFixture<UserSettings>, id: string): HTMLElem
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 }
 
+function openSection(fixture: ComponentFixture<UserSettings>, id: string): void {
+  (byTestId(fixture, `settings-nav-${id}`) as HTMLButtonElement).click();
+  fixture.detectChanges();
+}
+
 function castUserSettingsComponent(instance: UserSettings): {
   displayName: WritableSignal<string>;
   tagId: WritableSignal<string>;
   accentColor: WritableSignal<string>;
-  currentPassword: WritableSignal<string>;
-  newPassword: WritableSignal<string>;
-  confirmPassword: WritableSignal<string>;
+  birthday: WritableSignal<string>;
   saveProfile: () => Promise<void>;
   linkProvider: (providerId: string) => void;
   isLinkableProvider: (providerId: string) => boolean;
@@ -51,9 +56,7 @@ function castUserSettingsComponent(instance: UserSettings): {
     displayName: WritableSignal<string>;
     tagId: WritableSignal<string>;
     accentColor: WritableSignal<string>;
-    currentPassword: WritableSignal<string>;
-    newPassword: WritableSignal<string>;
-    confirmPassword: WritableSignal<string>;
+    birthday: WritableSignal<string>;
     saveProfile: () => Promise<void>;
     linkProvider: (providerId: string) => void;
     isLinkableProvider: (providerId: string) => boolean;
@@ -82,6 +85,7 @@ describe('UserSettings', () => {
       startGoogleLogin: vi.fn(),
       startGithubLogin: vi.fn(),
       startDiscordLogin: vi.fn(),
+      startPasswordUpdate: vi.fn(),
     };
   }
 
@@ -112,65 +116,79 @@ describe('UserSettings', () => {
 
     expect(component.displayName()).toBe('Mira Player');
     expect(component.tagId()).toBe('TAG-001');
+    expect(byTestId(fixture, 'account-email')?.textContent).toContain('player@tilt-us.com');
   });
 
-  it('updates ngModel controls and submits via template events', async () => {
+  it('switches sections via the sidebar navigation', () => {
+    const auth = defaultAuthMock({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+    });
+    const fixture = setup(auth);
+
+    expect(byTestId(fixture, 'settings-section-profile')).toBeTruthy();
+    expect(byTestId(fixture, 'settings-section-appearance')).toBeFalsy();
+    expect(byTestId(fixture, 'settings-nav-profile').className).toContain('is-active');
+
+    openSection(fixture, 'appearance');
+    expect(byTestId(fixture, 'settings-section-appearance')).toBeTruthy();
+    expect(byTestId(fixture, 'settings-section-profile')).toBeFalsy();
+    expect(byTestId(fixture, 'wallpaper-trigger')).toBeTruthy();
+    expect(byTestId(fixture, 'save-button')).toBeTruthy();
+
+    openSection(fixture, 'security');
+    expect(byTestId(fixture, 'settings-section-security')).toBeTruthy();
+    expect(byTestId(fixture, 'change-password-button')).toBeTruthy();
+    expect(byTestId(fixture, 'save-button')).toBeFalsy();
+
+    openSection(fixture, 'accounts');
+    expect(byTestId(fixture, 'settings-section-accounts')).toBeTruthy();
+    expect(byTestId(fixture, 'link-google')).toBeTruthy();
+    expect(byTestId(fixture, 'save-button')).toBeFalsy();
+  });
+
+  it('collects input changes across sections and saves them together', async () => {
     const auth = defaultAuthMock({
       displayName: 'Mira Player',
       email: 'player@tilt-us.com',
       tagId: 'TAG-001',
     });
     const fixture = setup(auth);
-    const component = castUserSettingsComponent(fixture.componentInstance);
+
     const displayName = byTestId(fixture, 'display-name') as HTMLInputElement;
     const tagId = byTestId(fixture, 'tag-id') as HTMLInputElement;
-    const accent = byTestId(fixture, 'accent-color') as HTMLInputElement;
 
     displayName.value = 'Changed Player';
     displayName.dispatchEvent(new Event('input', { bubbles: true }));
     tagId.value = 'TAG-007';
     tagId.dispatchEvent(new Event('input', { bubbles: true }));
+    fixture.debugElement
+      .query(By.css('[data-testid="birthday"]'))
+      .triggerEventHandler('valueChange', '2000-01-01');
+    fixture.detectChanges();
+
+    expect(castUserSettingsComponent(fixture.componentInstance).birthday()).toBe('2000-01-01');
+
+    openSection(fixture, 'appearance');
+
+    const accent = byTestId(fixture, 'accent-color') as HTMLInputElement;
     accent.value = '#123456';
     accent.dispatchEvent(new Event('input', { bubbles: true }));
-    (byTestId(fixture, 'birthday') as HTMLElement).dispatchEvent(
-      new CustomEvent('valueChange', { detail: '2000-01-01' }),
-    );
+    fixture.detectChanges();
 
+    (byTestId(fixture, 'save-button') as HTMLButtonElement).click();
     fixture.detectChanges();
     await fixture.whenStable();
     fixture.detectChanges();
 
-    const currentPassword = byTestId(fixture, 'current-password') as HTMLInputElement;
-    const newPassword = byTestId(fixture, 'new-password') as HTMLInputElement;
-    const confirmPassword = byTestId(fixture, 'confirm-password') as HTMLInputElement;
-
-    currentPassword.value = 'old-password';
-    currentPassword.dispatchEvent(new Event('input', { bubbles: true }));
-    newPassword.value = 'new-password';
-    newPassword.dispatchEvent(new Event('input', { bubbles: true }));
-    confirmPassword.value = 'new-password';
-    confirmPassword.dispatchEvent(new Event('input', { bubbles: true }));
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
-      new Event('submit', { bubbles: true }),
-    );
-    fixture.detectChanges();
-    await fixture.whenStable();
-    fixture.detectChanges();
-
-    expect(component.currentPassword()).toBe('old-password');
-    expect(component.newPassword()).toBe('new-password');
-    expect(component.confirmPassword()).toBe('new-password');
     expect(auth.saveProfile).toHaveBeenCalledWith({
       displayName: 'Changed Player',
       tagId: 'TAG-007',
       accentColor: '#123456',
     });
-
-    fixture.detectChanges();
-    expect(byTestId(fixture, 'settings-save-status')?.textContent).toContain('Änderungen gespeichert.');
+    expect(byTestId(fixture, 'settings-save-status')?.textContent).toContain(
+      'Änderungen gespeichert.',
+    );
   });
 
   it('sends changed fields to auth.saveProfile', async () => {
@@ -310,6 +328,19 @@ describe('UserSettings', () => {
     expect(byTestId(fixture, 'settings-save-error')?.textContent).toContain('Netzfehler');
   });
 
+  it('starts the Keycloak password update from the security section', () => {
+    const auth = defaultAuthMock({
+      displayName: 'Mira Player',
+      email: 'player@tilt-us.com',
+    });
+    const fixture = setup(auth);
+
+    openSection(fixture, 'security');
+    (byTestId(fixture, 'change-password-button') as HTMLButtonElement).click();
+
+    expect(auth.startPasswordUpdate).toHaveBeenCalledTimes(1);
+  });
+
   it('starts provider linking from buttons and ignores unsupported providers', () => {
     const startGoogleLogin = vi.fn();
     const startGithubLogin = vi.fn();
@@ -326,6 +357,7 @@ describe('UserSettings', () => {
     auth.startDiscordLogin = startDiscordLogin;
 
     const fixture = setup(auth);
+    openSection(fixture, 'accounts');
 
     byTestId(fixture, 'link-google').click();
     byTestId(fixture, 'link-discord').click();
@@ -354,6 +386,7 @@ describe('UserSettings', () => {
       email: 'player@tilt-us.com',
     });
     const fixture = setup(auth);
+    openSection(fixture, 'accounts');
 
     expect(byTestId(fixture, 'link-google')?.hasAttribute('disabled')).toBe(false);
     expect(byTestId(fixture, 'link-discord')?.hasAttribute('disabled')).toBe(false);

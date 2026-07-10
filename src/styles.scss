@@ -307,6 +307,53 @@
       focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand;
   }
 
+  // Settings page: dark card panels with a gold accent bar, one row per option.
+  .settings-card {
+    @apply overflow-hidden rounded-2xl border border-surface-border bg-surface/80 shadow-xl
+      backdrop-blur;
+  }
+
+  .settings-card-header {
+    @apply flex items-start gap-3 border-b border-surface-border px-6 py-5;
+  }
+
+  .settings-accent-bar {
+    @apply mt-0.5 h-6 w-1 shrink-0 rounded-full bg-brand;
+  }
+
+  .settings-card-title {
+    @apply text-lg font-bold tracking-wide;
+  }
+
+  .settings-card-subtitle {
+    @apply mt-0.5 text-sm text-white/50;
+  }
+
+  .settings-row {
+    @apply grid gap-3 px-6 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,20rem)] sm:items-center;
+  }
+
+  .settings-row-label {
+    @apply text-sm font-semibold;
+  }
+
+  .settings-row-hint {
+    @apply mt-1 text-xs text-white/45;
+  }
+
+  .settings-nav-item {
+    @apply w-full whitespace-nowrap rounded-lg border-l-2 border-transparent px-4 py-2.5
+      text-left text-sm font-semibold tracking-wide text-white/60 transition-colors
+      hover:bg-white/5 hover:text-white focus:outline-none focus-visible:ring-2
+      focus-visible:ring-brand;
+
+    &.is-active {
+      @apply border-brand text-brand;
+      // brand is a CSS variable, so Tailwind's alpha modifier can't be used here.
+      background: color-mix(in srgb, var(--app-brand) 12%, transparent);
+    }
+  }
+
   // Hidden until the carousel is hovered or focused (see .event-carousel rules).
   .event-carousel-nav {
     @apply pointer-events-none absolute top-1/2 z-20 inline-flex h-11 w-11 -translate-y-1/2

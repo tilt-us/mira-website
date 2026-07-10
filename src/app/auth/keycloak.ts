@@ -363,6 +363,39 @@ async function startProviderLogin(provider: OAuthProvider, options?: OAuthLoginO
   window.location.assign(createValidatedProviderLoginUrl(authUrl, searchParams));
 }
 
+// Password changes go through Keycloak's UPDATE_PASSWORD required action; the
+// user comes back through the regular OAuth callback handled in AuthService.
+export async function startPasswordUpdate() {
+  const state = createRandomString(24);
+  const codeVerifier = createRandomString(64);
+  const codeChallenge = await createCodeChallenge(codeVerifier);
+  const redirectUri = getRedirectUri();
+  const errorRedirectUri = getProviderErrorRedirectUri();
+
+  const searchParams = new URLSearchParams({
+    client_id: KEYCLOAK_CLIENT_ID,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
+    kc_action: "UPDATE_PASSWORD",
+    redirect_uri: redirectUri,
+    kc_error_redirect_uri: errorRedirectUri,
+    error_redirect_uri: errorRedirectUri,
+    fallback_uri: errorRedirectUri,
+    returnTo: errorRedirectUri,
+    response_type: "code",
+    scope: "openid email profile",
+    state,
+  });
+
+  const authUrl = getCurrentKeycloakAuthUrl();
+
+  assertConfiguredUrl(authUrl, "Keycloak-Auth-URL");
+  assertConfiguredPath(redirectUri, "Redirect-URI");
+  saveOAuthRequest(state, codeVerifier, redirectUri);
+
+  window.location.assign(createValidatedProviderLoginUrl(authUrl, searchParams));
+}
+
 export function startGoogleLogin(options?: OAuthLoginOptions) {
   return startProviderLogin(
     {
