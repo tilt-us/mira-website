@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { Home } from './home/home';
+import { JobsPage } from './jobs/jobs-page';
 import { LegalPage } from './legal/legal-page/legal-page';
 import { PlaceholderPage } from './placeholder/placeholder-page';
 import { UserSettings } from './user-settings/user-settings';
@@ -49,16 +50,7 @@ export const routes: Routes = [
       },
     },
   },
-  {
-    path: 'jobs',
-    component: PlaceholderPage,
-    data: {
-      placeholder: {
-        title: 'Jobs',
-        tagline: 'Want to help build Mira? Open positions will be listed here.',
-      },
-    },
-  },
+  { path: 'jobs', component: JobsPage },
   {
     path: 'terms-of-use',
     component: LegalPage,
