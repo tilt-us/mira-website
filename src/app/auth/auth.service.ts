@@ -10,7 +10,6 @@ import {
   startGithubLogin,
   startGoogleLogin,
   startKeycloakLogout,
-  startPasswordUpdate,
 } from './keycloak';
 import {
   clearOAuthRequest,
@@ -31,10 +30,6 @@ import {
   updateTagId,
   updateUsername,
 } from '../../api/sdk.gen';
-import {
-  ClientSettingsResponse,
-  UpdateClientSettingsRequest,
-} from '../../api/types.gen';
 
 const OAUTH_ERROR_STORAGE_KEY = "mira.auth.oauthError";
 const OAUTH_ERROR_REDIRECT_FLAG = "mira_error_redirected";
@@ -73,33 +68,6 @@ function mapApiUser(profile: {
     preferredUsername: profile.preferredUsername,
     tagId: profile.tagId,
     avatarRightsConsented: profile.avatarRightsConsented,
-  };
-}
-
-function toSettingsUpdatePayload(current: ClientSettingsResponse): UpdateClientSettingsRequest {
-  const folders = (current.folders ?? []).flatMap((folder) =>
-    folder.name
-      ? [{
-          name: folder.name,
-          moveHereWhen: folder.moveHereWhen,
-          friendPublicIds: folder.friendPublicIds,
-        }]
-      : [],
-  );
-
-  return {
-    resolution: current.resolution,
-    uiScale: current.uiScale,
-    accentColor: current.accentColor,
-    background: current.background,
-    clientAnimation: current.clientAnimation,
-    language: current.language,
-    chatPosition: current.chatPosition,
-    screenMode: current.screenMode,
-    allowFriendRequest: current.allowFriendRequest,
-    showEmailPublic: current.showEmailPublic,
-    useFriendColors: current.useFriendColors,
-    ...(folders.length > 0 ? { folders } : {}),
   };
 }
 
@@ -485,14 +453,8 @@ export class AuthService {
       }
 
       if (payload.accentColor !== undefined || payload.background !== undefined) {
-        // The settings record is shared with the game client (resolution, ui scale,
-        // friend folders, ...) and the PUT is not guaranteed to merge partial bodies.
-        // Send the current record back in full with only our fields changed so a
-        // replace on the backend cannot wipe client-managed values.
-        const currentSettings = (await getSettings({ throwOnError: true })).data ?? {};
-
         await updateSettings({
-          body: { ...toSettingsUpdatePayload(currentSettings), ...payload },
+          body: payload,
           throwOnError: true,
         });
       }
@@ -553,10 +515,6 @@ export class AuthService {
         ? { kcAction: "idp_link:discord" }
         : undefined,
     );
-  }
-
-  startPasswordUpdate() {
-    return startPasswordUpdate();
   }
 }
 

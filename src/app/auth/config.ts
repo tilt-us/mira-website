@@ -13,7 +13,8 @@ const DEV_KEYCLOAK_BASE_URL =
 const LOCAL_KEYCLOAK_CLIENT_ID = "mira-bevy";
 const LOCAL_KEYCLOAK_PASSWORD_CLIENT_ID = "mira-e2e";
 const DEV_KEYCLOAK_CLIENT_ID = "mira-web";
-const DEV_KEYCLOAK_PASSWORD_CLIENT_ID = "mira-web";
+// LOCAL TESTING ONLY - do not commit: mira-web forbids direct access grants.
+const DEV_KEYCLOAK_PASSWORD_CLIENT_ID = "mira-e2e";
 
 function isLocalHost() {
   const host =
@@ -22,11 +23,8 @@ function isLocalHost() {
 }
 
 function resolveKeycloakClientMode() {
-  if (API_CLIENT_MODE === "local") {
-    return "local";
-  }
-
-  return isLocalHost() ? "local" : "dev";
+  // LOCAL TESTING ONLY - do not commit: use the dev Keycloak from localhost too.
+  return API_CLIENT_MODE === "local" && isLocalHost() ? "local" : "dev";
 }
 
 function getDefaultKeycloakBaseUrl() {

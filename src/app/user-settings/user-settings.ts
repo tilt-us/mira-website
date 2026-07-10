@@ -1,4 +1,5 @@
 import { Component, inject, linkedSignal, signal } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 
 import { AuthService } from '../auth/auth.service';
 import { DatePicker } from '../shared/date-picker/date-picker';
@@ -8,16 +9,9 @@ import { WallpaperService } from '../shared/wallpaper.service';
 import { ACCOUNT_PROVIDERS } from './account-providers';
 import { normalizeLoginError } from '../auth/auth.service';
 
-export type SettingsSectionId = 'profile' | 'appearance' | 'security' | 'accounts';
-
-export interface SettingsSection {
-  readonly id: SettingsSectionId;
-  readonly label: string;
-}
-
 @Component({
   selector: 'app-user-settings',
-  imports: [DatePicker, WallpaperPicker],
+  imports: [FormsModule, DatePicker, WallpaperPicker],
   templateUrl: './user-settings.html',
 })
 export class UserSettings {
@@ -30,14 +24,6 @@ export class UserSettings {
   protected readonly saveStatus = signal('');
   protected readonly socialProviderIds = ['google', 'discord', 'github'];
 
-  protected readonly sections: readonly SettingsSection[] = [
-    { id: 'profile', label: 'Profile' },
-    { id: 'appearance', label: 'Appearance' },
-    { id: 'security', label: 'Security' },
-    { id: 'accounts', label: 'Linked accounts' },
-  ];
-  protected readonly activeSection = signal<SettingsSectionId>('profile');
-
   // Persisted via the backend when changed.
   protected readonly displayName = linkedSignal(() => this.auth.user()?.displayName ?? '');
   protected readonly tagId = linkedSignal(() => this.auth.user()?.tagId ?? '');
@@ -45,9 +31,10 @@ export class UserSettings {
   protected readonly birthday = signal('');
   protected readonly selectedWallpaper = signal(this.wallpaperService.wallpaper());
 
-  protected selectSection(id: SettingsSectionId): void {
-    this.activeSection.set(id);
-  }
+  // Change-password form — placeholder only, nothing is sent anywhere yet.
+  protected readonly currentPassword = signal('');
+  protected readonly newPassword = signal('');
+  protected readonly confirmPassword = signal('');
 
   protected async saveProfile(): Promise<void> {
     this.saveError.set('');
@@ -92,12 +79,9 @@ export class UserSettings {
     }
   }
 
-  protected onSaveClick(): void {
+  protected onProfileSubmit(event: Event): void {
+    event.preventDefault();
     void this.saveProfile();
-  }
-
-  protected changePassword(): void {
-    this.auth.startPasswordUpdate();
   }
 
   protected isLinkableProvider(providerId: string): boolean {
