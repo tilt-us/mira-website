@@ -22,7 +22,7 @@ export class Footer {
   protected readonly year = new Date().getFullYear();
   protected readonly discordUrl = DISCORD_INVITE_URL;
 
-  // "Jobs" is a placeholder page for now (tracked in the wiki).
+  // Explore links and "Report" are placeholder pages for now (tracked in the wiki).
   protected readonly columns: FooterColumn[] = [
     {
       heading: 'Explore',

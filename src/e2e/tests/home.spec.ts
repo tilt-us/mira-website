@@ -31,11 +31,11 @@ test.describe('Main page', () => {
     expect((await header.boundingBox())?.y).toBe(0);
   });
 
-  test('links to the jobs placeholder from the footer', async ({ page }) => {
+  test('links to the jobs page from the footer', async ({ page }) => {
     await page.goto('/');
 
     await page.getByRole('navigation', { name: 'Company' }).getByText('Jobs').click();
     await expect(page).toHaveURL(/\/jobs$/);
-    await expect(page.getByRole('heading', { name: 'Jobs' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Join the team', level: 1 })).toBeVisible();
   });
 });
