@@ -1,0 +1,220 @@
+<section class="mx-auto max-w-6xl px-6 pb-24 2xl:max-w-[110rem]" aria-label="My builds">
+  @if (!auth.isLoggedIn()) {
+    <div
+      class="mx-auto max-w-xl rounded-2xl border border-surface-border bg-surface-raised/60 p-8 text-center backdrop-blur"
+      data-testid="my-builds-login"
+      appReveal
+    >
+      <h2 class="text-2xl font-semibold">Sign in to build</h2>
+      <p class="mt-3 text-white/70">
+        Your builds are tied to your Mira account so you can publish them to the community.
+      </p>
+      <button type="button" class="btn-primary mt-6" data-testid="my-builds-login-button" (click)="login()">
+        Log in
+      </button>
+    </div>
+  } @else {
+    <div class="flex flex-wrap items-center justify-between gap-4" appReveal>
+      <p class="text-sm text-white/60" data-testid="my-builds-count">
+        {{ own().length }} {{ own().length === 1 ? 'build' : 'builds' }} ·
+        {{ publishedCount() }} published
+      </p>
+
+      @if (!formOpen()) {
+        <button type="button" class="btn-primary" data-testid="build-create" (click)="openCreate()">
+          New build
+        </button>
+      }
+    </div>
+
+    @if (formOpen()) {
+      <form
+        class="mt-6 rounded-2xl border border-surface-border bg-surface-raised/60 p-6 backdrop-blur"
+        data-testid="build-form"
+        (ngSubmit)="save()"
+      >
+        <h2 class="text-xl font-semibold">
+          {{ editingId() ? 'Edit build' : 'Create a build' }}
+        </h2>
+
+        <div class="mt-6 grid gap-5 md:grid-cols-2">
+          <label class="flex flex-col gap-1.5 md:col-span-2">
+            <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Title</span>
+            <input
+              class="input"
+              name="title"
+              placeholder="e.g. Tempo Lira — rewind the teamfight"
+              data-testid="build-form-title"
+              [ngModel]="draft().title"
+              (ngModelChange)="setTitle($event)"
+            />
+          </label>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+              Champion
+            </span>
+            <select
+              class="input"
+              name="champion"
+              data-testid="build-form-champion"
+              [ngModel]="draft().championId"
+              (ngModelChange)="setChampion($event)"
+            >
+              @for (champion of champions; track champion.id) {
+                <option [value]="champion.id">{{ champion.name }} — {{ champion.epithet }}</option>
+              }
+            </select>
+          </label>
+
+          <label class="flex flex-col gap-1.5">
+            <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Role</span>
+            <select
+              class="input"
+              name="role"
+              data-testid="build-form-role"
+              [ngModel]="draft().role"
+              (ngModelChange)="setRole($event)"
+            >
+              @for (option of roles; track option) {
+                <option [value]="option">{{ option }}</option>
+              }
+            </select>
+          </label>
+        </div>
+
+        <fieldset class="mt-6">
+          <legend class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+            Items — click in buy order
+          </legend>
+          <div class="mt-3 flex flex-wrap gap-2">
+            @for (item of items; track item.id) {
+              <button
+                type="button"
+                class="rounded-lg border px-3 py-2 text-xs transition-colors"
+                [class]="
+                  isItemSelected(item.id)
+                    ? 'border-brand bg-brand/20 text-brand'
+                    : 'border-surface-border text-white/70 hover:bg-surface-raised-hover/60'
+                "
+                [attr.aria-pressed]="isItemSelected(item.id)"
+                [title]="item.description"
+                data-testid="build-form-item"
+                (click)="toggleItem(item.id)"
+              >
+                {{ item.name }}
+              </button>
+            }
+          </div>
+
+          <p class="mt-3 text-sm text-white/50" data-testid="build-form-item-order">
+            {{ draft().itemIds.length }} selected
+          </p>
+        </fieldset>
+
+        <fieldset class="mt-6">
+          <legend class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+            Skill order
+          </legend>
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            @for (slot of skillSlots; track slot) {
+              <button
+                type="button"
+                class="btn-ghost h-10 min-h-0 w-10 px-0 py-0 text-sm font-bold"
+                data-testid="build-form-skill"
+                (click)="addSkill(slot)"
+              >
+                {{ slot }}
+              </button>
+            }
+
+            <button type="button" class="link ml-2 text-sm" data-testid="build-form-skill-undo" (click)="undoSkill()">
+              Undo
+            </button>
+            <button type="button" class="link text-sm" data-testid="build-form-skill-clear" (click)="clearSkills()">
+              Clear
+            </button>
+          </div>
+
+          <p class="mt-3 text-sm text-white/60" data-testid="build-form-skill-order">
+            {{ draft().skillOrder.length ? draft().skillOrder.join(' → ') : 'No skills added yet' }}
+          </p>
+        </fieldset>
+
+        <label class="mt-6 flex flex-col gap-1.5">
+          <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Summary</span>
+          <textarea
+            class="input min-h-[6rem]"
+            name="summary"
+            rows="3"
+            placeholder="When is this build strong, and how do you play it?"
+            data-testid="build-form-summary"
+            [ngModel]="draft().summary"
+            (ngModelChange)="setSummary($event)"
+          ></textarea>
+        </label>
+
+        <label class="mt-5 flex flex-col gap-1.5">
+          <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">
+            Tags — comma separated
+          </span>
+          <input
+            class="input"
+            name="tags"
+            placeholder="teamfight, ranked, scaling"
+            data-testid="build-form-tags"
+            [ngModel]="tagInput()"
+            (ngModelChange)="setTags($event)"
+          />
+        </label>
+
+        <label class="mt-5 flex items-center gap-3 text-sm text-white/70">
+          <input
+            type="checkbox"
+            name="published"
+            class="h-4 w-4 accent-brand"
+            data-testid="build-form-published"
+            [ngModel]="draft().published"
+            (ngModelChange)="setPublished($event)"
+          />
+          Publish to the community list
+        </label>
+
+        @if (error()) {
+          <p class="mt-5 text-sm text-red-400" data-testid="build-form-error">{{ error() }}</p>
+        }
+
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button type="submit" class="btn-primary" data-testid="build-form-save">
+            {{ editingId() ? 'Save changes' : 'Create build' }}
+          </button>
+          <button type="button" class="btn-ghost" data-testid="build-form-cancel" (click)="closeForm()">
+            Cancel
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (isLoading()) {
+      <p class="mt-10 text-center text-white/50" data-testid="my-builds-loading">Loading builds…</p>
+    } @else if (own().length === 0) {
+      <p class="mt-10 text-center text-white/70" data-testid="my-builds-empty">
+        You have not created a build yet.
+      </p>
+    } @else {
+      <ul class="mt-8 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+        @for (build of own(); track build.id) {
+          <li appReveal>
+            <app-build-card
+              [build]="build"
+              [showOwnerActions]="true"
+              (edit)="openEdit($event)"
+              (remove)="remove($event)"
+              (publishToggled)="togglePublished($event)"
+            />
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

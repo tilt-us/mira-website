@@ -1,5 +1,8 @@
 import { Routes } from '@angular/router';
 
+import { BuildsPage } from './builds/builds-page';
+import { CommunityBuilds } from './builds/community-builds/community-builds';
+import { MyBuilds } from './builds/my-builds/my-builds';
 import { CharactersPage } from './characters/characters-page/characters-page';
 import { Home } from './home/home';
 import { JobsPage } from './jobs/jobs-page';
@@ -24,13 +27,12 @@ export const routes: Routes = [
   },
   {
     path: 'builds',
-    component: PlaceholderPage,
-    data: {
-      placeholder: {
-        title: 'Builds',
-        tagline: 'Craft, share and discover powerful builds.',
-      },
-    },
+    component: BuildsPage,
+    children: [
+      { path: '', redirectTo: 'community', pathMatch: 'full' },
+      { path: 'community', component: CommunityBuilds },
+      { path: 'my', component: MyBuilds },
+    ],
   },
   {
     path: 'streamers',
