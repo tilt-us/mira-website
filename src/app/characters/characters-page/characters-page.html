@@ -1,0 +1,84 @@
+<!-- Roster hero, matching the cinematic style of the home and careers pages. -->
+<section class="mx-auto max-w-4xl px-6 pb-12 pt-32 text-center sm:pt-40" appReveal>
+  <p class="text-xs font-semibold uppercase tracking-[0.4em] text-brand sm:text-sm">Characters</p>
+  <h1 class="mt-4 text-4xl font-black uppercase tracking-[0.15em] sm:text-6xl">The roster</h1>
+  <p class="mt-4 text-lg text-white/70">
+    Read up on where the fighters of Mira come from, or compare their stats and abilities.
+  </p>
+</section>
+
+<section class="mx-auto max-w-5xl px-6 pb-24" aria-label="Character roster">
+  <div class="mb-6 flex flex-wrap items-center justify-between gap-4" appReveal>
+    <ul class="flex flex-wrap gap-2" aria-label="Filter by role">
+      @for (role of roles(); track role) {
+        <li>
+          <button
+            type="button"
+            class="rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-widest transition-colors"
+            [class]="
+              activeRole() === role
+                ? 'border-brand bg-brand/10 text-brand'
+                : 'border-surface-border bg-surface/60 text-white/60 hover:bg-surface-raised'
+            "
+            [attr.aria-pressed]="activeRole() === role"
+            data-testid="role-filter"
+            (click)="selectRole(role)"
+          >
+            {{ role }}
+          </button>
+        </li>
+      }
+    </ul>
+
+    <p class="text-sm text-white/60" data-testid="character-count">
+      {{ visibleCharacters().length }} characters
+    </p>
+  </div>
+
+  <p class="mb-8 text-sm text-white/50" data-testid="placeholder-notice">{{ notice }}</p>
+
+  <ul class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    @for (character of visibleCharacters(); track character.id) {
+      <li appReveal>
+        <a
+          [routerLink]="['/characters', character.id]"
+          class="group flex h-full flex-col overflow-hidden rounded-2xl border border-surface-border bg-surface-raised/80 backdrop-blur transition-colors hover:bg-surface-raised-hover/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+          data-testid="character-card"
+        >
+          <figure class="relative aspect-[4/5] overflow-hidden">
+            <img
+              [src]="character.image"
+              [alt]="character.name + ' artwork'"
+              class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              loading="lazy"
+            />
+            <figcaption
+              class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent p-5 pt-16"
+            >
+              <span class="block text-xs font-semibold uppercase tracking-[0.3em] text-brand">
+                {{ character.epithet }}
+              </span>
+              <span class="mt-1 block text-2xl font-semibold">{{ character.name }}</span>
+            </figcaption>
+          </figure>
+
+          <div class="flex grow flex-col gap-3 px-5 py-4">
+            <span
+              class="w-fit rounded-full border border-surface-border px-3 py-1 text-xs uppercase tracking-widest text-white/60"
+              data-testid="character-role"
+            >
+              {{ character.role }}
+            </span>
+            <p class="text-sm text-white/70">{{ character.tagline }}</p>
+          </div>
+        </a>
+      </li>
+    }
+  </ul>
+
+  @if (visibleCharacters().length === 0) {
+    <p class="text-center text-white/60" data-testid="empty-roster">
+      No characters match this role yet.
+    </p>
+  }
+</section>

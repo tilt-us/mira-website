@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 
+import { CharacterDetail } from './characters/character-detail/character-detail';
+import { CharactersPage } from './characters/characters-page/characters-page';
 import { Home } from './home/home';
 import { JobsPage } from './jobs/jobs-page';
 import { LegalPage } from './legal/adapters/ui/legal-page';
@@ -10,6 +12,8 @@ export const routes: Routes = [
   { path: '', component: Home },
   { path: 'auth', redirectTo: '', pathMatch: 'full' },
   { path: 'settings', component: UserSettings },
+  { path: 'characters', component: CharactersPage },
+  { path: 'characters/:id', component: CharacterDetail },
   {
     path: 'leaderboards',
     component: PlaceholderPage,
