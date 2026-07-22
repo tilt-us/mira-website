@@ -6,6 +6,7 @@ import {
   completeRedirectLogin,
   getValidAccessToken,
   loginWithPassword,
+  startAccountAction,
   startDiscordLogin,
   startGithubLogin,
   startGoogleLogin,
@@ -17,16 +18,14 @@ import {
   readTokens,
   saveTokens,
 } from './storage';
-import { ThemeService } from '../shared/theme.service';
-import { WallpaperService } from '../shared/wallpaper.service';
+import { ClientSettingsService } from '../shared/client-settings.service';
 import { AuthUser, RegisterPayload } from './auth.types';
 import {
-  getSettings,
+  confirmAvatarRights,
   loginOptions,
   logout as apiLogout,
   me,
   register,
-  updateSettings,
   updateTagId,
   updateUsername,
 } from '../../api/sdk.gen';
@@ -108,8 +107,7 @@ function mapAuthErrorMessage(message: string): string {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private readonly themeService = inject(ThemeService);
-  private readonly wallpaperService = inject(WallpaperService);
+  private readonly clientSettings = inject(ClientSettingsService);
   private readonly currentUser = signal<AuthUser | null>(null);
   private readonly providerState = signal<string[]>([]);
   private readonly initialized = signal(false);
@@ -128,7 +126,7 @@ export class AuthService {
 
   constructor() {
     setApiAccessToken(undefined);
-    this.themeService.applyDefaults();
+    this.clientSettings.reset();
     this.bootstrapPromise = this.bootstrap();
   }
 
@@ -210,7 +208,7 @@ export class AuthService {
         if (hasOAuthError) {
           clearOAuthRequest();
           this.currentUser.set(null);
-          this.themeService.applyDefaults();
+          this.clientSettings.reset();
 
           if (!hasHandledOAuthError) {
             returnToOAuthErrorPage();
@@ -224,7 +222,7 @@ export class AuthService {
         if (!tokens) {
           clearOAuthRequest();
           this.currentUser.set(null);
-          this.themeService.applyDefaults();
+          this.clientSettings.reset();
           returnToMainPage();
           return;
         }
@@ -242,7 +240,7 @@ export class AuthService {
         clearTokens();
         setApiAccessToken(undefined);
         this.currentUser.set(null);
-        this.themeService.applyDefaults();
+        this.clientSettings.reset();
         return;
       }
 
@@ -252,7 +250,7 @@ export class AuthService {
       clearTokens();
       setApiAccessToken(undefined);
       this.currentUser.set(null);
-      this.themeService.applyDefaults();
+      this.clientSettings.reset();
       if (hasOAuthResponse) {
         persistOAuthError();
         returnToMainPage();
@@ -295,17 +293,11 @@ export class AuthService {
     this.currentUser.set(profile ? mapApiUser(profile) : null);
 
     if (!profile) {
-      this.themeService.applyDefaults();
+      this.clientSettings.reset();
       return;
     }
 
-    try {
-      const settings = (await getSettings({ throwOnError: true })).data;
-      this.themeService.applyAccent(settings?.accentColor);
-      this.wallpaperService.setFromServer(settings?.background);
-    } catch {
-      this.themeService.applyDefaults();
-    }
+    await this.clientSettings.load();
   }
 
   /**
@@ -402,59 +394,42 @@ export class AuthService {
     }
   }
 
-  async saveProfile(options: {
-    displayName?: string;
-    tagId?: string;
-    accentColor?: string;
-    background?: string;
-  }): Promise<void> {
+  /**
+   * Persists the identity fields. Display name and tag id live behind their own
+   * endpoints; everything else the settings page offers belongs to
+   * {@link ClientSettingsService}.
+   */
+  async saveProfile(options: { displayName?: string; tagId?: string }): Promise<void> {
+    if (!this.isLoggedIn()) {
+      throw new Error('Nicht angemeldet.');
+    }
+
+    const currentDisplayName = this.user()?.displayName ?? '';
+    const currentTagId = this.user()?.tagId ?? '';
+    const nextDisplayName =
+      options.displayName !== undefined && options.displayName !== currentDisplayName
+        ? options.displayName
+        : undefined;
+    const nextTagId =
+      options.tagId !== undefined && options.tagId !== currentTagId ? options.tagId : undefined;
+
+    if (nextDisplayName === undefined && nextTagId === undefined) {
+      return;
+    }
+
     this.loadingState.set(true);
 
     try {
-      const currentDisplayName = this.user()?.displayName ?? '';
-      const currentTagId = this.user()?.tagId ?? '';
-
-      if (
-        !this.isLoggedIn() ||
-        (options.displayName === undefined &&
-          options.tagId === undefined &&
-          options.accentColor === undefined &&
-          options.background === undefined)
-      ) {
-        return;
-      }
-
-      const payload: { accentColor?: string; background?: string } = {};
-
-      if (options.accentColor !== undefined) {
-        payload.accentColor = options.accentColor;
-      }
-
-      if (options.background !== undefined) {
-        payload.background = options.background;
-      }
-
-      if (options.displayName !== undefined && options.displayName !== currentDisplayName) {
+      if (nextDisplayName !== undefined) {
         await updateUsername({
-          body: {
-            username: options.displayName,
-          },
+          body: { username: nextDisplayName },
           throwOnError: true,
         });
       }
 
-      if (options.tagId !== undefined && options.tagId !== currentTagId) {
+      if (nextTagId !== undefined) {
         await updateTagId({
-          body: {
-            tagId: options.tagId,
-          },
-          throwOnError: true,
-        });
-      }
-
-      if (payload.accentColor !== undefined || payload.background !== undefined) {
-        await updateSettings({
-          body: payload,
+          body: { tagId: nextTagId },
           throwOnError: true,
         });
       }
@@ -463,6 +438,27 @@ export class AuthService {
     } finally {
       this.loadingState.set(false);
     }
+  }
+
+  /** Confirms that the user holds the rights to their avatar image. */
+  async confirmAvatarRights(): Promise<void> {
+    this.loadingState.set(true);
+
+    try {
+      await confirmAvatarRights({ throwOnError: true });
+      await this.loadProfile();
+    } finally {
+      this.loadingState.set(false);
+    }
+  }
+
+  /**
+   * Hands the password change to Keycloak (application-initiated action).
+   * Passwords never pass through the website, and accounts that only exist
+   * through an identity provider get their credential set up there.
+   */
+  startPasswordUpdate() {
+    return startAccountAction('UPDATE_PASSWORD');
   }
 
   async logout(): Promise<void> {
@@ -489,7 +485,7 @@ export class AuthService {
       clearTokens();
       setApiAccessToken(undefined);
       this.currentUser.set(null);
-      this.themeService.applyDefaults();
+      this.clientSettings.reset();
     }
   }
 

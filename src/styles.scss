@@ -331,6 +331,201 @@
       @apply bg-brand;
     }
   }
+
+  // Settings page — section list on the left, one panel of rows on the right,
+  // mirroring the layout of the in-game client settings.
+  .settings-shell {
+    @apply grid overflow-hidden rounded-2xl border border-white/10 bg-black/55 shadow-2xl
+      backdrop-blur-xl md:grid-cols-[16rem_minmax(0,1fr)];
+  }
+
+  .settings-nav {
+    @apply flex flex-col gap-1 border-b border-white/10 bg-black/35 p-4
+      md:border-b-0 md:border-r;
+  }
+
+  .settings-nav-title {
+    @apply mb-3 px-3 text-[0.65rem] font-bold uppercase tracking-[0.35em] text-white/40;
+  }
+
+  .settings-nav-item {
+    @apply relative rounded-md px-3 py-2.5 text-left text-sm font-semibold uppercase
+      tracking-wider text-white/55 transition-colors hover:bg-white/5 hover:text-white
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+
+    // Gold marker on the active entry, as in the client.
+    &.is-active {
+      @apply bg-white/5 text-white;
+
+      &::before {
+        content: '';
+        @apply absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-brand;
+      }
+    }
+  }
+
+  .settings-nav-user {
+    @apply mt-4 flex flex-col gap-0.5 border-t border-white/10 px-3 pt-4 md:mt-auto;
+  }
+
+  .settings-nav-user-name {
+    @apply truncate text-sm font-semibold;
+  }
+
+  .settings-nav-user-mail {
+    @apply truncate text-xs text-white/40;
+  }
+
+  .settings-panel {
+    @apply flex min-h-[34rem] flex-col;
+  }
+
+  .settings-panel-head {
+    @apply border-b border-white/10 px-6 py-5 sm:px-8;
+  }
+
+  .settings-panel-title {
+    @apply text-xl font-bold uppercase tracking-[0.18em];
+  }
+
+  .settings-panel-hint {
+    @apply mt-1 text-sm text-white/45;
+  }
+
+  .settings-panel-body {
+    @apply flex flex-1 flex-col px-6 sm:px-8;
+  }
+
+  .settings-row {
+    @apply grid gap-3 border-b border-white/5 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]
+      sm:items-center sm:gap-8;
+
+    &:last-of-type {
+      @apply border-b-0;
+    }
+  }
+
+  .settings-row-stacked {
+    @apply sm:grid-cols-1 sm:gap-4;
+  }
+
+  .settings-row-text {
+    @apply flex flex-col gap-1;
+  }
+
+  .settings-row-label {
+    @apply text-sm font-semibold;
+  }
+
+  .settings-row-hint {
+    @apply text-xs leading-relaxed text-white/40;
+  }
+
+  .settings-row-control {
+    @apply flex items-center;
+  }
+
+  .settings-row-control-end {
+    @apply sm:justify-end;
+  }
+
+  .settings-readonly {
+    @apply text-sm text-white/50;
+  }
+
+  .settings-color {
+    @apply h-10 w-16 cursor-pointer rounded-lg border border-surface-border bg-surface p-1;
+  }
+
+  .settings-range {
+    @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/15 accent-brand;
+  }
+
+  .settings-toggle {
+    @apply relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border
+      border-white/15 bg-white/10 transition-colors focus:outline-none
+      focus-visible:ring-2 focus-visible:ring-brand;
+
+    &.is-on {
+      @apply border-brand bg-brand;
+    }
+
+    &.is-on .settings-toggle-knob {
+      @apply translate-x-5 bg-brand-fg;
+    }
+  }
+
+  .settings-toggle-knob {
+    @apply ml-0.5 h-4 w-4 rounded-full bg-white transition-transform;
+  }
+
+  .settings-wallpapers {
+    @apply grid grid-cols-2 gap-3 sm:grid-cols-4;
+  }
+
+  .settings-wallpaper {
+    @apply overflow-hidden rounded-lg border border-white/10 bg-surface-raised text-left
+      opacity-70 transition hover:opacity-100 focus:outline-none
+      focus-visible:ring-2 focus-visible:ring-brand;
+
+    &.is-active {
+      @apply border-brand opacity-100 ring-2 ring-brand;
+    }
+  }
+
+  .settings-wallpaper-image {
+    @apply aspect-video w-full object-cover;
+  }
+
+  .settings-wallpaper-label {
+    @apply block px-2 py-1.5 text-xs font-semibold;
+  }
+
+  .settings-providers {
+    @apply flex flex-col;
+  }
+
+  .settings-provider {
+    @apply flex items-center gap-3 border-b border-white/5 py-4;
+
+    &:last-of-type {
+      @apply border-b-0;
+    }
+  }
+
+  .settings-provider-icon {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md;
+  }
+
+  .settings-provider-label {
+    @apply flex-1 text-sm font-semibold;
+  }
+
+  .settings-actions {
+    @apply sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t
+      border-white/10 bg-black/55 px-6 py-4 backdrop-blur sm:px-8;
+  }
+
+  .settings-actions-messages {
+    @apply mr-auto;
+  }
+
+  .settings-message {
+    @apply text-xs text-white/50;
+
+    &.is-error {
+      @apply text-red-300;
+    }
+
+    &.is-ok {
+      @apply text-emerald-300;
+    }
+  }
+}
+
+// Keeps native dropdowns on the dark palette instead of the OS default.
+select.input {
+  color-scheme: dark;
 }
 
 .reveal {

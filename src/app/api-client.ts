@@ -17,8 +17,15 @@ function isLocalBackendHost() {
 }
 
 function resolveConfiguredApiMode(): 'local' | 'dev' {
-  // LOCAL TESTING ONLY - do not commit: talk to the dev API from localhost too.
-  return runtimeApiClientMode === 'local' && isLocalBackendHost() ? 'local' : 'dev';
+  if (runtimeApiClientMode === 'local') {
+    return 'local';
+  }
+
+  if (runtimeApiClientMode === 'dev') {
+    return isLocalBackendHost() ? 'local' : 'dev';
+  }
+
+  return isLocalBackendHost() ? 'local' : 'dev';
 }
 
 export function setApiClientMode(mode: string): void {

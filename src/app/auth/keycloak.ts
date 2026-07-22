@@ -396,6 +396,44 @@ export function startDiscordLogin(options?: OAuthLoginOptions) {
   );
 }
 
+/**
+ * Starts a Keycloak application-initiated action (e.g. `UPDATE_PASSWORD`).
+ *
+ * Same authorization-code + PKCE round trip as a login, only with `kc_action`
+ * set: Keycloak shows its own form for the action and sends the user back to
+ * the redirect URI, where the regular callback handling picks the tokens up.
+ */
+export async function startAccountAction(kcAction: string) {
+  const state = createRandomString(24);
+  const codeVerifier = createRandomString(64);
+  const codeChallenge = await createCodeChallenge(codeVerifier);
+  const redirectUri = getRedirectUri();
+  const errorRedirectUri = getProviderErrorRedirectUri();
+
+  const searchParams = new URLSearchParams({
+    client_id: KEYCLOAK_CLIENT_ID,
+    code_challenge: codeChallenge,
+    code_challenge_method: "S256",
+    kc_action: kcAction,
+    redirect_uri: redirectUri,
+    kc_error_redirect_uri: errorRedirectUri,
+    error_redirect_uri: errorRedirectUri,
+    fallback_uri: errorRedirectUri,
+    returnTo: errorRedirectUri,
+    response_type: "code",
+    scope: "openid email profile",
+    state,
+  });
+
+  const authUrl = getCurrentKeycloakAuthUrl();
+
+  assertConfiguredUrl(authUrl, "Keycloak-Auth-URL");
+  assertConfiguredPath(redirectUri, "Redirect-URI");
+  saveOAuthRequest(state, codeVerifier, redirectUri);
+
+  window.location.assign(createValidatedProviderLoginUrl(authUrl, searchParams));
+}
+
 function shouldRefreshAccessToken(tokens: AuthTokens) {
   return Boolean(
     tokens.refreshToken &&
