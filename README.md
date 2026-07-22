@@ -85,6 +85,20 @@ For remote/dev API mode, use:
 pnpm run start:dev
 ```
 
+For local API backends, prefer this:
+
+```bash
+pnpm run start:local
+```
+
+`start:local` refreshes the generated OpenAPI client against local services on `8080/8081/...` and starts `ng serve`.
+
+For remote/dev API mode, use:
+
+```bash
+pnpm run start:dev
+```
+
 ## Code Scaffolding
 
 Angular CLI includes powerful code scaffolding tools. To generate a new component, run:

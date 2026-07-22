@@ -1,222 +1,536 @@
 @if (auth.isLoggedIn()) {
-  <section class="mx-auto max-w-2xl px-6 py-24">
-    <h1 class="text-4xl font-bold tracking-tight">User settings</h1>
-    <p class="mt-2 text-sm text-white/50">
-      Ändere deine Profildaten und weitere Einstellungen.
-    </p>
+  <section class="mx-auto w-full max-w-6xl px-4 pb-20 pt-28 sm:px-6 2xl:max-w-[90rem]">
+    <div class="settings-shell">
+      <aside class="settings-nav" data-testid="settings-nav">
+        <p class="settings-nav-title">Einstellungen</p>
 
-    <form class="mt-10 flex flex-col gap-6" (ngSubmit)="onProfileSubmit($event)">
-      <label class="flex flex-col gap-2">
-        <span class="text-sm font-medium">Display name</span>
-        <input
-          class="input"
-          type="text"
-          name="displayName"
-          autocomplete="nickname"
-          data-testid="display-name"
-          [value]="displayName()"
-          (input)="displayName.set($any($event.target).value)"
-        />
-      </label>
-
-      <label class="flex flex-col gap-2">
-        <span class="text-sm font-medium">Tag ID</span>
-        <input
-          class="input"
-          type="text"
-          name="tagId"
-          autocomplete="off"
-          data-testid="tag-id"
-          [value]="tagId()"
-          (input)="tagId.set($any($event.target).value)"
-        />
-      </label>
-
-      <div class="flex flex-col gap-2">
-        <span class="text-sm font-medium">Birthday</span>
-        <app-date-picker
-          ariaLabel="Birthday"
-          data-testid="birthday"
-          [value]="birthday()"
-          (valueChange)="birthday.set($event)"
-        />
-      </div>
-
-      <label class="flex flex-col gap-2">
-        <span class="text-sm font-medium">Accent color</span>
-        <input
-          class="input h-10 w-16 p-1"
-          type="color"
-          name="accentColor"
-          autocomplete="off"
-          data-testid="accent-color"
-          [value]="accentColor()"
-          (input)="accentColor.set($any($event.target).value)"
-        />
-      </label>
-
-      <button
-        type="submit"
-        class="btn-primary self-start"
-        data-testid="save-button"
-        [disabled]="isSaving()"
-      >
-        Save changes
-      </button>
-
-      @if (saveError()) {
-        <p class="text-sm text-red-300" data-testid="settings-save-error">{{ saveError() }}</p>
-      }
-
-      @if (saveStatus()) {
-        <p class="text-sm text-green-200" data-testid="settings-save-status">{{ saveStatus() }}</p>
-      }
-    </form>
-
-    <h2 class="mt-14 text-2xl font-semibold">Appearance</h2>
-    <p class="mt-1 text-sm text-white/50">Choose the background wallpaper.</p>
-    <div class="mt-4 flex flex-col gap-2">
-      <span class="text-sm font-medium">Background</span>
-      <app-wallpaper-picker />
-    </div>
-
-    <h2 class="mt-14 text-2xl font-semibold">Change password</h2>
-    <div class="mt-6 flex flex-col gap-6">
-      <label class="flex flex-col gap-2">
-        <span class="text-sm font-medium">Current password</span>
-        <input
-          class="input"
-          type="password"
-          autocomplete="current-password"
-          data-testid="current-password"
-          [ngModel]="currentPassword()"
-          [ngModelOptions]="{ standalone: true }"
-          (ngModelChange)="currentPassword.set($event)"
-        />
-      </label>
-
-      <label class="flex flex-col gap-2">
-        <span class="text-sm font-medium">New password</span>
-        <input
-          class="input"
-          type="password"
-          autocomplete="new-password"
-          data-testid="new-password"
-          [ngModel]="newPassword()"
-          [ngModelOptions]="{ standalone: true }"
-          (ngModelChange)="newPassword.set($event)"
-        />
-      </label>
-
-      <label class="flex flex-col gap-2">
-        <span class="text-sm font-medium">Confirm new password</span>
-        <input
-          class="input"
-          type="password"
-          autocomplete="new-password"
-          data-testid="confirm-password"
-          [ngModel]="confirmPassword()"
-          [ngModelOptions]="{ standalone: true }"
-          (ngModelChange)="confirmPassword.set($event)"
-        />
-      </label>
-
-      <button
-        type="submit"
-        class="btn-primary self-start"
-        data-testid="change-password-button"
-        disabled
-      >
-        Update password
-      </button>
-    </div>
-
-    <h2 class="mt-14 text-2xl font-semibold">Linked accounts</h2>
-    <p class="mt-1 text-sm text-white/50">
-      Connect external services to your account (coming soon).
-    </p>
-
-    <ul class="mt-6 grid gap-3 sm:grid-cols-2">
-      @for (provider of providers; track provider.id) {
-        <li
-          class="flex items-center justify-between rounded-lg border border-surface-border bg-surface/60 px-4 py-3"
-        >
-          <span>{{ provider.label }}</span>
+        @for (section of sections; track section.id) {
           <button
             type="button"
-            class="btn-ghost"
-            [class]="getSocialButtonClasses(provider.id)"
-            [attr.data-testid]="'link-' + provider.id"
-            [attr.aria-label]="provider.label"
-            [disabled]="!isLinkableProvider(provider.id)"
-            (click)="linkProvider(provider.id)"
-            [title]="provider.label"
+            class="settings-nav-item"
+            [class.is-active]="activeSection() === section.id"
+            [attr.aria-current]="activeSection() === section.id ? 'page' : null"
+            [attr.data-testid]="'section-' + section.id"
+            (click)="selectSection(section.id)"
           >
-            @if (isLinkableProvider(provider.id)) {
-              @if (provider.id === 'google') {
-                <svg
-                  aria-hidden="true"
-                  class="h-4 w-4"
-                  focusable="false"
-                  viewBox="0 0 18 18"
-                >
-                  <path
-                    d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"
-                    fill="#4285f4"
-                  />
-                  <path
-                    d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.35 0-4.34-1.58-5.05-3.72H.93v2.33A9 9 0 0 0 9 18Z"
-                    fill="#34a853"
-                  />
-                  <path
-                    d="M3.95 10.7A5.41 5.41 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.93A9 9 0 0 0 0 9c0 1.45.34 2.82.93 4.03l3.02-2.33Z"
-                    fill="#fbbc05"
-                  />
-                  <path
-                    d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8.65 8.65 0 0 0 9 0 9 9 0 0 0 .93 4.97L3.95 7.3C4.66 5.16 6.65 3.58 9 3.58Z"
-                    fill="#ea4335"
-                  />
-                </svg>
-              }
-              @if (provider.id === 'discord') {
-                <svg
-                  aria-hidden="true"
-                  class="h-4 w-4"
-                  focusable="false"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M19.54 5.23a18.88 18.88 0 0 0-4.68-1.46 12.96 12.96 0 0 0-.6 1.24 17.5 17.5 0 0 0-5.19 0 12.1 12.1 0 0 0-.61-1.24 18.8 18.8 0 0 0-4.68 1.46C.82 9.65.02 13.95.42 18.19a18.93 18.93 0 0 0 5.74 2.9c.46-.62.87-1.28 1.22-1.97-.67-.25-1.31-.56-1.92-.92l.47-.37c3.7 1.71 7.72 1.71 11.38 0l.47.37c-.61.36-1.25.67-1.92.92.35.69.76 1.35 1.22 1.97a18.87 18.87 0 0 0 5.74-2.9c.48-4.91-.82-9.17-3.28-12.96ZM8.09 15.59c-1.12 0-2.04-1.03-2.04-2.29 0-1.26.9-2.29 2.04-2.29 1.14 0 2.06 1.04 2.04 2.29 0 1.26-.9 2.29-2.04 2.29Zm7.53 0c-1.12 0-2.04-1.03-2.04-2.29 0-1.26.9-2.29 2.04-2.29 1.14 0 2.06 1.04 2.04 2.29 0 1.26-.9 2.29-2.04 2.29Z"
-                    fill="#ffffff"
-                  />
-                </svg>
-              }
-              @if (provider.id === 'github') {
-                <svg
-                  aria-hidden="true"
-                  class="h-4 w-4"
-                  focusable="false"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.38.97.11-.75.41-1.27.74-1.56-2.57-.29-5.27-1.28-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.07 0 0 .98-.31 3.18 1.19a11.05 11.05 0 0 1 5.8 0c2.2-1.5 3.17-1.19 3.17-1.19.64 1.6.24 2.78.12 3.07.74.81 1.19 1.85 1.19 3.11 0 4.45-2.7 5.43-5.28 5.72.42.36.79 1.07.79 2.16v3.04c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
-                    fill="#ffffff"
-                  />
-                </svg>
-              }
-              <span class="sr-only">{{ provider.label }}</span>
-            } @else {
-              <span class="text-xs">Bald</span>
-            }
+            {{ section.label }}
           </button>
-        </li>
-      }
-    </ul>
+        }
+
+        <div class="settings-nav-user">
+          <span class="settings-nav-user-name">{{ auth.user()?.displayName }}</span>
+          <span class="settings-nav-user-mail">{{ auth.user()?.email }}</span>
+        </div>
+      </aside>
+
+      <form class="settings-panel" (ngSubmit)="onSubmit($event)">
+        <header class="settings-panel-head">
+          <h1 class="settings-panel-title" data-testid="section-title">
+            {{ activeSectionMeta().label }}
+          </h1>
+          <p class="settings-panel-hint">{{ activeSectionMeta().hint }}</p>
+        </header>
+
+        <div class="settings-panel-body">
+          @switch (activeSection()) {
+            @case ('account') {
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Anzeigename</span>
+                  <span class="settings-row-hint">So sehen dich andere Spieler.</span>
+                </div>
+                <div class="settings-row-control">
+                  <input
+                    class="input w-full"
+                    type="text"
+                    name="displayName"
+                    autocomplete="nickname"
+                    data-testid="display-name"
+                    [value]="displayName()"
+                    (input)="displayName.set($any($event.target).value)"
+                  />
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Tag-ID</span>
+                  <span class="settings-row-hint">Dein Kürzel für Freundschaftsanfragen.</span>
+                </div>
+                <div class="settings-row-control">
+                  <input
+                    class="input w-full"
+                    type="text"
+                    name="tagId"
+                    autocomplete="off"
+                    data-testid="tag-id"
+                    [value]="tagId()"
+                    (input)="tagId.set($any($event.target).value)"
+                  />
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">E-Mail</span>
+                  <span class="settings-row-hint">Wird über den Anmeldeanbieter verwaltet.</span>
+                </div>
+                <div class="settings-row-control">
+                  <p class="settings-readonly" data-testid="email">
+                    {{ auth.user()?.email ?? '—' }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Spieler-ID</span>
+                  <span class="settings-row-hint">Wird vom Server vergeben.</span>
+                </div>
+                <div class="settings-row-control">
+                  <p class="settings-readonly" data-testid="public-id">
+                    {{ auth.user()?.publicId ?? '—' }}
+                  </p>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Geburtstag</span>
+                  <span class="settings-row-hint">
+                    Noch ohne Backend-Feld — wird derzeit nicht gespeichert.
+                  </span>
+                </div>
+                <div class="settings-row-control">
+                  <app-date-picker
+                    ariaLabel="Geburtstag"
+                    data-testid="birthday"
+                    [value]="birthday()"
+                    (valueChange)="birthday.set($event)"
+                  />
+                </div>
+              </div>
+            }
+
+            @case ('appearance') {
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Akzentfarbe</span>
+                  <span class="settings-row-hint">
+                    Färbt Website und Client. Wird sofort als Vorschau angewendet.
+                  </span>
+                </div>
+                <div class="settings-row-control">
+                  <div class="flex items-center gap-3">
+                    <input
+                      class="settings-color"
+                      type="color"
+                      name="accentColor"
+                      autocomplete="off"
+                      aria-label="Akzentfarbe"
+                      data-testid="accent-color"
+                      [value]="accentColor()"
+                      (input)="setAccentColor($any($event.target).value)"
+                    />
+                    <span class="settings-readonly">{{ accentColor() }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-row settings-row-stacked">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Hintergrund</span>
+                  <span class="settings-row-hint">Wallpaper für Website und Client-Startbild.</span>
+                </div>
+                <div class="settings-wallpapers" role="radiogroup" aria-label="Hintergrund">
+                  @for (option of wallpapers; track option.id) {
+                    <button
+                      type="button"
+                      role="radio"
+                      class="settings-wallpaper"
+                      [class.is-active]="isWallpaperSelected(option.id)"
+                      [attr.aria-checked]="isWallpaperSelected(option.id)"
+                      [attr.data-testid]="'wallpaper-' + option.id"
+                      (click)="selectWallpaper(option.id)"
+                    >
+                      <img
+                        class="settings-wallpaper-image"
+                        [src]="wallpaperPreview(option.id)"
+                        alt=""
+                        loading="lazy"
+                      />
+                      <span class="settings-wallpaper-label">{{ option.label }}</span>
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @case ('client') {
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Sprache</span>
+                  <span class="settings-row-hint">Sprache der Client-Oberfläche.</span>
+                </div>
+                <div class="settings-row-control">
+                  <select
+                    class="input w-full"
+                    name="language"
+                    data-testid="language"
+                    [value]="language()"
+                    (change)="language.set($any($event.target).value)"
+                  >
+                    <option value="">Nicht gesetzt</option>
+                    @for (option of languageOptions(); track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Auflösung</span>
+                  <span class="settings-row-hint">Fenstergröße des Clients.</span>
+                </div>
+                <div class="settings-row-control">
+                  <select
+                    class="input w-full"
+                    name="resolution"
+                    data-testid="resolution"
+                    [value]="resolution()"
+                    (change)="resolution.set($any($event.target).value)"
+                  >
+                    <option value="">Nicht gesetzt</option>
+                    @for (option of resolutionOptions(); track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Anzeigemodus</span>
+                  <span class="settings-row-hint">Vollbild, rahmenlos oder im Fenster.</span>
+                </div>
+                <div class="settings-row-control">
+                  <select
+                    class="input w-full"
+                    name="screenMode"
+                    data-testid="screen-mode"
+                    [value]="screenMode()"
+                    (change)="screenMode.set($any($event.target).value)"
+                  >
+                    <option value="">Nicht gesetzt</option>
+                    @for (option of screenModeOptions(); track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">UI-Skalierung</span>
+                  <span class="settings-row-hint">Größe der Bedienelemente im Client.</span>
+                </div>
+                <div class="settings-row-control">
+                  <div class="flex items-center gap-3">
+                    <input
+                      class="settings-range"
+                      type="range"
+                      name="uiScale"
+                      aria-label="UI-Skalierung"
+                      data-testid="ui-scale"
+                      [min]="uiScaleMin"
+                      [max]="uiScaleMax"
+                      [step]="uiScaleStep"
+                      [value]="uiScale()"
+                      (input)="uiScale.set($any($event.target).valueAsNumber)"
+                    />
+                    <span class="settings-readonly w-14 text-right" data-testid="ui-scale-value">
+                      {{ uiScalePercent() }}%
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Chat-Position</span>
+                  <span class="settings-row-hint">Seite, an der das Chatfenster andockt.</span>
+                </div>
+                <div class="settings-row-control">
+                  <select
+                    class="input w-full"
+                    name="chatPosition"
+                    data-testid="chat-position"
+                    [value]="chatPosition()"
+                    (change)="chatPosition.set($any($event.target).value)"
+                  >
+                    <option value="">Nicht gesetzt</option>
+                    @for (option of chatPositionOptions(); track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Animationen</span>
+                  <span class="settings-row-hint">Bewegung in der Client-Oberfläche.</span>
+                </div>
+                <div class="settings-row-control">
+                  <select
+                    class="input w-full"
+                    name="clientAnimation"
+                    data-testid="client-animation"
+                    [value]="clientAnimation()"
+                    (change)="clientAnimation.set($any($event.target).value)"
+                  >
+                    <option value="">Nicht gesetzt</option>
+                    @for (option of clientAnimationOptions(); track option.value) {
+                      <option [value]="option.value">{{ option.label }}</option>
+                    }
+                  </select>
+                </div>
+              </div>
+            }
+
+            @case ('privacy') {
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">E-Mail öffentlich zeigen</span>
+                  <span class="settings-row-hint">
+                    Andere Spieler sehen deine E-Mail-Adresse in deinem Profil.
+                  </span>
+                </div>
+                <div class="settings-row-control settings-row-control-end">
+                  <button
+                    type="button"
+                    class="settings-toggle"
+                    role="switch"
+                    [class.is-on]="showEmailPublic()"
+                    [attr.aria-checked]="showEmailPublic()"
+                    aria-label="E-Mail öffentlich zeigen"
+                    data-testid="show-email-public"
+                    (click)="showEmailPublic.set(!showEmailPublic())"
+                  >
+                    <span class="settings-toggle-knob"></span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Freundesfarben verwenden</span>
+                  <span class="settings-row-hint">
+                    Zeigt Freunde im Client in ihrer eigenen Akzentfarbe.
+                  </span>
+                </div>
+                <div class="settings-row-control settings-row-control-end">
+                  <button
+                    type="button"
+                    class="settings-toggle"
+                    role="switch"
+                    [class.is-on]="useFriendColors()"
+                    [attr.aria-checked]="useFriendColors()"
+                    aria-label="Freundesfarben verwenden"
+                    data-testid="use-friend-colors"
+                    (click)="useFriendColors.set(!useFriendColors())"
+                  >
+                    <span class="settings-toggle-knob"></span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Bildrechte am Avatar</span>
+                  <span class="settings-row-hint">
+                    Bestätige, dass du die Rechte an deinem Profilbild hast.
+                  </span>
+                </div>
+                <div class="settings-row-control settings-row-control-end">
+                  @if (auth.user()?.avatarRightsConsented) {
+                    <p class="settings-readonly" data-testid="avatar-rights-state">Bestätigt</p>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn-ghost min-h-0 px-4 py-2 text-sm"
+                      data-testid="confirm-avatar-rights"
+                      (click)="confirmAvatarRights()"
+                    >
+                      Jetzt bestätigen
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+
+            @case ('security') {
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Passwort</span>
+                  <span class="settings-row-hint">
+                    Die Änderung läuft über Keycloak — dein Passwort erreicht die Website nie.
+                  </span>
+                </div>
+                <div class="settings-row-control settings-row-control-end">
+                  <button
+                    type="button"
+                    class="btn-ghost min-h-0 px-4 py-2 text-sm"
+                    data-testid="change-password"
+                    (click)="changePassword()"
+                  >
+                    Passwort ändern
+                  </button>
+                </div>
+              </div>
+
+              <div class="settings-row">
+                <div class="settings-row-text">
+                  <span class="settings-row-label">Abmelden</span>
+                  <span class="settings-row-hint">Beendet die Sitzung auf diesem Gerät.</span>
+                </div>
+                <div class="settings-row-control settings-row-control-end">
+                  <button
+                    type="button"
+                    class="btn-ghost min-h-0 px-4 py-2 text-sm"
+                    data-testid="logout"
+                    (click)="auth.logout()"
+                  >
+                    Abmelden
+                  </button>
+                </div>
+              </div>
+            }
+
+            @case ('connections') {
+              <ul class="settings-providers">
+                @for (provider of providers; track provider.id) {
+                  <li class="settings-provider">
+                    <span class="settings-provider-icon" [class]="getSocialButtonClasses(provider.id)">
+                      @switch (provider.id) {
+                        @case ('google') {
+                          <svg aria-hidden="true" class="h-4 w-4" focusable="false" viewBox="0 0 18 18">
+                            <path
+                              d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"
+                              fill="#4285f4"
+                            />
+                            <path
+                              d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.35 0-4.34-1.58-5.05-3.72H.93v2.33A9 9 0 0 0 9 18Z"
+                              fill="#34a853"
+                            />
+                            <path
+                              d="M3.95 10.7A5.41 5.41 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.93A9 9 0 0 0 0 9c0 1.45.34 2.82.93 4.03l3.02-2.33Z"
+                              fill="#fbbc05"
+                            />
+                            <path
+                              d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8.65 8.65 0 0 0 9 0 9 9 0 0 0 .93 4.97L3.95 7.3C4.66 5.16 6.65 3.58 9 3.58Z"
+                              fill="#ea4335"
+                            />
+                          </svg>
+                        }
+                        @case ('discord') {
+                          <svg aria-hidden="true" class="h-4 w-4" focusable="false" viewBox="0 0 24 24">
+                            <path
+                              d="M19.54 5.23a18.88 18.88 0 0 0-4.68-1.46 12.96 12.96 0 0 0-.6 1.24 17.5 17.5 0 0 0-5.19 0 12.1 12.1 0 0 0-.61-1.24 18.8 18.8 0 0 0-4.68 1.46C.82 9.65.02 13.95.42 18.19a18.93 18.93 0 0 0 5.74 2.9c.46-.62.87-1.28 1.22-1.97-.67-.25-1.31-.56-1.92-.92l.47-.37c3.7 1.71 7.72 1.71 11.38 0l.47.37c-.61.36-1.25.67-1.92.92.35.69.76 1.35 1.22 1.97a18.87 18.87 0 0 0 5.74-2.9c.48-4.91-.82-9.17-3.28-12.96ZM8.09 15.59c-1.12 0-2.04-1.03-2.04-2.29 0-1.26.9-2.29 2.04-2.29 1.14 0 2.06 1.04 2.04 2.29 0 1.26-.9 2.29-2.04 2.29Zm7.53 0c-1.12 0-2.04-1.03-2.04-2.29 0-1.26.9-2.29 2.04-2.29 1.14 0 2.06 1.04 2.04 2.29 0 1.26-.9 2.29-2.04 2.29Z"
+                              fill="#ffffff"
+                            />
+                          </svg>
+                        }
+                        @case ('github') {
+                          <svg aria-hidden="true" class="h-4 w-4" focusable="false" viewBox="0 0 24 24">
+                            <path
+                              d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.38.97.11-.75.41-1.27.74-1.56-2.57-.29-5.27-1.28-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.07 0 0 .98-.31 3.18 1.19a11.05 11.05 0 0 1 5.8 0c2.2-1.5 3.17-1.19 3.17-1.19.64 1.6.24 2.78.12 3.07.74.81 1.19 1.85 1.19 3.11 0 4.45-2.7 5.43-5.28 5.72.42.36.79 1.07.79 2.16v3.04c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
+                              fill="#ffffff"
+                            />
+                          </svg>
+                        }
+                        @default {
+                          <span aria-hidden="true" class="text-xs font-bold">
+                            {{ provider.label.charAt(0) }}
+                          </span>
+                        }
+                      }
+                    </span>
+
+                    <span class="settings-provider-label">{{ provider.label }}</span>
+
+                    <button
+                      type="button"
+                      class="btn-ghost min-h-0 px-4 py-2 text-sm"
+                      [attr.data-testid]="'link-' + provider.id"
+                      [disabled]="!isLinkableProvider(provider.id)"
+                      (click)="linkProvider(provider.id)"
+                    >
+                      {{ isLinkableProvider(provider.id) ? 'Verbinden' : 'Bald' }}
+                    </button>
+                  </li>
+                }
+              </ul>
+            }
+          }
+
+          @if (accountError()) {
+            <p class="settings-message is-error" data-testid="settings-account-error">
+              {{ accountError() }}
+            </p>
+          }
+
+          @if (accountStatus()) {
+            <p class="settings-message is-ok" data-testid="settings-account-status">
+              {{ accountStatus() }}
+            </p>
+          }
+        </div>
+
+        <footer class="settings-actions">
+          <div class="settings-actions-messages">
+            @if (saveError()) {
+              <p class="settings-message is-error" data-testid="settings-save-error">
+                {{ saveError() }}
+              </p>
+            } @else if (saveStatus()) {
+              <p class="settings-message is-ok" data-testid="settings-save-status">
+                {{ saveStatus() }}
+              </p>
+            } @else if (hasChanges()) {
+              <p class="settings-message" data-testid="settings-dirty-hint">
+                Ungespeicherte Änderungen.
+              </p>
+            }
+          </div>
+
+          <button
+            type="button"
+            class="btn-ghost min-h-0 px-4 py-2 text-sm"
+            data-testid="discard-button"
+            [disabled]="isSaving() || !hasChanges()"
+            (click)="discard()"
+          >
+            Verwerfen
+          </button>
+
+          <button
+            type="submit"
+            class="btn-primary min-h-0 px-5 py-2 text-sm"
+            data-testid="save-button"
+            [disabled]="isSaving()"
+          >
+            Änderungen speichern
+          </button>
+        </footer>
+      </form>
+    </div>
   </section>
 } @else {
-  <section class="mx-auto max-w-2xl px-6 py-24 text-center" data-testid="settings-signed-out">
-    <h1 class="text-3xl font-semibold">User settings</h1>
-    <p class="mt-3 text-white/70">Please log in to manage your settings.</p>
+  <section class="mx-auto max-w-2xl px-6 py-32 text-center" data-testid="settings-signed-out">
+    <h1 class="text-3xl font-semibold">Einstellungen</h1>
+    <p class="mt-3 text-white/70">Melde dich an, um deine Einstellungen zu verwalten.</p>
     <button type="button" class="btn-primary mt-6" (click)="auth.login()">Login</button>
   </section>
 }

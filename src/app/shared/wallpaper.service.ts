@@ -22,6 +22,13 @@ const STORAGE_KEY = 'mira-website-wallpaper';
 const DEFAULT_WALLPAPER: Wallpaper = 'lira';
 const KNOWN_WALLPAPERS = new Set<WallpaperOptionId>(WALLPAPERS.map((item) => item.id));
 
+/** Image source of a wallpaper; unknown values are treated as a plain URL. */
+export function wallpaperImageUrl(wallpaper: WallpaperSource): string {
+  return KNOWN_WALLPAPERS.has(wallpaper as Wallpaper)
+    ? `/${wallpaper}-wallpaper.png`
+    : wallpaper;
+}
+
 /**
  * Mirrors the client's wallpaper handling: the choice is persisted in
  * localStorage and applied through the `--app-background-wallpaper` CSS
@@ -92,8 +99,6 @@ export class WallpaperService {
   }
 
   private resolveWallpaperUrl(wallpaper: WallpaperSource): string {
-    return this.isKnownWallpaper(wallpaper)
-      ? `url('/${wallpaper}-wallpaper.png')`
-      : `url('${wallpaper}')`;
+    return `url('${wallpaperImageUrl(wallpaper)}')`;
   }
 }
