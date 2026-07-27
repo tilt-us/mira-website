@@ -1,8 +1,8 @@
 import { Component, effect, inject, signal } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
-import { AuthService } from '../../auth/auth.service';
-import { AuthPage } from '../../auth/auth-page';
+import { AuthService } from '../../auth/application/auth.service';
+import { AuthPage } from '../../auth/adapters/ui/auth-page';
 
 @Component({
   selector: 'app-header',

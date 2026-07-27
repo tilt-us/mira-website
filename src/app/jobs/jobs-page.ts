@@ -1,7 +1,7 @@
 import { Component, signal } from '@angular/core';
 
 import { Reveal } from '../shared/reveal';
-import { APPLICATION_EMAIL, applicationMailto, JOB_POSTINGS, JobPosting } from './jobs.data';
+import { APPLICATION_EMAIL, applicationMailto, JOB_POSTINGS, JobPosting } from './domain/jobs.data';
 
 @Component({
   selector: 'app-jobs-page',

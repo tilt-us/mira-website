@@ -1,10 +1,78 @@
 # mira-website
 
 ![Angular](https://img.shields.io/badge/Angular-22-red?logo=angular)
-![pnpm](https://img.shields.io/badge/pnpm-11.9.0-orange?logo=pnpm)
+![pnpm](https://img.shields.io/badge/pnpm-11.5.0-orange?logo=pnpm)
 ![TypeScript](https://img.shields.io/badge/TypeScript-6.0-blue?logo=typescript)
 ![Vitest](https://img.shields.io/badge/Vitest-4.1.9-green?logo=vitest)
 ![Playwright](https://img.shields.io/badge/Playwright-1.61.1-teal?logo=playwright)
+
+## Architecture
+
+The frontend follows a **hexagonal architecture** (Ports & Adapters), applied
+*feature-first*: each feature is a vertical slice that separates a pure domain
+core from application services and from the adapters that reach the outside
+world.
+
+![Hexagonal architecture of the Angular frontend](Docs/architecture-frontend.svg)
+
+| Ring | Role | In this codebase |
+|------|------|------------------|
+| **Domain** (core) | Framework-free models, value objects and **port** interfaces | `<feature>/domain/` — e.g. `AuthUser`, `Os`/`DownloadTarget`, `LegalDocument`, pure `os-detection` logic |
+| **Application** (use cases) | Services that orchestrate the domain and depend **only on ports** | `<feature>/application/` — e.g. `AuthService`, `DownloadService`, `ClientSettingsService` |
+| **Adapters** | Inbound (driving) and outbound (driven) | `<feature>/adapters/ui/` components & the router (inbound); `.../gateway`, `.../identity` HTTP/SDK/browser adapters (outbound) |
+
+**Dependency inversion happens at the ports.** An application service never
+imports the generated SDK or `HttpClient` directly — it depends on an interface
+plus an Angular `InjectionToken`, and an outbound adapter supplies the concrete
+implementation. This is the pattern the settings feature already established with
+`CLIENT_SETTINGS_API`.
+
+| Feature | Outbound port | Adapter implementation |
+|---------|---------------|------------------------|
+| `auth` | `IdentityProviderPort` · `TokenStoragePort` · `AuthApiPort` | Keycloak / token-storage / SDK adapters |
+| `download` | `VersionGatewayPort` · `DownloadGatewayPort` | HTTP version + browser download adapters |
+| `legal` | `LegalDocumentGatewayPort` | HTTP documents adapter (bundled dummy fallback) |
+| `settings` | `ClientSettingsApi` | `/api/me/settings` SDK adapter |
+
+The shared HTTP infrastructure (`api-client.ts`, generated `src/api/**`) and the
+composition root (`app.config.ts`, `main.ts`) wire the adapters to their ports at
+bootstrap. The bundled desktop client (`webui`) and the `mira-service` backend
+sit *outside* the hexagon — the frontend only talks to them through its adapters.
+
+> The backend service (`mira-service`) has its own, separate hexagonal diagram.
+
+### Project Structure
+
+Each feature is a vertical slice. Features that carry logic (`auth`, `download`,
+`legal`, `settings`) split into `domain/` · `application/` · `adapters/`;
+purely presentational features (`home`, `layout`, `placeholder`) are inbound-
+adapter components and stay flat.
+
+```
+src/app/
+  auth/                     # identity & session (fully inverted)
+    domain/                 #   models.ts · ports.ts (IdentityProvider, TokenStorage, AuthApi)
+    application/            #   auth.service.ts
+    adapters/
+      ui/                   #   auth-page
+      identity/             #   keycloak · storage · config + the 3 port adapters
+  download/
+    domain/                 #   models.ts · os-detection.ts (pure) · ports.ts
+    application/            #   download.service.ts
+    adapters/
+      ui/                   #   download-button · os-modal
+      gateway/              #   http-version · browser-download
+  legal/
+    domain/ application/    #   models.ts · ports.ts · legal.service.ts (+ dummy fallback)
+    adapters/ui|gateway/    #   legal-page · http-legal
+  settings/
+    domain/ application/    #   ports.ts · client-settings · theme · wallpaper services
+    adapters/ui|gateway/    #   user-settings · client-settings-api
+  home/ jobs/ layout/ placeholder/   # inbound-adapter pages (jobs has a small domain/)
+  shared/                   # shared kernel: reveal, date-picker, event-carousel, community
+  api-client.ts             # shared outbound HTTP infrastructure (interceptors, token)
+  app.config.ts · main.ts   # composition root — wires adapters to ports
+```
 
 ## Branch Strategy
 
@@ -70,20 +138,6 @@ pnpm start
 ```
 
 Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-For local API backends, prefer this:
-
-```bash
-pnpm run start:local
-```
-
-`start:local` refreshes the generated OpenAPI client against local services on `8080/8081/...` and starts `ng serve`.
-
-For remote/dev API mode, use:
-
-```bash
-pnpm run start:dev
-```
 
 For local API backends, prefer this:
 

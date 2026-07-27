@@ -4,8 +4,8 @@ import { WritableSignal, signal } from '@angular/core';
 import { Mock, vi } from 'vitest';
 
 import { Header } from './header';
-import { AuthService } from '../../auth/auth.service';
-import { AuthUser } from '../../auth/auth.types';
+import { AuthService } from '../../auth/application/auth.service';
+import { AuthUser } from '../../auth/domain/models';
 
 function byTestId(fixture: ComponentFixture<Header>, id: string): HTMLElement {
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
