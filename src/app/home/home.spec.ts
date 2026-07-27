@@ -6,6 +6,7 @@ import { of } from 'rxjs';
 import { vi } from 'vitest';
 
 import { Home } from './home';
+import { DISCORD_INVITE_URL } from '../shared/community';
 
 const OAUTH_ERROR_STORAGE_KEY = 'mira.auth.oauthError';
 
@@ -77,7 +78,13 @@ describe('Home', () => {
   });
 
   it('shows a Discord link', () => {
-    expect(render().querySelector('[data-testid="discord-link"]')).toBeTruthy();
+    const link = render().querySelector(
+      '[data-testid="discord-link"]',
+    ) as HTMLAnchorElement | null;
+    expect(link).toBeTruthy();
+    expect(link?.getAttribute('href')).toBe(DISCORD_INVITE_URL);
+    expect(link?.getAttribute('target')).toBe('_blank');
+    expect(link?.getAttribute('rel')).toContain('noopener');
   });
 
   it('navigates the news carousel independently of the events carousel', () => {
