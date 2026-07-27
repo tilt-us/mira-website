@@ -1,0 +1,86 @@
+<section class="mx-auto max-w-6xl px-6 pb-24 2xl:max-w-[110rem]" aria-label="Community builds">
+  <div
+    class="rounded-2xl border border-surface-border bg-surface-raised/60 p-5 backdrop-blur"
+    appReveal
+  >
+    <div class="flex flex-col gap-4 md:flex-row md:items-end">
+      <label class="flex flex-1 flex-col gap-1.5">
+        <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Search</span>
+        <input
+          class="input"
+          type="search"
+          placeholder="Champion, title, author or tag"
+          data-testid="build-search"
+          [ngModel]="query()"
+          (ngModelChange)="query.set($event)"
+        />
+      </label>
+
+      <label class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Character</span>
+        <select
+          class="input"
+          data-testid="build-character-filter"
+          [ngModel]="championId()"
+          (ngModelChange)="championId.set($event)"
+        >
+          <option value="all">All characters</option>
+          @for (champion of champions; track champion.id) {
+            <option [value]="champion.id">{{ champion.name }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Role</span>
+        <select
+          class="input"
+          data-testid="build-role-filter"
+          [ngModel]="role()"
+          (ngModelChange)="role.set($event)"
+        >
+          <option value="all">All roles</option>
+          @for (option of roles; track option) {
+            <option [value]="option">{{ option }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Sort</span>
+        <select
+          class="input"
+          data-testid="build-sort"
+          [ngModel]="sort()"
+          (ngModelChange)="sort.set($event)"
+        >
+          <option value="popular">Most votes</option>
+          <option value="recent">Recently updated</option>
+        </select>
+      </label>
+    </div>
+  </div>
+
+  <p class="mt-6 text-sm text-white/60" data-testid="build-result-count">
+    {{ results().length }} {{ results().length === 1 ? 'build' : 'builds' }} found
+  </p>
+
+  @if (isLoading()) {
+    <p class="mt-10 text-center text-white/50" data-testid="builds-loading">Loading builds…</p>
+  } @else if (results().length === 0) {
+    <div class="mt-10 text-center" data-testid="builds-empty">
+      <p class="text-white/70">No build matches that search.</p>
+      <button type="button" class="btn-ghost mt-4" data-testid="builds-reset" (click)="resetFilters()">
+        Reset filters
+      </button>
+    </div>
+  } @else {
+    <ul class="mt-4 grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      @for (build of results(); track build.id) {
+        <li appReveal>
+          <app-build-card [build]="build" />
+        </li>
+      }
+    </ul>
+  }
+</section>
