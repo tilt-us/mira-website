@@ -18,9 +18,10 @@ export class Header {
   protected readonly avatarImageError = signal(false);
   private lastAvatarUrl: string | null = null;
 
-  // Primary navigation tabs; each targets a placeholder page (see app.routes).
+  // Primary navigation tabs; the placeholder ones are wired in app.routes.
   protected readonly tabs = [
     { path: '/leaderboards', label: 'Leaderboards' },
+    { path: '/characters', label: 'Characters' },
     { path: '/builds', label: 'Builds' },
     { path: '/streamers', label: 'Streamers' },
     { path: '/report', label: 'Report' },

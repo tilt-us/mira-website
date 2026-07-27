@@ -92,7 +92,14 @@ describe('Header', () => {
   it('renders a navigation tab for every primary section', () => {
     const nav = byTestId(fixture, 'primary-nav');
     const hrefs = Array.from(nav.querySelectorAll('a')).map((a) => a.getAttribute('href'));
-    expect(hrefs).toEqual(['/leaderboards', '/builds', '/streamers', '/report']);
+    expect(hrefs).toEqual([
+      '/leaderboards',
+      '/characters',
+      '/builds',
+      '/streamers',
+      '/report',
+    ]);
+    expect(nav.textContent).toContain('Characters');
     expect(nav.textContent).toContain('Leaderboards');
     expect(nav.textContent).toContain('Report');
   });
