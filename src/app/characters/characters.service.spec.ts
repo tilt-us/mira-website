@@ -54,7 +54,7 @@ describe('CHARACTERS data', () => {
     }
   });
 
-  it('keeps the difficulty inside the range the detail page labels', () => {
+  it('keeps the difficulty inside the range the characters page labels', () => {
     for (const character of CHARACTERS) {
       expect(character.difficulty).toBeGreaterThanOrEqual(1);
       expect(character.difficulty).toBeLessThanOrEqual(3);

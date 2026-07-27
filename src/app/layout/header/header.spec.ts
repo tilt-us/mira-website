@@ -93,8 +93,8 @@ describe('Header', () => {
     const nav = byTestId(fixture, 'primary-nav');
     const hrefs = Array.from(nav.querySelectorAll('a')).map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual([
-      '/characters',
       '/leaderboards',
+      '/characters',
       '/builds',
       '/streamers',
       '/report',

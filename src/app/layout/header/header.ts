@@ -20,8 +20,8 @@ export class Header {
 
   // Primary navigation tabs; the placeholder ones are wired in app.routes.
   protected readonly tabs = [
-    { path: '/characters', label: 'Characters' },
     { path: '/leaderboards', label: 'Leaderboards' },
+    { path: '/characters', label: 'Characters' },
     { path: '/builds', label: 'Builds' },
     { path: '/streamers', label: 'Streamers' },
     { path: '/report', label: 'Report' },
