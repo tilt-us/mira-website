@@ -17,6 +17,21 @@
       </label>
 
       <label class="flex flex-col gap-1.5">
+        <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Character</span>
+        <select
+          class="input"
+          data-testid="build-character-filter"
+          [ngModel]="championId()"
+          (ngModelChange)="championId.set($event)"
+        >
+          <option value="all">All characters</option>
+          @for (champion of champions; track champion.id) {
+            <option [value]="champion.id">{{ champion.name }}</option>
+          }
+        </select>
+      </label>
+
+      <label class="flex flex-col gap-1.5">
         <span class="text-xs font-semibold uppercase tracking-[0.2em] text-white/80">Role</span>
         <select
           class="input"

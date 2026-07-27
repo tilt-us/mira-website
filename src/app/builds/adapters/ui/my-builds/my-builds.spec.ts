@@ -3,10 +3,10 @@ import { TestBed } from '@angular/core/testing';
 import { Mock, vi } from 'vitest';
 
 import { MyBuilds } from './my-builds';
-import { AuthService } from '../../auth/auth.service';
-import { AuthUser } from '../../auth/auth.types';
-import { BUILDS_API } from '../builds.service';
-import { Build } from '../builds.types';
+import { AuthService } from '../../../../auth/application/auth.service';
+import { AuthUser } from '../../../../auth/domain/models';
+import { Build } from '../../../domain/models';
+import { BUILDS_GATEWAY } from '../../../domain/ports';
 
 function build(overrides: Partial<Build> = {}): Build {
   return {
@@ -42,7 +42,7 @@ async function setup() {
     imports: [MyBuilds],
     providers: [
       {
-        provide: BUILDS_API,
+        provide: BUILDS_GATEWAY,
         useValue: { listCommunity: vi.fn().mockResolvedValue([]), listOwn, replaceOwn },
       },
       {

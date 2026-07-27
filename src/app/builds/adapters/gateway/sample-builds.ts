@@ -1,81 +1,8 @@
-import { Build, Champion, Item } from './builds.types';
-
-// Placeholder game data — the backend exposes no champion, item or build
-// endpoints yet, so the page ships with a curated sample set (tracked in the
-// wiki). Champions match the roster shown on the home page.
-export const CHAMPIONS: readonly Champion[] = [
-  { id: 'lira', name: 'Lira', epithet: 'The Timeweaver', role: 'Controller' },
-  { id: 'ignara', name: 'Ignara', epithet: 'The Flameheart', role: 'Duelist' },
-  { id: 'yuna', name: 'Yuna', epithet: 'The Stormcaller', role: 'Mage' },
-  { id: 'sophia', name: 'Sophia', epithet: 'The Lightbringer', role: 'Guardian' },
-];
-
-export const ITEMS: readonly Item[] = [
-  {
-    id: 'hourglass-blade',
-    name: 'Hourglass Blade',
-    category: 'Weapon',
-    description: 'Attacks briefly slow the target, stacking with time-based abilities.',
-  },
-  {
-    id: 'emberfang',
-    name: 'Emberfang',
-    category: 'Weapon',
-    description: 'Burns the target over time; the burn refreshes on every hit.',
-  },
-  {
-    id: 'stormpiercer',
-    name: 'Stormpiercer',
-    category: 'Weapon',
-    description: 'Ignores a share of magic resistance on ability damage.',
-  },
-  {
-    id: 'aegis-of-dawn',
-    name: 'Aegis of Dawn',
-    category: 'Armour',
-    description: 'Grants a shield to the lowest-health ally nearby.',
-  },
-  {
-    id: 'bulwark-plating',
-    name: 'Bulwark Plating',
-    category: 'Armour',
-    description: 'Reduces incoming burst damage while below half health.',
-  },
-  {
-    id: 'chronomantle',
-    name: 'Chronomantle',
-    category: 'Arcane',
-    description: 'Shortens ability cooldowns after every takedown.',
-  },
-  {
-    id: 'tidecaller-orb',
-    name: 'Tidecaller Orb',
-    category: 'Arcane',
-    description: 'Increases ability power the longer a fight lasts.',
-  },
-  {
-    id: 'wardens-focus',
-    name: "Warden's Focus",
-    category: 'Arcane',
-    description: 'Heals nearby allies whenever a shield expires.',
-  },
-  {
-    id: 'swiftstep-greaves',
-    name: 'Swiftstep Greaves',
-    category: 'Boots',
-    description: 'Movement speed that ramps up while out of combat.',
-  },
-  {
-    id: 'ironhold-sabatons',
-    name: 'Ironhold Sabatons',
-    category: 'Boots',
-    description: 'Reduces the duration of slows and roots.',
-  },
-];
+import type { Build } from '../../domain/models';
 
 /**
  * Sample community builds. These stand in for the published builds other
- * players will submit once the backend supports them.
+ * players will submit once the backend supports them (tracked in the wiki).
  */
 export const COMMUNITY_BUILDS: readonly Build[] = [
   {
@@ -169,11 +96,3 @@ export const COMMUNITY_BUILDS: readonly Build[] = [
     published: true,
   },
 ];
-
-export function championById(id: string): Champion | undefined {
-  return CHAMPIONS.find((champion) => champion.id === id);
-}
-
-export function itemById(id: string): Item | undefined {
-  return ITEMS.find((item) => item.id === id);
-}

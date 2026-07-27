@@ -10,17 +10,17 @@ export const BUILD_ROLES: readonly BuildRole[] = [
 ];
 
 export interface Champion {
-  id: string;
-  name: string;
-  epithet: string;
-  role: BuildRole;
+  readonly id: string;
+  readonly name: string;
+  readonly epithet: string;
+  readonly role: BuildRole;
 }
 
 export interface Item {
-  id: string;
-  name: string;
-  category: 'Weapon' | 'Armour' | 'Arcane' | 'Boots';
-  description: string;
+  readonly id: string;
+  readonly name: string;
+  readonly category: 'Weapon' | 'Armour' | 'Arcane' | 'Boots';
+  readonly description: string;
 }
 
 /** The four ability slots; a skill order is the sequence they are levelled in. */
@@ -29,22 +29,22 @@ export type SkillSlot = 'Q' | 'W' | 'E' | 'R';
 export const SKILL_SLOTS: readonly SkillSlot[] = ['Q', 'W', 'E', 'R'];
 
 export interface Build {
-  id: string;
-  title: string;
-  championId: string;
-  role: BuildRole;
+  readonly id: string;
+  readonly title: string;
+  readonly championId: string;
+  readonly role: BuildRole;
   /** Item ids in the order they are meant to be bought. */
-  itemIds: readonly string[];
+  readonly itemIds: readonly string[];
   /** Slots in levelling order, e.g. `Q W Q E R`. */
-  skillOrder: readonly SkillSlot[];
-  summary: string;
-  author: string;
-  tags: readonly string[];
-  votes: number;
+  readonly skillOrder: readonly SkillSlot[];
+  readonly summary: string;
+  readonly author: string;
+  readonly tags: readonly string[];
+  readonly votes: number;
   /** ISO date, used for the "recently updated" sort. */
-  updatedAt: string;
+  readonly updatedAt: string;
   /** Own builds start as drafts and are only listed publicly once published. */
-  published: boolean;
+  readonly published: boolean;
 }
 
 /** Everything the create form collects; the rest is filled in by the service. */

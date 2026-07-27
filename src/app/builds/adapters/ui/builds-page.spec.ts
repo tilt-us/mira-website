@@ -20,15 +20,15 @@ describe('BuildsPage', () => {
     expect(fixture.nativeElement.querySelector('h1').textContent).toContain('Loadouts');
   });
 
-  it('separates community builds from your own with two tabs', () => {
+  it('separates community builds from the item builder with two tabs', () => {
     const fixture = setup();
     const tabs = Array.from(
       fixture.nativeElement.querySelectorAll('[data-testid="builds-tab"]'),
     ) as HTMLAnchorElement[];
 
     expect(tabs.length).toBe(2);
-    expect(tabs[0].textContent).toContain('Community');
-    expect(tabs[1].textContent).toContain('My builds');
+    expect(tabs[0].textContent).toContain('Community Builds');
+    expect(tabs[1].textContent).toContain('Item Builder');
     expect(tabs.map((tab) => tab.getAttribute('href'))).toEqual(['/community', '/my']);
   });
 

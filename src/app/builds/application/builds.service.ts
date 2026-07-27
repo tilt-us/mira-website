@@ -1,56 +1,12 @@
-import { computed, inject, Injectable, InjectionToken, signal } from '@angular/core';
+import { computed, inject, Injectable, signal } from '@angular/core';
 
-import { COMMUNITY_BUILDS } from './builds.data';
-import { Build, BuildDraft, BuildRole, BuildSort } from './builds.types';
-
-const OWN_BUILDS_KEY = 'mira.builds.own';
-
-/**
- * The build reads and writes the page needs, injected so tests can stand in for
- * them and so the mock source can be swapped for the real endpoints once the
- * backend exposes builds.
- */
-export interface BuildsApi {
-  listCommunity(): Promise<readonly Build[]>;
-  listOwn(): Promise<readonly Build[]>;
-  replaceOwn(builds: readonly Build[]): Promise<void>;
-}
-
-function readStoredBuilds(): readonly Build[] {
-  if (typeof window === 'undefined') {
-    return [];
-  }
-
-  const raw = localStorage.getItem(OWN_BUILDS_KEY);
-
-  if (!raw) {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(raw) as Build[];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    localStorage.removeItem(OWN_BUILDS_KEY);
-    return [];
-  }
-}
-
-export const BUILDS_API = new InjectionToken<BuildsApi>('BUILDS_API', {
-  providedIn: 'root',
-  factory: () => ({
-    listCommunity: async () => COMMUNITY_BUILDS,
-    listOwn: async () => readStoredBuilds(),
-    replaceOwn: async (builds) => {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem(OWN_BUILDS_KEY, JSON.stringify(builds));
-      }
-    },
-  }),
-});
+import { Build, BuildDraft, BuildRole, BuildSort } from '../domain/models';
+import { BUILDS_GATEWAY } from '../domain/ports';
 
 export interface BuildFilter {
   query: string;
+  /** A champion id, or `'all'` to keep every character. */
+  championId: string | 'all';
   role: BuildRole | 'all';
   sort: BuildSort;
 }
@@ -70,11 +26,13 @@ function matchesQuery(build: Build, query: string): boolean {
   return haystack.includes(needle);
 }
 
-/** Pure search/sort used by both build lists, kept outside the service to test in isolation. */
+/** Pure search/sort used by the community list, kept outside the service to test in isolation. */
 export function filterBuilds(builds: readonly Build[], filter: BuildFilter): readonly Build[] {
   const matched = builds.filter(
     (build) =>
-      matchesQuery(build, filter.query) && (filter.role === 'all' || build.role === filter.role),
+      matchesQuery(build, filter.query) &&
+      (filter.championId === 'all' || build.championId === filter.championId) &&
+      (filter.role === 'all' || build.role === filter.role),
   );
 
   return [...matched].sort((a, b) =>
@@ -83,14 +41,14 @@ export function filterBuilds(builds: readonly Build[], filter: BuildFilter): rea
 }
 
 /**
- * Owns both halves of the Builds page: the read-only community list and the
- * builds the signed-in player created themselves. Own builds live in local
- * storage until a backend exists, so creating and editing already works
- * end-to-end without one.
+ * Owns both halves of the Builds feature: the read-only community list and the
+ * builds the signed-in player created themselves. Own builds are persisted
+ * through the gateway (local storage for now), so creating and editing works
+ * without a backend.
  */
 @Injectable({ providedIn: 'root' })
 export class BuildsService {
-  private readonly api = inject(BUILDS_API);
+  private readonly gateway = inject(BUILDS_GATEWAY);
   private readonly communityBuilds = signal<readonly Build[]>([]);
   private readonly ownBuilds = signal<readonly Build[]>([]);
   private readonly loading = signal(false);
@@ -109,7 +67,10 @@ export class BuildsService {
     this.loading.set(true);
 
     try {
-      const [community, own] = await Promise.all([this.api.listCommunity(), this.api.listOwn()]);
+      const [community, own] = await Promise.all([
+        this.gateway.listCommunity(),
+        this.gateway.listOwn(),
+      ]);
       this.communityBuilds.set(community);
       this.ownBuilds.set(own);
     } catch {
@@ -155,6 +116,6 @@ export class BuildsService {
 
   private async persist(builds: readonly Build[]): Promise<void> {
     this.ownBuilds.set(builds);
-    await this.api.replaceOwn(builds);
+    await this.gateway.replaceOwn(builds);
   }
 }

@@ -1,12 +1,19 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 
-import { AuthService } from '../../auth/auth.service';
-import { Reveal } from '../../shared/reveal';
+import { AuthService } from '../../../../auth/application/auth.service';
+import { Reveal } from '../../../../shared/reveal';
 import { BuildCard } from '../build-card/build-card';
-import { BuildsService } from '../builds.service';
-import { CHAMPIONS, championById, ITEMS } from '../builds.data';
-import { Build, BUILD_ROLES, BuildDraft, BuildRole, SKILL_SLOTS, SkillSlot } from '../builds.types';
+import { CHAMPIONS, championById, ITEMS } from '../../../domain/catalog';
+import {
+  Build,
+  BUILD_ROLES,
+  BuildDraft,
+  BuildRole,
+  SKILL_SLOTS,
+  SkillSlot,
+} from '../../../domain/models';
+import { BuildsService } from '../../../application/builds.service';
 
 /** Blank form state; also what "cancel" returns to. */
 function emptyDraft(): BuildDraft {

@@ -1,12 +1,13 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 
-import { Reveal } from '../shared/reveal';
+import { Reveal } from '../../../shared/reveal';
 
 /**
  * Shell for the Builds feature. Browsing what the community published and
- * managing your own builds are two different jobs, so each gets its own route
- * under `/builds` and this component only supplies the shared hero and tabs.
+ * building your own loadout are two different jobs, so each gets its own route
+ * under `/builds`; this component supplies the shared hero and the switcher
+ * that sits at the top of both sub-pages.
  */
 @Component({
   selector: 'app-builds-page',
@@ -15,7 +16,7 @@ import { Reveal } from '../shared/reveal';
 })
 export class BuildsPage {
   protected readonly tabs = [
-    { path: 'community', label: 'Community', hint: 'Discover what others play' },
-    { path: 'my', label: 'My builds', hint: 'Create and publish your own' },
+    { path: 'community', label: 'Community Builds', hint: 'Discover what others play' },
+    { path: 'my', label: 'Item Builder', hint: 'Create and publish your own' },
   ];
 }

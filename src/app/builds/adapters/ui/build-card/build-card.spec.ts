@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { BuildCard } from './build-card';
-import { Build } from '../builds.types';
+import { Build } from '../../../domain/models';
 
 function build(overrides: Partial<Build> = {}): Build {
   return {

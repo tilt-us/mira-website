@@ -1,9 +1,9 @@
 import { Component, computed, input, output } from '@angular/core';
 
-import { championById, itemById } from '../builds.data';
-import { Build, Item } from '../builds.types';
+import { championById, itemById } from '../../../domain/catalog';
+import { Build, Item } from '../../../domain/models';
 
-/** Renders one build; the owner actions are only wired up in "My builds". */
+/** Renders one build; the owner actions are only wired up in the item builder. */
 @Component({
   selector: 'app-build-card',
   templateUrl: './build-card.html',

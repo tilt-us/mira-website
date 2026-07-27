@@ -1,8 +1,14 @@
 import { TestBed } from '@angular/core/testing';
 import { Mock, vi } from 'vitest';
 
-import { BUILDS_API, BuildsService, filterBuilds } from './builds.service';
-import { Build, BuildDraft } from './builds.types';
+import { BuildFilter, BuildsService, filterBuilds } from './builds.service';
+import { Build, BuildDraft } from '../domain/models';
+import { BUILDS_GATEWAY } from '../domain/ports';
+
+/** A "keep everything" filter; tests override only the field under test. */
+function filter(overrides: Partial<BuildFilter> = {}): BuildFilter {
+  return { query: '', championId: 'all', role: 'all', sort: 'popular', ...overrides };
+}
 
 function build(overrides: Partial<Build> = {}): Build {
   return {
@@ -52,14 +58,14 @@ describe('filterBuilds', () => {
   ];
 
   it('returns everything for an empty query', () => {
-    expect(filterBuilds(builds, { query: '  ', role: 'all', sort: 'popular' }).length).toBe(2);
+    expect(filterBuilds(builds, filter({ query: '  ' })).length).toBe(2);
   });
 
   it('matches title, author, champion and tags case-insensitively', () => {
-    const byTitle = filterBuilds(builds, { query: 'dive', role: 'all', sort: 'popular' });
-    const byAuthor = filterBuilds(builds, { query: 'RUE', role: 'all', sort: 'popular' });
-    const byChampion = filterBuilds(builds, { query: 'lira', role: 'all', sort: 'popular' });
-    const byTag = filterBuilds(builds, { query: 'meta', role: 'all', sort: 'popular' });
+    const byTitle = filterBuilds(builds, filter({ query: 'dive' }));
+    const byAuthor = filterBuilds(builds, filter({ query: 'RUE' }));
+    const byChampion = filterBuilds(builds, filter({ query: 'lira' }));
+    const byTag = filterBuilds(builds, filter({ query: 'meta' }));
 
     expect(byTitle.map((b) => b.id)).toEqual(['b']);
     expect(byAuthor.map((b) => b.id)).toEqual(['b']);
@@ -67,15 +73,25 @@ describe('filterBuilds', () => {
     expect(byTag.map((b) => b.id)).toEqual(['a']);
   });
 
+  it('filters by character', () => {
+    const ignara = filterBuilds(builds, filter({ championId: 'ignara' }));
+
+    expect(ignara.map((b) => b.id)).toEqual(['b']);
+  });
+
+  it('combines the character filter with the search query', () => {
+    expect(filterBuilds(builds, filter({ championId: 'lira', query: 'dive' })).length).toBe(0);
+  });
+
   it('filters by role', () => {
-    const duelists = filterBuilds(builds, { query: '', role: 'Duelist', sort: 'popular' });
+    const duelists = filterBuilds(builds, filter({ role: 'Duelist' }));
 
     expect(duelists.map((b) => b.id)).toEqual(['b']);
   });
 
   it('sorts by votes or by last update', () => {
-    const popular = filterBuilds(builds, { query: '', role: 'all', sort: 'popular' });
-    const recent = filterBuilds(builds, { query: '', role: 'all', sort: 'recent' });
+    const popular = filterBuilds(builds, filter({ sort: 'popular' }));
+    const recent = filterBuilds(builds, filter({ sort: 'recent' }));
 
     expect(popular.map((b) => b.id)).toEqual(['b', 'a']);
     expect(recent.map((b) => b.id)).toEqual(['a', 'b']);
@@ -83,7 +99,7 @@ describe('filterBuilds', () => {
 
   it('leaves the source array untouched', () => {
     const source = [...builds];
-    filterBuilds(source, { query: '', role: 'all', sort: 'popular' });
+    filterBuilds(source, filter());
 
     expect(source.map((b) => b.id)).toEqual(['a', 'b']);
   });
@@ -103,7 +119,7 @@ describe('BuildsService', () => {
     TestBed.configureTestingModule({
       providers: [
         BuildsService,
-        { provide: BUILDS_API, useValue: { listCommunity, listOwn, replaceOwn } },
+        { provide: BUILDS_GATEWAY, useValue: { listCommunity, listOwn, replaceOwn } },
       ],
     });
     service = TestBed.inject(BuildsService);
@@ -199,39 +215,39 @@ describe('BuildsService', () => {
   });
 });
 
-describe('BUILDS_API default implementation', () => {
+describe('BUILDS_GATEWAY default adapter', () => {
   beforeEach(() => {
     localStorage.clear();
     TestBed.configureTestingModule({ providers: [BuildsService] });
   });
 
   it('serves the sample community builds', async () => {
-    const builds = await TestBed.inject(BUILDS_API).listCommunity();
+    const builds = await TestBed.inject(BUILDS_GATEWAY).listCommunity();
 
     expect(builds.length).toBeGreaterThan(0);
     expect(builds.every((b) => b.published)).toBe(true);
   });
 
   it('round-trips own builds through local storage', async () => {
-    const api = TestBed.inject(BUILDS_API);
+    const gateway = TestBed.inject(BUILDS_GATEWAY);
 
-    await api.replaceOwn([build({ id: 'stored' })]);
+    await gateway.replaceOwn([build({ id: 'stored' })]);
 
-    expect((await api.listOwn()).map((b) => b.id)).toEqual(['stored']);
+    expect((await gateway.listOwn()).map((b) => b.id)).toEqual(['stored']);
   });
 
   it('starts empty and discards corrupted storage', async () => {
-    const api = TestBed.inject(BUILDS_API);
-    expect(await api.listOwn()).toEqual([]);
+    const gateway = TestBed.inject(BUILDS_GATEWAY);
+    expect(await gateway.listOwn()).toEqual([]);
 
     localStorage.setItem('mira.builds.own', '{not json');
-    expect(await api.listOwn()).toEqual([]);
+    expect(await gateway.listOwn()).toEqual([]);
     expect(localStorage.getItem('mira.builds.own')).toBeNull();
   });
 
   it('ignores stored values that are not a list', async () => {
     localStorage.setItem('mira.builds.own', '{"nope":true}');
 
-    expect(await TestBed.inject(BUILDS_API).listOwn()).toEqual([]);
+    expect(await TestBed.inject(BUILDS_GATEWAY).listOwn()).toEqual([]);
   });
 });

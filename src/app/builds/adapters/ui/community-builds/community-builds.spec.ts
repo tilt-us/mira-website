@@ -2,8 +2,8 @@ import { TestBed } from '@angular/core/testing';
 import { Mock, vi } from 'vitest';
 
 import { CommunityBuilds } from './community-builds';
-import { BUILDS_API } from '../builds.service';
-import { Build } from '../builds.types';
+import { Build } from '../../../domain/models';
+import { BUILDS_GATEWAY } from '../../../domain/ports';
 
 function build(overrides: Partial<Build> = {}): Build {
   return {
@@ -50,7 +50,7 @@ async function setup() {
     imports: [CommunityBuilds],
     providers: [
       {
-        provide: BUILDS_API,
+        provide: BUILDS_GATEWAY,
         useValue: { listCommunity, listOwn, replaceOwn: vi.fn().mockResolvedValue(undefined) },
       },
     ],
@@ -130,6 +130,27 @@ describe('CommunityBuilds', () => {
 
     await type(fixture, 'build-search', 'teamfight');
     expect(cards(fixture).length).toBe(2);
+  });
+
+  it('filters by the selected character', async () => {
+    const fixture = await setup();
+
+    await type(fixture, 'build-character-filter', 'ignara');
+    expect(titles(fixture)).toEqual(['Dive Ignara']);
+
+    await type(fixture, 'build-character-filter', 'lira');
+    expect(titles(fixture)).toEqual(['Tempo Lira']);
+  });
+
+  it('offers every champion in the character selector', async () => {
+    const fixture = await setup();
+    const options = Array.from(
+      fixture.nativeElement.querySelectorAll('[data-testid="build-character-filter"] option'),
+    ).map((option) => (option as HTMLOptionElement).value);
+
+    expect(options).toContain('all');
+    expect(options).toContain('lira');
+    expect(options).toContain('ignara');
   });
 
   it('filters by role', async () => {
