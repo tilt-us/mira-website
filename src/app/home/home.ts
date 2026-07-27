@@ -1,9 +1,9 @@
 import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { mapAuthErrorMessage } from '../auth/auth.service';
+import { mapAuthErrorMessage } from '../auth/application/auth.service';
 
-import { DownloadButton } from '../download/download-button/download-button';
+import { DownloadButton } from '../download/adapters/ui/download-button/download-button';
 import { Reveal } from '../shared/reveal';
 import { CarouselCard, EventCarousel } from '../shared/event-carousel/event-carousel';
 import { CharacterShowcase, ShowcaseCharacter } from './character-showcase/character-showcase';

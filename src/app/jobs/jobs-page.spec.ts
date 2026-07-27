@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 
 import { JobsPage } from './jobs-page';
-import { APPLICATION_EMAIL, applicationMailto, JOB_POSTINGS } from './jobs.data';
+import { APPLICATION_EMAIL, applicationMailto, JOB_POSTINGS } from './domain/jobs.data';
 
 function setup() {
   TestBed.configureTestingModule({ imports: [JobsPage] });

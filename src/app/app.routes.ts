@@ -2,9 +2,9 @@ import { Routes } from '@angular/router';
 
 import { Home } from './home/home';
 import { JobsPage } from './jobs/jobs-page';
-import { LegalPage } from './legal/legal-page/legal-page';
+import { LegalPage } from './legal/adapters/ui/legal-page';
 import { PlaceholderPage } from './placeholder/placeholder-page';
-import { UserSettings } from './user-settings/user-settings';
+import { UserSettings } from './settings/adapters/ui/user-settings';
 
 export const routes: Routes = [
   { path: '', component: Home },

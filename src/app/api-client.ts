@@ -1,6 +1,6 @@
 import { client } from "../api/client.gen";
-import { clearTokens } from "./auth/storage";
-import { getValidAccessToken } from "./auth/keycloak";
+import { clearTokens } from "./auth/adapters/identity/storage";
+import { getValidAccessToken } from "./auth/adapters/identity/keycloak";
 import { API_CLIENT_MODE } from "./api-runtime.config";
 
 const LOCAL_API_BASE_URL = "http://localhost:8080";
