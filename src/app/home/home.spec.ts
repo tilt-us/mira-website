@@ -65,16 +65,16 @@ describe('Home', () => {
     expect(el.querySelectorAll('[data-testid="character-tab"]').length).toBe(4);
   });
 
-  it('shows the news and events sections', () => {
+  it('shows news and events merged into a single section', () => {
     const el = render();
     expect(el.querySelector('#news')).toBeTruthy();
-    expect(el.querySelector('#events')).toBeTruthy();
+    expect(el.querySelector('#events')).toBeFalsy();
+    expect(el.querySelectorAll('[data-testid="event-carousel"]').length).toBe(1);
   });
 
-  it('shows a carousel with a card per placeholder entry in both sections', () => {
+  it('shows a carousel card per combined placeholder entry', () => {
     const el = render();
-    expect(el.querySelectorAll('#news .event-carousel-card').length).toBe(5);
-    expect(el.querySelectorAll('#events .event-carousel-card').length).toBe(5);
+    expect(el.querySelectorAll('#news .event-carousel-card').length).toBe(6);
   });
 
   it('shows a Discord link', () => {
@@ -87,21 +87,19 @@ describe('Home', () => {
     expect(link?.getAttribute('rel')).toContain('noopener');
   });
 
-  it('navigates the news carousel independently of the events carousel', () => {
+  it('navigates the combined carousel', () => {
     const fixture = TestBed.createComponent(Home);
     fixture.detectChanges();
     const el = fixture.nativeElement as HTMLElement;
 
-    const newsNext = el.querySelector('#news [aria-label="Show next event"]') as HTMLElement;
-    newsNext.click();
+    const next = el.querySelector('#news [aria-label="Show next event"]') as HTMLElement;
+    next.click();
     fixture.detectChanges();
 
-    const activeIn = (section: string) =>
-      Array.from(el.querySelectorAll(`${section} .event-carousel-card`)).findIndex((card) =>
-        card.classList.contains('is-active'),
-      );
-    expect(activeIn('#news')).toBe(1);
-    expect(activeIn('#events')).toBe(0);
+    const active = Array.from(el.querySelectorAll('#news .event-carousel-card')).findIndex((card) =>
+      card.classList.contains('is-active'),
+    );
+    expect(active).toBe(1);
   });
 
   it('shows a mapped error toast for OAuth errors from query params', () => {

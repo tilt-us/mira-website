@@ -556,9 +556,9 @@ select.input {
 // its circular offset from the active one, so all visible cards travel
 // together while the card crossing the seam jumps while it cannot be seen.
 .event-carousel {
-  --event-card-width: min(24rem, 80vw);
-  --event-card-height: 13rem;
-  --event-card-overlap: 1.5rem;
+  --event-card-width: min(28rem, 85vw);
+  --event-card-height: 16rem;
+  --event-card-overlap: 1.75rem;
   // Cards overlap on purpose, so one navigation step is less than a full card.
   --event-card-step: calc(var(--event-card-width) - var(--event-card-overlap));
   // Keeps vertical page scrolling working while horizontal drags become swipes.

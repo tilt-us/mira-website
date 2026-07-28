@@ -60,22 +60,16 @@ export class Home {
     },
   ];
 
-  // Placeholder content — no news/events backend yet (tracked in the wiki).
-  // Will later be the latest ~5 entries from the backend.
+  // News and events share one carousel: this site only covers the game, so
+  // neither alone fills a row. Placeholder content — no backend endpoint yet
+  // (tracked in the wiki). Will later be the latest ~6 entries from the backend.
   protected readonly news: CarouselCard[] = [
-    { id: 'news-1', title: 'Coming soon', body: 'News about Mira will appear here.' },
+    { id: 'news-1', title: 'Coming soon', body: 'News and events about Mira will appear here.' },
     { id: 'news-2', title: 'Devlog', body: 'Behind-the-scenes updates are on the way.' },
     { id: 'news-3', title: 'Patch notes', body: 'Release notes will be posted here.' },
-    { id: 'news-4', title: 'Community', body: 'Player highlights coming soon.' },
-    { id: 'news-5', title: 'Stay tuned', body: 'Follow along for the latest.' },
-  ];
-
-  protected readonly events: CarouselCard[] = [
-    { id: 'event-1', title: 'Coming soon', body: 'Upcoming events will be listed here.' },
-    { id: 'event-2', title: 'Tournaments', body: 'Competitive events are being planned.' },
-    { id: 'event-3', title: 'Playtests', body: 'Open playtest sessions soon.' },
-    { id: 'event-4', title: 'Launch', body: 'Release date to be announced.' },
-    { id: 'event-5', title: 'Dev streams', body: 'Live sessions with the team soon.' },
+    { id: 'news-4', title: 'Tournaments', body: 'Competitive events are being planned.' },
+    { id: 'news-5', title: 'Playtests', body: 'Open playtest sessions soon.' },
+    { id: 'news-6', title: 'Dev streams', body: 'Live sessions with the team soon.' },
   ];
 
   constructor() {

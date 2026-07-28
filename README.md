@@ -129,6 +129,44 @@ git config core.hooksPath .githooks
 
 This prevents accidental direct pushes to `master`.
 
+## Node version
+
+This project requires **Node.js v24.17.0** (Angular CLI 22 needs ≥ v24.15.0).
+The version is pinned in [`.node-version`](.node-version), so any Node manager
+that reads it (fnm, nvm, asdf, Volta) picks the right version automatically.
+
+## Troubleshooting
+
+### `node.exe` was not recognized / `CommandNotFoundException` when running `ng`, `pnpm` or `node`
+
+Node is managed by [**fnm**](https://github.com/Schniz/fnm) and is not on the
+`PATH` until fnm is activated in your shell. If a fresh terminal can't find
+`node`/`pnpm`/`ng`, your shell profile isn't activating fnm.
+
+**PowerShell (permanent fix)** — add this line to your profile
+(`$PROFILE`, e.g. `C:\Users\<you>\Documents\WindowsPowerShell\Microsoft.PowerShell_profile.ps1`):
+
+```powershell
+fnm env --use-on-cd | Out-String | Invoke-Expression
+```
+
+Open a new terminal afterwards. `--use-on-cd` also auto-switches to the version
+in `.node-version` whenever you `cd` into the project. For a one-off session you
+can instead prepend the install dir manually:
+
+```powershell
+$env:Path = "$env:APPDATA\fnm\node-versions\v24.17.0\installation;" + $env:Path
+```
+
+(Bash/Zsh users add `eval "$(fnm env --use-on-cd)"` to `~/.bashrc` / `~/.zshrc`.)
+
+### `The Angular CLI requires a minimum Node.js version of v24.15.0`
+
+Your active Node is too old (fnm's default is often an older v22). From inside
+the project run `fnm use` to switch to the pinned `.node-version`, or set it as
+the default with `fnm default v24.17.0`. Install it first if missing:
+`fnm install v24.17.0`.
+
 ## Development Server
 
 To start a local development server, run:
