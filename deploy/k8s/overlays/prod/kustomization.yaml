@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tilt-prod
+resources:
+  - ../../base
+  - namespace.yaml
+  - ingress.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: mira-website
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+      - op: replace
+        path: /spec/template/spec/containers/0/image
+        value: ghcr.io/tilt-us/mira-website:sha-REPLACE_WITH_FULL_COMMIT_SHA

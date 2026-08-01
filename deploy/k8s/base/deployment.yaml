@@ -1,0 +1,81 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mira-website
+  labels:
+    app.kubernetes.io/name: mira-website
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: mira
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mira-website
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mira-website
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: mira
+    spec:
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: mira-website
+          # Development only; GitOps must replace this with a digest before staging or production.
+          image: ghcr.io/tilt-us/mira-website:development
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8080
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 2
+            failureThreshold: 15
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 20
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: caddy-data
+              mountPath: /data
+            - name: caddy-config
+              mountPath: /config
+      volumes:
+        - name: caddy-data
+          emptyDir: {}
+        - name: caddy-config
+          emptyDir: {}

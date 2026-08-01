@@ -1,0 +1,23 @@
+{
+	auto_https off
+	admin off
+}
+
+:8080 {
+	root * /usr/share/caddy
+	encode zstd gzip
+
+	header {
+		-Server
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), geolocation=(), microphone=()"
+	}
+
+	@health path /healthz
+	respond @health 200
+
+	try_files {path} /index.html
+	file_server
+}
