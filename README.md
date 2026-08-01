@@ -254,3 +254,9 @@ pnpm run test:e2e
 The CI builds the website container and publishes it to GHCR. It does not access
 deployment hosts or Kubernetes clusters. K3s deployment and the GitOps handover
 are documented in [docs/deployment-k3s.md](docs/deployment-k3s.md).
+
+The current deployment is a temporary S-TEST setup. All non-local browser
+requests still use the shared API and Keycloak endpoints at
+`https://api.tilt-us.com` and `https://api.tilt-us.com/keycloak`. R-TEST and
+PROD must not be rolled out from this website CI until separate backend
+environments and public runtime configuration are available.
