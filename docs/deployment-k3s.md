@@ -38,6 +38,12 @@ The Kustomize overlays are under `deploy/k8s/overlays`. They use a ClusterIP
 service on port 80 to the Caddy container on port 8080, Traefik ingress, and
 cert-manager's `letsencrypt-prod` ClusterIssuer.
 
+The official Caddy image grants its binary `NET_BIND_SERVICE` as a file
+capability for ports below 1024. The runtime image removes that capability
+because this service only binds port 8080. Do not add `NET_BIND_SERVICE` to the
+Pod. The deployment deliberately retains `capabilities.drop: [ALL]`,
+`allowPrivilegeEscalation: false`, and `runAsNonRoot: true`.
+
 ```bash
 kubectl kustomize deploy/k8s/overlays/dev
 kubectl kustomize deploy/k8s/overlays/staging
@@ -91,6 +97,26 @@ tokens, private keys, or client credentials.
    equivalent generated manifests) with each environment's normal GitOps
    repository credentials. This repository does not create an Argo CD token or
    assume an infrastructure repository.
+
+## Argo CD S-TEST bootstrap
+
+`deploy/argocd/mira-website-dev.yaml` is the sole Argo CD Application supplied
+by this repository. It watches the `development` branch's dev overlay and
+automatically synchronizes only the `tilt-dev` namespace. It uses the standard
+`default` Argo CD project and assumes Argo CD is installed in the `argocd`
+namespace.
+
+An administrator applies this Application once from a trusted cluster-admin
+workstation; GitHub Actions never receives Kubernetes credentials and does not
+run this command:
+
+```bash
+kubectl apply -f deploy/argocd/mira-website-dev.yaml
+```
+
+Argo CD needs read access to this Git repository when it is private. Staging
+and production intentionally have no Application bootstrap until separate
+backend environments and public runtime configuration are available.
 
 ## Retiring legacy secrets
 

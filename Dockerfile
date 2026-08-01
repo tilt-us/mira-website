@@ -16,6 +16,11 @@ LABEL org.opencontainers.image.source="https://github.com/tilt-us/mira-website" 
       org.opencontainers.image.description="Mira website frontend" \
       org.opencontainers.image.licenses="NOASSERTION"
 
+# The upstream image grants this binary NET_BIND_SERVICE for ports below 1024.
+# Caddy only binds 8080 here; retaining the file capability makes exec fail when
+# Kubernetes correctly drops every ambient capability.
+RUN setcap -r /usr/bin/caddy
+
 COPY Caddyfile /etc/caddy/Caddyfile
 COPY --from=build --chown=1000:1000 /app/dist/mira-website/browser /usr/share/caddy
 
