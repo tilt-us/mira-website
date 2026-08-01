@@ -14,7 +14,7 @@ After the first push, make the GHCR package public in its GitHub Package
 settings when K3s should pull it anonymously. A private package instead needs
 an image pull secret managed in the cluster or GitOps repository, not here.
 
-## Release mapping
+## Branch mapping and rollout status
 
 | Source | Environment | Namespace | Hostname |
 | --- | --- | --- | --- |
@@ -22,11 +22,15 @@ an image pull secret managed in the cluster or GitOps repository, not here.
 | `master` | R-TEST | `tilt-staging` | `staging.tilt-us.com` |
 | `vX.Y.Z` tag | PROD | `tilt-prod` | `tilt-us.com`, `www.tilt-us.com` |
 
-Pushes to `development` and `master` publish a mutable branch tag and the
-immutable, full-SHA tag `sha-<commit SHA>`. Release tags never rebuild: they
-promote the existing SHA image to `vX.Y.Z`, `X.Y.Z`, `X.Y`, and `X` with the
-same digest. No `latest` tag is created. Buildx also attaches SBOM and
-provenance attestations.
+Only S-TEST is currently eligible for website rollout. `master` and release
+tags still create or promote image artifacts, but they must not be deployed to
+R-TEST or PROD from this repository yet.
+
+Pushes to `development` and `master` first run unit, Playwright, and container
+smoke tests, then publish a mutable branch tag and the immutable, full-SHA tag
+`sha-<commit SHA>`. Release tags never rebuild: they promote the existing SHA
+image to `vX.Y.Z`, `X.Y.Z`, `X.Y`, and `X` with the same digest. No `latest`
+tag is created. Buildx also attaches SBOM and provenance attestations.
 
 ## Manifests
 
@@ -54,12 +58,19 @@ No digest is invented in this repository. An image automation controller or a
 commit in a GitOps repository should make that image patch. Production renders
 two replicas; two pods on a single K3s node are not high availability.
 
-## Runtime configuration
+## Temporary backend configuration
 
-The reviewed frontend has no Angular environment files. Its browser-visible
-API and Keycloak defaults resolve to the same public `api.tilt-us.com` service
-for every non-local hostname, so one image can serve dev, staging, and prod
-without added runtime configuration. No ConfigMaps are needed at this point.
+The frontend has no Angular environment files. For every non-local hostname it
+currently uses these shared browser-visible endpoints:
+
+- API: `https://api.tilt-us.com`
+- Keycloak: `https://api.tilt-us.com/keycloak`
+
+This is a temporary S-TEST configuration, not an environment-neutral runtime
+configuration. Until separate backend environments and public runtime
+configuration exist, R-TEST and PROD must not be rolled out through this
+website CI. No API, Keycloak, authentication, or client-mode behavior is
+changed by this container migration.
 
 If an environment later requires a different browser API or OAuth address, use
 a mounted public JSON file such as `/config/runtime.json`, load it in an Angular
@@ -73,8 +84,10 @@ tokens, private keys, or client credentials.
 2. Render the dev overlay with the command above and inspect its namespace,
    ingress host, TLS secret, health probes, and image reference.
 3. Replace the dev bootstrap tag with the published digest in the GitOps
-   configuration, then let Argo CD synchronize it.
-4. Configure Argo CD applications to watch the relevant overlay paths (or
+   configuration, then let Argo CD synchronize S-TEST.
+4. Do not synchronize the staging or prod overlays until separate backend
+   environments and runtime configuration are available.
+5. Configure Argo CD applications to watch the relevant overlay paths (or
    equivalent generated manifests) with each environment's normal GitOps
    repository credentials. This repository does not create an Argo CD token or
    assume an infrastructure repository.
