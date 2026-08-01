@@ -251,39 +251,6 @@ pnpm run test:e2e
 
 ## Deployment
 
-On `development` branch pushes, the CI workflow deploys the build output to `S-TEST` and publishes it to
-`https://tilt-us.com` (served via Caddy on the server at the configured `DEPLOY_HOST`).
-If `mira-caddy` runs in Docker (as in the `mira-service` stack), deployment and Caddy reload are done
-inside that container so host-level systemd restart is **not** required.
-
-Defaults are tuned for the existing `mira-service` stack:
-
-- `DEPLOY_PATH` -> `/srv/mira/website`
-- `DEPLOY_CADDY_CONTAINER` -> `mira-caddy`
-- Caddyfile used in container: `/etc/caddy/Caddyfile`
-- website root injected into host Caddy config: `<DEPLOY_PATH>/browser`
-- Ensure `/srv/mira/website` is mounted/visible inside the `mira-caddy` container.
-
-Required repository secrets for deployment:
-
-- `CODECOV_TOKEN`
-- `DEPLOY_HOST`
-- `DEPLOY_USER`
-- `DEPLOY_SSH_KEY`
-- `DEPLOY_PATH` (optional, default: `/srv/mira/website`)
-- Optional: `DEPLOY_PORT` (defaults to `22`) and `DEPLOY_POST_DEPLOY_COMMAND` (for fully custom post steps)
-- Optional (for Dockerized Caddy):
-  - `DEPLOY_CADDY_CONTAINER` (default: `mira-caddy`)
-  - `CADDY_CONTAINER_CONFIG_PATH` (default: `/etc/caddy/Caddyfile`)
-  - `CADDY_CONFIG_PATH` (legacy alias for `CADDY_CONTAINER_CONFIG_PATH`)
-  - `CADDY_HOST_CONFIG_PATH` (optional if config mount can be discovered from the container)
-  - `CADDY_SITE_ROOT` (optional, default: `<DEPLOY_PATH>/browser`)
-  - `CADDY_CONTAINER_USE_SUDO` (`true`/`false`, default `false`)
-  - `DEPLOY_RSYNC_WITH_SUDO` (`true`/`false`, default `false`, when true runs rsync via `sudo rsync` on target)
-
-If `DEPLOY_POST_DEPLOY_COMMAND` is not set, the workflow:
-
-1. syncs `dist/mira-website/` to `${DEPLOY_PATH}`
-2. auto-detects or uses `CADDY_HOST_CONFIG_PATH`
-3. replaces any existing managed marker block and any existing `tilt-us.com` / `www.tilt-us.com` server blocks in that file, then appends a single managed block,
-4. reloads Caddy via `docker exec <DEPLOY_CADDY_CONTAINER> caddy reload --config <CADDY_CONTAINER_CONFIG_PATH>`.
+The CI builds the website container and publishes it to GHCR. It does not access
+deployment hosts or Kubernetes clusters. K3s deployment and the GitOps handover
+are documented in [docs/deployment-k3s.md](docs/deployment-k3s.md).

@@ -1,0 +1,34 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mira-website
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - tilt-us.com
+        - www.tilt-us.com
+      secretName: mira-website-prod-tls
+  rules:
+    - host: tilt-us.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mira-website
+                port:
+                  name: http
+    - host: www.tilt-us.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mira-website
+                port:
+                  name: http
