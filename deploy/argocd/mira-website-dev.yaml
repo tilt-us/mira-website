@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mira-website-dev
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: mira-website
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/part-of: mira
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/tilt-us/mira-website.git
+    targetRevision: development
+    path: deploy/k8s/overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tilt-dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
