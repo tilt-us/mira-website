@@ -43,6 +43,22 @@ describe('api-client runtime configuration', () => {
     expect(getApiBaseUrl()).toBe('http://localhost:8080');
   });
 
+  it('rejects a parsed URL without protocol or host', () => {
+    const originalUrl = globalThis.URL;
+    vi.stubGlobal('URL', class {
+      protocol = '';
+      host = '';
+    });
+
+    try {
+      expect(() => applyRuntimeApiConfig('https://dev.api.tilt-us.com')).toThrow(
+        'Runtime API base URL',
+      );
+    } finally {
+      vi.stubGlobal('URL', originalUrl);
+    }
+  });
+
   it('sets browser auth and device headers', () => {
     applyRuntimeApiConfig('https://dev.api.tilt-us.com');
     setApiAccessToken('token');
@@ -81,6 +97,23 @@ describe('api-client runtime configuration', () => {
     expect(result.headers.get('Authorization')).toBeNull();
   });
 
+  it('clears auth state when token validation throws', async () => {
+    localStorage.setItem(
+      'mira.auth.tokens',
+      JSON.stringify({ accessToken: createJwtWithIssuer('https://invalid.issuer') }),
+    );
+    const interceptor = client.interceptors.request.fns.at(-1)!;
+    const request = new Request('https://example.test', {
+      headers: { Authorization: 'Bearer old-token', 'X-Device-Type': 'Web' },
+    });
+
+    const result = await interceptor(request, {} as never);
+
+    expect(localStorage.getItem('mira.auth.tokens')).toBeNull();
+    expect(result.headers.get('Authorization')).toBeNull();
+    expect(result.headers.get('X-Device-Type')).toBeNull();
+  });
+
   it('clears auth state and emits an event for an unauthorized response', async () => {
     const handler = vi.fn();
     window.addEventListener('mira:auth-required', handler);
@@ -91,6 +124,30 @@ describe('api-client runtime configuration', () => {
 
     expect(localStorage.getItem('mira.auth.tokens')).toBeNull();
     expect(handler).toHaveBeenCalledOnce();
+    window.removeEventListener('mira:auth-required', handler);
+  });
+
+  it('treats forbidden responses like unauthorized responses', async () => {
+    const handler = vi.fn();
+    window.addEventListener('mira:auth-required', handler);
+    const interceptor = client.interceptors.response.fns.at(-1)!;
+
+    await interceptor(new Response(null, { status: 403 }), new Request('https://example.test'), {} as never);
+
+    expect(handler).toHaveBeenCalledOnce();
+    window.removeEventListener('mira:auth-required', handler);
+  });
+
+  it('leaves successful responses unchanged', async () => {
+    const handler = vi.fn();
+    window.addEventListener('mira:auth-required', handler);
+    const interceptor = client.interceptors.response.fns.at(-1)!;
+    const response = new Response(JSON.stringify({ status: 'ok' }), { status: 200 });
+
+    await expect(interceptor(response, new Request('https://example.test'), {} as never)).resolves.toBe(
+      response,
+    );
+    expect(handler).not.toHaveBeenCalled();
     window.removeEventListener('mira:auth-required', handler);
   });
 });

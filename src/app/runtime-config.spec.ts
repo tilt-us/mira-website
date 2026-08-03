@@ -64,6 +64,16 @@ describe('runtime configuration', () => {
     expect(() => validateRuntimeConfig(missingApiBaseUrl)).toThrow(RuntimeConfigError);
   });
 
+  it('rejects a non-object configuration payload', () => {
+    expect(() => validateRuntimeConfig([])).toThrow('must be an object');
+  });
+
+  it('rejects malformed endpoint URLs', () => {
+    expect(() =>
+      validateRuntimeConfig({ ...environmentConfig('dev'), apiBaseUrl: 'not-a-url' }),
+    ).toThrow('must be an absolute URL');
+  });
+
   it('rejects HTTP URLs outside the local environment', () => {
     expect(() =>
       validateRuntimeConfig({ ...environmentConfig('dev'), apiBaseUrl: 'http://dev.api.tilt-us.com' }),
@@ -72,6 +82,18 @@ describe('runtime configuration', () => {
 
   it('allows the explicitly supported local HTTP URLs', () => {
     expect(validateRuntimeConfig(baseConfig)).toEqual(baseConfig);
+  });
+
+  it('rejects unsupported local hosts and ports', () => {
+    expect(() =>
+      validateRuntimeConfig({ ...baseConfig, apiBaseUrl: 'http://localhost:8081' }),
+    ).toThrow('must use http://localhost:8080');
+  });
+
+  it('rejects unknown runtime environments', () => {
+    expect(() => validateRuntimeConfig({ ...baseConfig, environment: 'preview' })).toThrow(
+      'must be local, dev, staging, or prod',
+    );
   });
 
   it('rejects unexpected fields so secrets cannot be exposed in runtime.json', () => {
@@ -84,6 +106,26 @@ describe('runtime configuration', () => {
     expect(() =>
       validateRuntimeConfig({ ...environmentConfig('dev'), keycloakBaseUrl: 'https://sso.tilt-us.com' }),
     ).toThrow('infrastructure Keycloak');
+  });
+
+  it('reports a network error while loading runtime.json', async () => {
+    await expect(loadRuntimeConfig(vi.fn().mockRejectedValue(new Error('offline')))).rejects.toThrow(
+      'could not load /config/runtime.json',
+    );
+  });
+
+  it('reports an unsuccessful runtime.json response', async () => {
+    await expect(
+      loadRuntimeConfig(vi.fn().mockResolvedValue(new Response(null, { status: 503 }))),
+    ).rejects.toThrow('HTTP 503');
+  });
+
+  it('reports invalid JSON in runtime.json', async () => {
+    await expect(
+      loadRuntimeConfig(
+        vi.fn().mockResolvedValue({ ok: true, json: vi.fn().mockRejectedValue(new Error('invalid')) }),
+      ),
+    ).rejects.toThrow('does not contain valid JSON');
   });
 
   it('applies the loaded API and Keycloak endpoints without a production fallback', () => {
