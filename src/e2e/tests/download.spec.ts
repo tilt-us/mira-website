@@ -33,7 +33,7 @@ test.describe('Download game button', () => {
       // Links should point at the installer endpoint and include either a versioned installer
       // filename or the macOS install script.
       expect(href).toMatch(
-        /api\.tilt-us\.com\/downloads\/game-sources\/installer\/(install-macos\.sh|mira-installer-\d+\.\d+\.\d+-)/,
+        /localhost:8080\/downloads\/game-sources\/installer\/(install-macos\.sh|mira-installer-\d+\.\d+\.\d+-)/,
       );
     }
   });

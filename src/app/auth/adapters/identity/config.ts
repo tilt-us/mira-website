@@ -1,5 +1,3 @@
-import { API_CLIENT_MODE } from "../../../api-runtime.config";
-
 export type KeycloakRuntimeConfig = {
   keycloakBaseUrl?: string;
   keycloakRealm?: string;
@@ -8,70 +6,30 @@ export type KeycloakRuntimeConfig = {
 };
 
 const LOCAL_KEYCLOAK_BASE_URL = "http://localhost:8081";
-const DEV_KEYCLOAK_BASE_URL =
-  `${typeof window === "undefined" ? "https:" : window.location.protocol}//api.tilt-us.com/keycloak`;
 const LOCAL_KEYCLOAK_CLIENT_ID = "mira-bevy";
 const LOCAL_KEYCLOAK_PASSWORD_CLIENT_ID = "mira-e2e";
-const DEV_KEYCLOAK_CLIENT_ID = "mira-web";
-const DEV_KEYCLOAK_PASSWORD_CLIENT_ID = "mira-web";
 
-function isLocalHost() {
-  const host =
-    typeof window === "undefined" ? "localhost" : window.location.hostname.toLowerCase();
-  return host === "localhost" || host === "127.0.0.1" || host === "::1";
-}
-
-function resolveKeycloakClientMode() {
-  if (API_CLIENT_MODE === "local") {
-    return "local";
-  }
-
-  return isLocalHost() ? "local" : "dev";
-}
-
-function getDefaultKeycloakBaseUrl() {
-  return resolveKeycloakClientMode() === "local"
-    ? LOCAL_KEYCLOAK_BASE_URL
-    : DEV_KEYCLOAK_BASE_URL;
-}
-
-function normalizeKeycloakBaseUrl(baseUrl?: string | null) {
-  const fallback = getDefaultKeycloakBaseUrl();
-  const trimmed = typeof baseUrl === "string" ? baseUrl.trim() : "";
-
-  if (!trimmed || trimmed.toLowerCase() === "undefined") {
-    return fallback;
+function normalizeKeycloakBaseUrl(baseUrl: string): string {
+  const trimmed = baseUrl.trim();
+  if (!trimmed) {
+    throw new Error('Keycloak base URL is required.');
   }
 
   try {
     const normalized = new URL(trimmed);
-
-    if (normalized.hostname.toLowerCase() === "undefined") {
-      return fallback;
+    if (!normalized.protocol || !normalized.host) {
+      throw new Error('missing protocol or host');
     }
-
-    if (normalized.hostname === "127.0.0.1") {
-      normalized.hostname = "localhost";
-    }
-
     return normalized.toString().replace(/\/$/, "");
   } catch {
-    if (!trimmed.includes("://")) {
-      return fallback;
-    }
-
-    return trimmed.replace("127.0.0.1", "localhost").replace(/\/$/, "");
+    throw new Error('Keycloak base URL must be an absolute URL.');
   }
 }
 
-export let KEYCLOAK_BASE_URL = normalizeKeycloakBaseUrl(getDefaultKeycloakBaseUrl());
+export let KEYCLOAK_BASE_URL = LOCAL_KEYCLOAK_BASE_URL;
 export let KEYCLOAK_REALM = "mira";
-export let KEYCLOAK_CLIENT_ID =
-  resolveKeycloakClientMode() === "local" ? LOCAL_KEYCLOAK_CLIENT_ID : DEV_KEYCLOAK_CLIENT_ID;
-export let KEYCLOAK_PASSWORD_CLIENT_ID =
-  resolveKeycloakClientMode() === "local"
-    ? LOCAL_KEYCLOAK_PASSWORD_CLIENT_ID
-    : DEV_KEYCLOAK_PASSWORD_CLIENT_ID;
+export let KEYCLOAK_CLIENT_ID = LOCAL_KEYCLOAK_CLIENT_ID;
+export let KEYCLOAK_PASSWORD_CLIENT_ID = LOCAL_KEYCLOAK_PASSWORD_CLIENT_ID;
 
 export let KEYCLOAK_ISSUER_URL = getKeycloakIssuerUrl();
 
@@ -79,7 +37,7 @@ export let KEYCLOAK_AUTH_URL = getKeycloakAuthUrl();
 export let KEYCLOAK_TOKEN_URL = getKeycloakTokenUrl();
 
 export function getCurrentKeycloakBaseUrl() {
-  return normalizeKeycloakBaseUrl(KEYCLOAK_BASE_URL);
+  return KEYCLOAK_BASE_URL;
 }
 
 function getCurrentKeycloakIssuerUrlValue() {
@@ -148,7 +106,11 @@ export function getCurrentKeycloakLogoutUrl(idToken?: string) {
 }
 
 export function applyKeycloakRuntimeConfig(config: KeycloakRuntimeConfig) {
-  KEYCLOAK_BASE_URL = normalizeKeycloakBaseUrl(config.keycloakBaseUrl ?? KEYCLOAK_BASE_URL);
+  if (!config.keycloakBaseUrl || !config.keycloakRealm || !config.keycloakClientId || !config.keycloakPasswordClientId) {
+    throw new Error('Complete Keycloak runtime configuration is required.');
+  }
+
+  KEYCLOAK_BASE_URL = normalizeKeycloakBaseUrl(config.keycloakBaseUrl);
   KEYCLOAK_REALM = config.keycloakRealm ?? KEYCLOAK_REALM;
   KEYCLOAK_CLIENT_ID = config.keycloakClientId ?? KEYCLOAK_CLIENT_ID;
   KEYCLOAK_PASSWORD_CLIENT_ID =

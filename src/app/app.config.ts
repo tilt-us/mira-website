@@ -7,7 +7,9 @@ import { provideRouter } from '@angular/router';
 import { provideHttpClient } from '@angular/common/http';
 
 import { routes } from './app.routes';
-import { setApiAccessToken } from './api-client';
+import { applyRuntimeApiConfig, reconfigureClientConfig, setApiAccessToken } from './api-client';
+import { applyKeycloakRuntimeConfig } from './auth/adapters/identity/config';
+import { loadRuntimeConfig } from './runtime-config';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -17,7 +19,11 @@ export const appConfig: ApplicationConfig = {
     {
       provide: APP_INITIALIZER,
       multi: true,
-      useFactory: () => () => {
+      useFactory: () => async () => {
+        const runtimeConfig = await loadRuntimeConfig();
+        applyRuntimeApiConfig(runtimeConfig.apiBaseUrl);
+        applyKeycloakRuntimeConfig(runtimeConfig);
+        reconfigureClientConfig();
         setApiAccessToken(undefined);
       },
     },

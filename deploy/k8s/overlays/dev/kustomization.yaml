@@ -5,6 +5,7 @@ resources:
   - ../../base
   - namespace.yaml
   - ingress.yaml
+  - runtime-config.yaml
 images:
   # Bootstrap tag only. GitOps should replace this with an immutable digest after the first promotion.
   - name: ghcr.io/tilt-us/mira-website

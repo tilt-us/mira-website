@@ -74,8 +74,15 @@ spec:
               mountPath: /data
             - name: caddy-config
               mountPath: /config
+            - name: runtime-config
+              mountPath: /usr/share/caddy/config/runtime.json
+              subPath: runtime.json
+              readOnly: true
       volumes:
         - name: caddy-data
           emptyDir: {}
         - name: caddy-config
           emptyDir: {}
+        - name: runtime-config
+          configMap:
+            name: mira-website-runtime

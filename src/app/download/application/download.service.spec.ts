@@ -8,10 +8,9 @@ import {
 
 import { DownloadService, FALLBACK_VERSION } from './download.service';
 
-const RELEASE_URL =
-  'https://api.tilt-us.com/downloads/game-sources/installer/manifest.json';
-const FALLBACK_RELEASE_URL = 'https://api.tilt-us.com/downloads/game-sources/latest.json';
-const DL_BASE = 'https://api.tilt-us.com/downloads/game-sources/installer';
+const RELEASE_URL = 'http://localhost:8080/downloads/game-sources/installer/manifest.json';
+const FALLBACK_RELEASE_URL = 'http://localhost:8080/downloads/game-sources/latest.json';
+const DL_BASE = 'http://localhost:8080/downloads/game-sources/installer';
 
 describe('DownloadService', () => {
   describe('OS detection & URL building', () => {

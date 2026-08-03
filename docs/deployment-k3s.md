@@ -1,48 +1,59 @@
 # K3s deployment
 
-## Architecture
+## Delivery model
 
-`GitHub Actions -> GHCR -> K3s -> Traefik`
+`GitHub Actions -> GHCR -> Argo CD -> K3s`
 
-CI tests the Angular application, builds `ghcr.io/tilt-us/mira-website`, and
-publishes images with `GITHUB_TOKEN`. It deliberately does not use SSH, rsync,
-a cluster-admin kubeconfig, `kubectl apply`, or direct access to the Kubernetes
-API. K3s uses containerd to pull the OCI image; no Docker Engine is required on
-the K3s node. Traefik terminates TLS and cert-manager obtains certificates.
+GitHub Actions runs tests and publishes `ghcr.io/tilt-us/mira-website`. It has
+no kubeconfig, SSH, rsync, or Argo CD admin access. Argo CD and Argo CD Image
+Updater deploy the branch image as an immutable digest in the cluster. K3s uses
+containerd; Docker Engine is not required on the server.
 
-After the first push, make the GHCR package public in its GitHub Package
-settings when K3s should pull it anonymously. A private package instead needs
-an image pull secret managed in the cluster or GitOps repository, not here.
+The website container listens on port 8080 as UID/GID 1000. It remains
+non-root, drops all capabilities, uses a read-only root filesystem, and has no
+host networking, Docker socket, HostPath, NodePort, or LoadBalancer access.
 
-## Branch mapping and rollout status
+## Environments
 
-| Source | Environment | Namespace | Hostname |
-| --- | --- | --- | --- |
-| `development` | S-TEST | `tilt-dev` | `dev.tilt-us.com` |
-| `master` | R-TEST | `tilt-staging` | `staging.tilt-us.com` |
-| `vX.Y.Z` tag | PROD | `tilt-prod` | `tilt-us.com`, `www.tilt-us.com` |
+| Branch | Environment | Website | API | Mira Keycloak | Namespace | Image tag |
+| --- | --- | --- | --- | --- | --- | --- |
+| `development` | Dev / S-TEST | `https://dev.tilt-us.com` | `https://dev.api.tilt-us.com` | `https://dev.api.tilt-us.com/keycloak` | `tilt-dev` | `development` |
+| `master` | Staging / R-TEST | `https://staging.tilt-us.com` | `https://staging.api.tilt-us.com` | `https://staging.api.tilt-us.com/keycloak` | `tilt-staging` | `master` |
+| release tag `vX.Y.Z` | future production | `https://tilt-us.com` | `https://api.tilt-us.com` | `https://api.tilt-us.com/keycloak` | `tilt-prod` | release tag |
 
-Only S-TEST is currently eligible for website rollout. `master` and release
-tags still create or promote image artifacts, but they must not be deployed to
-R-TEST or PROD from this repository yet.
+Production has no Argo CD Application in this repository and is not activated
+by this change. The infrastructure Keycloak at `sso.tilt-us.com` is only for
+infrastructure applications and must never be used by Mira.
 
-Pushes to `development` and `master` first run unit, Playwright, and container
-smoke tests, then publish a mutable branch tag and the immutable, full-SHA tag
-`sha-<commit SHA>`. Release tags never rebuild: they promote the existing SHA
-image to `vX.Y.Z`, `X.Y.Z`, `X.Y`, and `X` with the same digest. No `latest`
-tag is created. Buildx also attaches SBOM and provenance attestations.
+## Runtime configuration
 
-## Manifests
+One unchanged image runs in every environment. It contains a local development
+file at `public/config/runtime.json`; each Kubernetes overlay mounts its own
+public ConfigMap file at `/usr/share/caddy/config/runtime.json`.
 
-The Kustomize overlays are under `deploy/k8s/overlays`. They use a ClusterIP
-service on port 80 to the Caddy container on port 8080, Traefik ingress, and
-cert-manager's `letsencrypt-prod` ClusterIssuer.
+The browser loads `/config/runtime.json` with `cache: "no-store"` before Angular
+starts. Caddy serves this file as JSON with `Cache-Control: no-store, no-cache,
+must-revalidate` and does not route it through the SPA fallback. The file is
+public and may contain only endpoint URLs, realm, and public browser client
+IDs. Never put passwords, client secrets, tokens, keys, or database credentials
+in it.
 
-The official Caddy image grants its binary `NET_BIND_SERVICE` as a file
-capability for ports below 1024. The runtime image removes that capability
-because this service only binds port 8080. Do not add `NET_BIND_SERVICE` to the
-Pod. The deployment deliberately retains `capabilities.drop: [ALL]`,
-`allowPrivilegeEscalation: false`, and `runAsNonRoot: true`.
+## Promotion
+
+```text
+feature branch -> pull request to development -> Dev
+development -> pull request to master -> Staging
+```
+
+There is no automatic `development` to `master` merge, force-push, direct
+cluster deployment from GitHub Actions, or `latest` tag. A push to
+`development` publishes `development` and `sha-<commit>`; a push to `master`
+publishes `master` and `sha-<commit>`. Image Updater observes the mutable branch
+tag and writes its digest into the Argo CD application state.
+
+## Manifests and bootstrap
+
+Render the manifests locally before applying the Argo CD resources:
 
 ```bash
 kubectl kustomize deploy/k8s/overlays/dev
@@ -50,91 +61,39 @@ kubectl kustomize deploy/k8s/overlays/staging
 kubectl kustomize deploy/k8s/overlays/prod
 ```
 
-The dev overlay's `development` tag is only a bootstrap convenience. Staging
-and production intentionally contain a conspicuous SHA-tag placeholder so they
-cannot silently use a moving branch tag. Before synchronization, GitOps must
-replace the container image in every environment with the published immutable
-digest:
-
-```text
-ghcr.io/tilt-us/mira-website@sha256:<published digest>
-```
-
-No digest is invented in this repository. An image automation controller or a
-commit in a GitOps repository should make that image patch. Production renders
-two replicas; two pods on a single K3s node are not high availability.
-
-## Temporary backend configuration
-
-The frontend has no Angular environment files. For every non-local hostname it
-currently uses these shared browser-visible endpoints:
-
-- API: `https://api.tilt-us.com`
-- Keycloak: `https://api.tilt-us.com/keycloak`
-
-This is a temporary S-TEST configuration, not an environment-neutral runtime
-configuration. Until separate backend environments and public runtime
-configuration exist, R-TEST and PROD must not be rolled out through this
-website CI. No API, Keycloak, authentication, or client-mode behavior is
-changed by this container migration.
-
-If an environment later requires a different browser API or OAuth address, use
-a mounted public JSON file such as `/config/runtime.json`, load it in an Angular
-initializer before bootstrapping, and mount it from an environment ConfigMap.
-Such data is readable by every browser user and must never contain secrets,
-tokens, private keys, or client credentials.
-
-## First verification and rollout
-
-1. Confirm the branch image exists, for example `ghcr.io/tilt-us/mira-website:sha-<full commit SHA>`.
-2. Render the dev overlay with the command above and inspect its namespace,
-   ingress host, TLS secret, health probes, and image reference.
-3. Replace the dev bootstrap tag with the published digest in the GitOps
-   configuration, then let Argo CD synchronize S-TEST.
-4. Do not synchronize the staging or prod overlays until separate backend
-   environments and runtime configuration are available.
-5. Configure Argo CD applications to watch the relevant overlay paths (or
-   equivalent generated manifests) with each environment's normal GitOps
-   repository credentials. This repository does not create an Argo CD token or
-   assume an infrastructure repository.
-
-## Argo CD S-TEST bootstrap
-
-`deploy/argocd/mira-website-dev.yaml` is the sole Argo CD Application supplied
-by this repository. It watches the `development` branch's dev overlay and
-automatically synchronizes only the `tilt-dev` namespace. It uses the standard
-`default` Argo CD project and assumes Argo CD is installed in the `argocd`
-namespace.
-
-An administrator applies this Application once from a trusted cluster-admin
-workstation; GitHub Actions never receives Kubernetes credentials and does not
-run this command:
+The applications use `CreateNamespace=true`; `tilt-staging` does not need to be
+created beforehand. Dev is bootstrapped with `mira-website-dev.yaml` and its
+ImageUpdater resource. After the first successful `development -> master` merge
+and green `master` workflow, an administrator runs once from a trusted
+cluster-admin workstation:
 
 ```bash
-kubectl apply -f deploy/argocd/mira-website-dev.yaml
+kubectl apply -f deploy/argocd/mira-website-staging.yaml
+kubectl apply -f deploy/argocd/mira-website-staging-image-updater.yaml
 ```
 
-Argo CD needs read access to this Git repository when it is private. Staging
-and production intentionally have no Application bootstrap until separate
-backend environments and public runtime configuration are available.
+Further staging updates are then automatic.
 
-## Retiring legacy secrets
+## DNS and ZeroTier prerequisites
 
-After this migration is deployed and confirmed, remove these obsolete GitHub
-repository secrets:
+Do not automate these entries from this repository. The public IONOS A records
+needed for Let's Encrypt HTTP-01 are:
 
-- `DEPLOY_SSH_KEY`
-- `DEPLOY_HOST`
-- `DEPLOY_PORT`
-- `DEPLOY_USER`
-- `DEPLOY_PATH`
-- `DEPLOY_RSYNC_WITH_SUDO`
-- `DEPLOY_POST_DEPLOY_COMMAND`
-- `DEPLOY_CADDY_CONTAINER`
-- `CADDY_CONTAINER_CONFIG_PATH`
-- `CADDY_HOST_CONFIG_PATH`
-- `CADDY_SITE_ROOT`
-- `CADDY_CONTAINER_USE_SUDO`
-- `CADDY_CONFIG_PATH`
+```text
+staging.tilt-us.com       -> public server IP
+dev.api.tilt-us.com       -> public server IP
+staging.api.tilt-us.com   -> public server IP
+```
 
-`CODECOV_TOKEN` remains in use and must not be removed as part of this change.
+Team machines resolve internal HTTPS hosts over ZeroTier:
+
+```text
+10.253.212.1 staging.tilt-us.com
+10.253.212.1 dev.api.tilt-us.com
+10.253.212.1 staging.api.tilt-us.com
+```
+
+Public TCP port 443 remains closed; public port 80 remains open only for
+HTTP-01. The backend repositories must still provide the Dev/Staging API and
+Mira-Keycloak ingresses. Until then the website loads but API and login calls to
+the new URLs cannot succeed.

@@ -13,8 +13,8 @@
     "test:vite": "ng test --watch=false --coverage",
     "test:ci": "pnpm run test:vite && node scripts/check-coverage.js",
     "test:e2e": "playwright test",
-    "generate:api": "node scripts/set-api-mode.mjs dev && node scripts/merge-openapi.mjs && openapi-ts",
-    "generate:local:api": "node scripts/set-api-mode.mjs local && node scripts/with-env.mjs OPENAPI_INPUTS=http://localhost:8080/v3/api-docs,http://localhost:8082/v3/api-docs,http://localhost:8083/v3/api-docs,http://localhost:8085/v3/api-docs -- node scripts/merge-openapi.mjs && openapi-ts",
+    "generate:api": "node scripts/merge-openapi.mjs && openapi-ts",
+    "generate:local:api": "node scripts/with-env.mjs OPENAPI_INPUTS=http://localhost:8080/v3/api-docs,http://localhost:8082/v3/api-docs,http://localhost:8083/v3/api-docs,http://localhost:8085/v3/api-docs -- node scripts/merge-openapi.mjs && openapi-ts",
     "start:local": "pnpm run generate:local:api && pnpm start",
     "start:dev": "pnpm run generate:api && pnpm start"
   },
