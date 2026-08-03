@@ -1,24 +1,9 @@
 /* @vitest-environment node */
-import { vi } from 'vitest';
+import { expect, it } from 'vitest';
 
-import { client } from '../api/client.gen';
-import {
-  getApiBaseUrl,
-  reconfigureClientConfig,
-  resetApiClientMode,
-  setApiClientMode,
-} from './api-client';
+import { getApiBaseUrl, resetRuntimeApiConfig } from './api-client';
 
-describe('api-client node environment', () => {
-  const setConfigMock = vi.spyOn(client, 'setConfig');
-
-  it('falls back to localhost when running without window for local checks', () => {
-    setConfigMock.mockClear();
-    resetApiClientMode();
-    setApiClientMode('dev');
-    reconfigureClientConfig();
-
-    expect(getApiBaseUrl()).toBe('http://localhost:8080');
-    expect(setConfigMock).toHaveBeenCalled();
-  });
+it('uses the local runtime default without a browser environment', () => {
+  resetRuntimeApiConfig();
+  expect(getApiBaseUrl()).toBe('http://localhost:8080');
 });

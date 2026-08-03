@@ -8,7 +8,7 @@ import {
 import { LegalService } from './legal.service';
 import { LegalDocument } from '../domain/models';
 
-const BASE = 'https://api.tilt-us.com/documents/statutory';
+const BASE = 'http://localhost:8080/documents/statutory';
 
 describe('LegalService', () => {
   let service: LegalService;

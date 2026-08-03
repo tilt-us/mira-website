@@ -5,8 +5,7 @@ import { catchError } from 'rxjs/operators';
 
 import type { LegalDocument, LegalSlug } from '../../domain/models';
 import type { LegalDocumentGateway } from '../../domain/ports';
-
-const DOCUMENTS_BASE = 'https://api.tilt-us.com/documents/statutory';
+import { getApiBaseUrl } from '../../../api-client';
 
 /** Route slug → backend file name (the privacy file is stored as "police"). */
 const BACKEND_FILE: Record<LegalSlug, string> = {
@@ -17,11 +16,12 @@ const BACKEND_FILE: Record<LegalSlug, string> = {
 /** Outbound adapter: fetches statutory documents over HTTP, `null` on failure. */
 export function createLegalDocumentGateway(): LegalDocumentGateway {
   const http = inject(HttpClient);
+  const documentsBase = `${getApiBaseUrl()}/documents/statutory`;
 
   return {
     fetch: (slug) =>
       http
-        .get<LegalDocument | null>(`${DOCUMENTS_BASE}/${BACKEND_FILE[slug]}`)
+        .get<LegalDocument | null>(`${documentsBase}/${BACKEND_FILE[slug]}`)
         .pipe(catchError(() => of(null))),
   };
 }

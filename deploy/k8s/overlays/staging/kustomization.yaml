@@ -5,11 +5,9 @@ resources:
   - ../../base
   - namespace.yaml
   - ingress.yaml
-patches:
-  - target:
-      kind: Deployment
-      name: mira-website
-    patch: |-
-      - op: replace
-        path: /spec/template/spec/containers/0/image
-        value: ghcr.io/tilt-us/mira-website:sha-REPLACE_WITH_FULL_COMMIT_SHA
+  - runtime-config.yaml
+images:
+  # master is the observed bootstrap tag. Argo CD Image Updater replaces it in-cluster with an immutable digest.
+  - name: ghcr.io/tilt-us/mira-website
+    newName: ghcr.io/tilt-us/mira-website
+    newTag: master

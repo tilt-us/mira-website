@@ -5,8 +5,7 @@ import { catchError, map, shareReplay } from 'rxjs/operators';
 import { DownloadTarget, Os } from '../domain/models';
 import { detectLinuxTarget, detectOs } from '../domain/os-detection';
 import { DOWNLOAD_GATEWAY, VERSION_GATEWAY } from '../domain/ports';
-
-const DOWNLOAD_BASE = 'https://api.tilt-us.com/downloads/game-sources/installer';
+import { getApiBaseUrl } from '../../api-client';
 
 export const FALLBACK_VERSION = '1.0.0';
 
@@ -38,7 +37,7 @@ export class DownloadService {
   }
 
   buildDownloadUrl(target: DownloadTarget, version: string): string {
-    return `${DOWNLOAD_BASE}/${this.fileName(target, version)}`;
+    return `${getApiBaseUrl()}/downloads/game-sources/installer/${this.fileName(target, version)}`;
   }
 
   triggerDownload(url: string): void {

@@ -301,10 +301,7 @@ function mapOAuthProvider(provider: OAuthProvider) {
 
 function getProviderErrorRedirectUri() {
   const callbackUrl = new URL(getRedirectUri());
-  const errorRedirectHost = callbackUrl.hostname.toLowerCase() === "api.tilt-us.com"
-    ? "tilt-us.com"
-    : callbackUrl.hostname;
-  const redirectUri = new URL("/", `${callbackUrl.protocol}//${errorRedirectHost}${callbackUrl.port ? `:${callbackUrl.port}` : ""}`);
+  const redirectUri = new URL("/", callbackUrl.origin);
   redirectUri.searchParams.set("kc_error", "1");
 
   return redirectUri.toString();

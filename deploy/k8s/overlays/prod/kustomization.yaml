@@ -5,6 +5,7 @@ resources:
   - ../../base
   - namespace.yaml
   - ingress.yaml
+  - runtime-config.yaml
 patches:
   - target:
       kind: Deployment
@@ -13,6 +14,8 @@ patches:
       - op: replace
         path: /spec/replicas
         value: 2
-      - op: replace
-        path: /spec/template/spec/containers/0/image
-        value: ghcr.io/tilt-us/mira-website:sha-REPLACE_WITH_FULL_COMMIT_SHA
+images:
+  # This inert release-shaped bootstrap tag is never deployed: production has no Argo CD Application.
+  - name: ghcr.io/tilt-us/mira-website
+    newName: ghcr.io/tilt-us/mira-website
+    newTag: v0.0.0
