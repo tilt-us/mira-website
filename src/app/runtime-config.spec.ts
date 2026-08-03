@@ -1,4 +1,4 @@
-import { expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 
 import { applyRuntimeApiConfig, getApiBaseUrl, resetRuntimeApiConfig } from './api-client';
 import {
@@ -43,6 +43,11 @@ function environmentConfig(environment: MiraRuntimeConfig['environment']): MiraR
 }
 
 describe('runtime configuration', () => {
+  afterEach(() => {
+    resetRuntimeApiConfig();
+    applyKeycloakRuntimeConfig(baseConfig);
+  });
+
   it.each(['local', 'dev', 'staging', 'prod'] as const)(
     'accepts a valid %s configuration',
     (environment) => {
