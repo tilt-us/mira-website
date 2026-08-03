@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: tilt-prod
+resources:
+  - ../../base
+  - namespace.yaml
+  - ingress.yaml
+  - runtime-config.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: mira-website
+    patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+images:
+  # This inert release-shaped bootstrap tag is never deployed: production has no Argo CD Application.
+  - name: ghcr.io/tilt-us/mira-website
+    newName: ghcr.io/tilt-us/mira-website
+    newTag: v0.0.0

@@ -1,0 +1,20 @@
+apiVersion: argocd-image-updater.argoproj.io/v1alpha1
+kind: ImageUpdater
+metadata:
+  name: mira-website-staging
+  namespace: argocd
+spec:
+  writeBackConfig:
+    method: argocd
+  applicationRefs:
+    - namePattern: mira-website-staging
+      images:
+        - alias: mirawebsite
+          imageName: ghcr.io/tilt-us/mira-website:master
+          commonUpdateSettings:
+            updateStrategy: digest
+            platforms:
+              - linux/amd64
+          manifestTargets:
+            kustomize:
+              name: ghcr.io/tilt-us/mira-website

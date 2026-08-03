@@ -1,13 +1,20 @@
 import { Routes } from '@angular/router';
 
+import { BuildsPage } from './builds/adapters/ui/builds-page';
+import { CommunityBuilds } from './builds/adapters/ui/community-builds/community-builds';
+import { MyBuilds } from './builds/adapters/ui/my-builds/my-builds';
+import { CharactersPage } from './characters/characters-page/characters-page';
 import { Home } from './home/home';
-import { LegalPage } from './legal/legal-page/legal-page';
+import { JobsPage } from './jobs/jobs-page';
+import { LegalPage } from './legal/adapters/ui/legal-page';
 import { PlaceholderPage } from './placeholder/placeholder-page';
-import { UserSettings } from './user-settings/user-settings';
+import { UserSettings } from './settings/adapters/ui/user-settings';
 
 export const routes: Routes = [
   { path: '', component: Home },
+  { path: 'auth', redirectTo: '', pathMatch: 'full' },
   { path: 'settings', component: UserSettings },
+  { path: 'characters', component: CharactersPage },
   {
     path: 'leaderboards',
     component: PlaceholderPage,
@@ -20,13 +27,12 @@ export const routes: Routes = [
   },
   {
     path: 'builds',
-    component: PlaceholderPage,
-    data: {
-      placeholder: {
-        title: 'Builds',
-        tagline: 'Craft, share and discover powerful builds.',
-      },
-    },
+    component: BuildsPage,
+    children: [
+      { path: '', redirectTo: 'community', pathMatch: 'full' },
+      { path: 'community', component: CommunityBuilds },
+      { path: 'my', component: MyBuilds },
+    ],
   },
   {
     path: 'streamers',
@@ -48,16 +54,7 @@ export const routes: Routes = [
       },
     },
   },
-  {
-    path: 'jobs',
-    component: PlaceholderPage,
-    data: {
-      placeholder: {
-        title: 'Jobs',
-        tagline: 'Want to help build Mira? Open positions will be listed here.',
-      },
-    },
-  },
+  { path: 'jobs', component: JobsPage },
   {
     path: 'terms-of-use',
     component: LegalPage,

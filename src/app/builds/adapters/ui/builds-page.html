@@ -1,0 +1,28 @@
+<section class="mx-auto max-w-4xl px-6 pb-10 pt-32 text-center sm:pt-40" appReveal>
+  <p class="text-xs font-semibold uppercase tracking-[0.4em] text-brand sm:text-sm">Builds</p>
+  <h1 class="mt-4 text-4xl font-black uppercase tracking-[0.15em] sm:text-6xl">Loadouts</h1>
+  <p class="mt-4 text-lg text-white/70">
+    Find the builds the community swears by — or put your own on the map.
+  </p>
+</section>
+
+<section class="mx-auto max-w-6xl px-6 pb-6 2xl:max-w-[110rem]" aria-label="Builds sections">
+  <nav
+    class="mx-auto flex w-full max-w-xl flex-col gap-2 rounded-2xl border border-surface-border bg-surface-raised/60 p-2 backdrop-blur sm:flex-row"
+    data-testid="builds-tabs"
+  >
+    @for (tab of tabs; track tab.path) {
+      <a
+        [routerLink]="tab.path"
+        routerLinkActive="bg-brand text-brand-fg"
+        class="flex-1 rounded-xl px-5 py-3 text-center transition-colors hover:bg-surface-raised-hover/60"
+        data-testid="builds-tab"
+      >
+        <span class="block text-sm font-semibold uppercase tracking-[0.2em]">{{ tab.label }}</span>
+        <span class="mt-0.5 block text-xs opacity-70">{{ tab.hint }}</span>
+      </a>
+    }
+  </nav>
+</section>
+
+<router-outlet />

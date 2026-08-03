@@ -2,6 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 
 import { Footer } from './footer';
+import { DISCORD_INVITE_URL } from '../../shared/community';
 
 describe('Footer', () => {
   function setup(): ComponentFixture<Footer> {
@@ -49,6 +50,12 @@ describe('Footer', () => {
 
   it('links to the Discord community', () => {
     const fixture = setup();
-    expect(fixture.nativeElement.querySelector('[data-testid="footer-discord-link"]')).toBeTruthy();
+    const link = fixture.nativeElement.querySelector(
+      '[data-testid="footer-discord-link"]',
+    ) as HTMLAnchorElement | null;
+    expect(link).toBeTruthy();
+    expect(link?.getAttribute('href')).toBe(DISCORD_INVITE_URL);
+    expect(link?.getAttribute('target')).toBe('_blank');
+    expect(link?.getAttribute('rel')).toContain('noopener');
   });
 });

@@ -6,6 +6,202 @@
   :root {
     // Default background wallpaper; WallpaperService overrides it from storage.
     --app-background-wallpaper: url('/lira-wallpaper.png');
+    --app-accent: #f2c45b;
+    --app-accent-hover: #f4cf78;
+    --app-accent-fg: #101216;
+    --app-brand: #f2c45b;
+    --app-brand-hover: #f4cf78;
+    --app-brand-fg: #101216;
+  }
+
+  @keyframes user-avatar-hex-counter {
+    to {
+      transform: rotate(-360deg);
+    }
+  }
+
+  @keyframes user-avatar-hex-clockwise {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .avatar-hexagon {
+    position: relative;
+    width: 2.25rem;
+    height: 2.25rem;
+    min-height: 2.25rem;
+    aspect-ratio: 1;
+    min-width: 2.25rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    overflow: visible;
+  }
+
+  .avatar-hexagon-rings {
+    position: absolute;
+    inset: -6px;
+    width: calc(100% + 12px);
+    height: calc(100% + 12px);
+    aspect-ratio: 1;
+    z-index: 3;
+    overflow: visible;
+    filter: drop-shadow(0 0 12px color-mix(in srgb, var(--app-accent) 34%, transparent));
+    pointer-events: none;
+  }
+
+  .avatar-hexagon-rings g {
+    transform-box: fill-box;
+    transform-origin: center;
+    transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .avatar-hexagon-ring-middle,
+  .avatar-hexagon-ring-outer {
+    fill: transparent;
+    stroke-linejoin: round;
+    stroke-linecap: butt;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .avatar-hexagon-ring-middle {
+    opacity: 0.76;
+    stroke: var(--app-accent);
+    stroke-width: 2.3px;
+  }
+
+  .avatar-hexagon-ring-outer {
+    opacity: 0.9;
+    stroke: color-mix(in srgb, var(--app-accent) 72%, #ffffff);
+    stroke-width: 1.6px;
+  }
+
+  .avatar-hexagon-rings-active .avatar-hexagon-ring-middle {
+    animation: user-avatar-hex-counter 5.6s linear infinite;
+  }
+
+  .avatar-hexagon-rings-active .avatar-hexagon-ring-outer {
+    animation: user-avatar-hex-clockwise 5.6s linear infinite;
+  }
+
+  .avatar-hexagon-rings-locked .avatar-hexagon-ring-middle,
+  .avatar-hexagon-rings-locked .avatar-hexagon-ring-outer,
+  .user-menu-root:hover .avatar-hexagon-rings-middle,
+  .user-menu-root:hover .avatar-hexagon-rings-outer,
+  .user-menu-root.user-menu-open .avatar-hexagon-rings-middle,
+  .user-menu-root.user-menu-open .avatar-hexagon-rings-outer {
+    animation: none;
+    transform: rotate(0deg);
+  }
+
+  .avatar-hexagon-core {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    aspect-ratio: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    overflow: hidden;
+    pointer-events: none;
+    background: transparent;
+    color: #fff;
+  }
+
+  .avatar-hexagon-core,
+  .avatar-hexagon-image,
+  .avatar-hexagon-label {
+    width: 100%;
+    height: 100%;
+    display: block;
+    flex-shrink: 0;
+  }
+
+  .avatar-hexagon-image {
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .avatar-hexagon-label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    font-weight: 700;
+    background: var(--app-accent);
+  }
+
+  .avatar-hexagon-empty {
+    color: var(--app-brand-fg);
+  }
+
+  .avatar-hexagon-empty > .avatar-hexagon-core {
+    background: var(--app-accent);
+  }
+
+  .user-menu-trigger {
+    background: transparent !important;
+    backdrop-filter: none;
+    min-width: 250px;
+    width: auto;
+    justify-content: flex-start;
+  }
+
+  .user-menu-trigger:hover {
+    background: rgba(255, 255, 255, 0.08) !important;
+  }
+
+  .user-menu-card {
+    min-width: 250px;
+    background: var(--header-overlay-bg, transparent);
+    backdrop-filter: none;
+  }
+
+  .user-menu-action {
+    position: relative;
+    isolation: isolate;
+    display: inline-flex;
+    width: 100%;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 0.65rem;
+    padding: 0.625rem 0.75rem;
+    text-align: left;
+    text-decoration: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.85);
+    transition: color 0.25s ease;
+    background: transparent;
+    overflow: hidden;
+  }
+
+  .user-menu-action::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.25s ease;
+    background: var(--app-accent);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  .user-menu-action:hover,
+  .user-menu-action:focus-visible {
+    color: var(--app-accent-fg);
+    outline: none;
+  }
+
+  .user-menu-action:hover::before,
+  .user-menu-action:focus-visible::before {
+    transform: scaleX(1);
   }
 
   html {
@@ -45,7 +241,7 @@
   @supports not selector(::-webkit-scrollbar) {
     * {
       scrollbar-width: thin;
-      scrollbar-color: rgba(242, 196, 91, 0.65) transparent;
+      scrollbar-color: var(--app-accent) transparent;
     }
   }
 
@@ -65,11 +261,13 @@
     border: 3px solid transparent;
     border-radius: 9999px;
     background-clip: padding-box;
-    background-color: rgba(242, 196, 91, 0.6);
+    background-color: var(--app-accent);
+    opacity: 0.75;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #f2c45b;
+    background-color: var(--app-accent);
+    opacity: 1;
   }
 
   ::-webkit-scrollbar-corner {
@@ -108,6 +306,226 @@
       placeholder:text-white/30 transition-colors focus:outline-none
       focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand;
   }
+
+  // Hidden until the carousel is hovered or focused (see .event-carousel rules).
+  .event-carousel-nav {
+    @apply pointer-events-none absolute top-1/2 z-20 inline-flex h-11 w-11 -translate-y-1/2
+      items-center justify-center rounded-full border border-surface-border bg-surface/80
+      text-white opacity-0 backdrop-blur transition hover:bg-surface-raised
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+  }
+
+  .event-carousel-nav-prev {
+    @apply left-2;
+  }
+
+  .event-carousel-nav-next {
+    @apply right-2;
+  }
+
+  .event-carousel-dot {
+    @apply h-2.5 w-2.5 rounded-full bg-white/25 transition-colors hover:bg-white/50
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+
+    &.is-active {
+      @apply bg-brand;
+    }
+  }
+
+  // Settings page — section list on the left, one panel of rows on the right,
+  // mirroring the layout of the in-game client settings.
+  .settings-shell {
+    @apply grid overflow-hidden rounded-2xl border border-white/10 bg-black/55 shadow-2xl
+      backdrop-blur-xl md:grid-cols-[16rem_minmax(0,1fr)];
+  }
+
+  .settings-nav {
+    @apply flex flex-col gap-1 border-b border-white/10 bg-black/35 p-4
+      md:border-b-0 md:border-r;
+  }
+
+  .settings-nav-title {
+    @apply mb-3 px-3 text-[0.65rem] font-bold uppercase tracking-[0.35em] text-white/40;
+  }
+
+  .settings-nav-item {
+    @apply relative rounded-md px-3 py-2.5 text-left text-sm font-semibold uppercase
+      tracking-wider text-white/55 transition-colors hover:bg-white/5 hover:text-white
+      focus:outline-none focus-visible:ring-2 focus-visible:ring-brand;
+
+    // Gold marker on the active entry, as in the client.
+    &.is-active {
+      @apply bg-white/5 text-white;
+
+      &::before {
+        content: '';
+        @apply absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-brand;
+      }
+    }
+  }
+
+  .settings-nav-user {
+    @apply mt-4 flex flex-col gap-0.5 border-t border-white/10 px-3 pt-4 md:mt-auto;
+  }
+
+  .settings-nav-user-name {
+    @apply truncate text-sm font-semibold;
+  }
+
+  .settings-nav-user-mail {
+    @apply truncate text-xs text-white/40;
+  }
+
+  .settings-panel {
+    @apply flex min-h-[34rem] flex-col;
+  }
+
+  .settings-panel-head {
+    @apply border-b border-white/10 px-6 py-5 sm:px-8;
+  }
+
+  .settings-panel-title {
+    @apply text-xl font-bold uppercase tracking-[0.18em];
+  }
+
+  .settings-panel-hint {
+    @apply mt-1 text-sm text-white/45;
+  }
+
+  .settings-panel-body {
+    @apply flex flex-1 flex-col px-6 sm:px-8;
+  }
+
+  .settings-row {
+    @apply grid gap-3 border-b border-white/5 py-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,18rem)]
+      sm:items-center sm:gap-8;
+
+    &:last-of-type {
+      @apply border-b-0;
+    }
+  }
+
+  .settings-row-stacked {
+    @apply sm:grid-cols-1 sm:gap-4;
+  }
+
+  .settings-row-text {
+    @apply flex flex-col gap-1;
+  }
+
+  .settings-row-label {
+    @apply text-sm font-semibold;
+  }
+
+  .settings-row-hint {
+    @apply text-xs leading-relaxed text-white/40;
+  }
+
+  .settings-row-control {
+    @apply flex items-center;
+  }
+
+  .settings-row-control-end {
+    @apply sm:justify-end;
+  }
+
+  .settings-readonly {
+    @apply text-sm text-white/50;
+  }
+
+  .settings-color {
+    @apply h-10 w-16 cursor-pointer rounded-lg border border-surface-border bg-surface p-1;
+  }
+
+  .settings-range {
+    @apply h-1.5 w-full cursor-pointer appearance-none rounded-full bg-white/15 accent-brand;
+  }
+
+  .settings-toggle {
+    @apply relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border
+      border-white/15 bg-white/10 transition-colors focus:outline-none
+      focus-visible:ring-2 focus-visible:ring-brand;
+
+    &.is-on {
+      @apply border-brand bg-brand;
+    }
+
+    &.is-on .settings-toggle-knob {
+      @apply translate-x-5 bg-brand-fg;
+    }
+  }
+
+  .settings-toggle-knob {
+    @apply ml-0.5 h-4 w-4 rounded-full bg-white transition-transform;
+  }
+
+  .settings-wallpapers {
+    @apply grid grid-cols-2 gap-3 sm:grid-cols-4;
+  }
+
+  .settings-wallpaper {
+    @apply overflow-hidden rounded-lg border border-white/10 bg-surface-raised text-left
+      opacity-70 transition hover:opacity-100 focus:outline-none
+      focus-visible:ring-2 focus-visible:ring-brand;
+
+    &.is-active {
+      @apply border-brand opacity-100 ring-2 ring-brand;
+    }
+  }
+
+  .settings-wallpaper-image {
+    @apply aspect-video w-full object-cover;
+  }
+
+  .settings-wallpaper-label {
+    @apply block px-2 py-1.5 text-xs font-semibold;
+  }
+
+  .settings-providers {
+    @apply flex flex-col;
+  }
+
+  .settings-provider {
+    @apply flex items-center gap-3 border-b border-white/5 py-4;
+
+    &:last-of-type {
+      @apply border-b-0;
+    }
+  }
+
+  .settings-provider-icon {
+    @apply inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-md;
+  }
+
+  .settings-provider-label {
+    @apply flex-1 text-sm font-semibold;
+  }
+
+  .settings-actions {
+    @apply sticky bottom-0 flex flex-wrap items-center justify-end gap-3 border-t
+      border-white/10 bg-black/55 px-6 py-4 backdrop-blur sm:px-8;
+  }
+
+  .settings-actions-messages {
+    @apply mr-auto;
+  }
+
+  .settings-message {
+    @apply text-xs text-white/50;
+
+    &.is-error {
+      @apply text-red-300;
+    }
+
+    &.is-ok {
+      @apply text-emerald-300;
+    }
+  }
+}
+
+// Keeps native dropdowns on the dark palette instead of the OS default.
+select.input {
+  color-scheme: dark;
 }
 
 .reveal {
@@ -132,40 +550,90 @@
   }
 }
 
-.marquee {
+// Centered, endlessly looping event carousel: the active card sits scaled-up
+// on top, the neighbours peek from both sides tucked underneath, and cards
+// further out are parked invisibly at the edges. Every card is positioned by
+// its circular offset from the active one, so all visible cards travel
+// together while the card crossing the seam jumps while it cannot be seen.
+.event-carousel {
+  --event-card-width: min(28rem, 85vw);
+  --event-card-height: 16rem;
+  --event-card-overlap: 1.75rem;
+  // Cards overlap on purpose, so one navigation step is less than a full card.
+  --event-card-step: calc(var(--event-card-width) - var(--event-card-overlap));
+  // Keeps vertical page scrolling working while horizontal drags become swipes.
+  touch-action: pan-y;
+  outline: none;
+}
+
+.event-carousel-frame {
+  position: relative;
+}
+
+.event-carousel-viewport {
+  position: relative;
   overflow: hidden;
+  // Fixed height because the cards are absolutely positioned; extra room so
+  // the scaled-up active card is not clipped.
+  height: calc(var(--event-card-height) + 3rem);
+  user-select: none;
   -webkit-mask-image: linear-gradient(
     to right,
     transparent,
-    black 6%,
-    black 94%,
+    black 8%,
+    black 92%,
     transparent
   );
-  mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
 
-.marquee-track {
-  display: flex;
-  width: max-content;
-  gap: 1.5rem;
-  animation: marquee-scroll var(--marquee-duration, 30s) linear infinite;
+.event-carousel-stage {
+  position: absolute;
+  inset: 0;
 }
 
-.marquee-track.is-paused {
-  animation-play-state: paused;
+.event-carousel-card {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--event-card-width);
+  height: var(--event-card-height);
+  margin-left: calc(var(--event-card-width) / -2);
+  margin-top: calc(var(--event-card-height) / -2);
+  transform: translateX(calc(var(--card-offset, 0) * var(--event-card-step))) scale(0.92);
+  opacity: 0.55;
+  cursor: pointer;
+  transition:
+    transform 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.55s ease;
 }
 
-@keyframes marquee-scroll {
-  from {
-    transform: translateX(-50%);
-  }
-  to {
-    transform: translateX(0);
-  }
+.event-carousel-card.is-active {
+  z-index: 10;
+  transform: translateX(calc(var(--card-offset, 0) * var(--event-card-step))) scale(1.05);
+  opacity: 1;
+  cursor: default;
+  filter: drop-shadow(0 18px 30px rgba(0, 0, 0, 0.45));
+}
+
+.event-carousel-card.is-far {
+  opacity: 0;
+  pointer-events: none;
+}
+
+// Seam-crossing cards teleport to their new edge but may still fade.
+.event-carousel-card.is-wrapping {
+  transition: opacity 0.55s ease;
+}
+
+.event-carousel:hover .event-carousel-nav,
+.event-carousel:focus-within .event-carousel-nav {
+  opacity: 1;
+  pointer-events: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .marquee-track {
-    animation: none;
+  .event-carousel-card {
+    transition: none;
   }
 }

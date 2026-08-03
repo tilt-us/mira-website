@@ -1,4 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { DatePicker, DatePickerLocale } from './date-picker';
 
@@ -68,8 +69,6 @@ describe('DatePicker', () => {
     TestBed.resetTestingModule();
     create(undefined, '2001-03-15');
     expect(byTestId(fixture, 'date-picker-display').textContent).toContain('03/15/2001');
-
-    language.mockRestore();
   });
 
   it('opens on the month of the selected date with a localized header', () => {

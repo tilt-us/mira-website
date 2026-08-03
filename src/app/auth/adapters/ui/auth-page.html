@@ -1,0 +1,218 @@
+<section
+  class="flex w-full flex-col max-w-[24rem] border border-surface-border bg-surface p-4 sm:p-5"
+  [class.rounded-lg]="compact"
+  [class.rounded-2xl]="!compact"
+  [class.mx-auto]="!compact"
+  [class.py-6]="!compact"
+>
+  <div class="flex items-center justify-between gap-3">
+    <h1 class="text-xl font-bold tracking-tight">
+      @if (mode() === 'login') {
+        Login
+      } @else {
+        Register
+      }
+    </h1>
+
+    @if (compact) {
+      <button
+        type="button"
+        class="link text-xs"
+        aria-label="Popup schließen"
+        data-testid="auth-close"
+        (click)="close()"
+      >
+        ✕
+      </button>
+    }
+  </div>
+
+  <p class="mt-1 text-sm text-white/50">
+    @if (mode() === 'login') {
+      Mit Account-Daten oder externem Login anmelden.
+    } @else {
+      Neues Konto anlegen.
+    }
+  </p>
+
+  <div class="mt-4 flex w-full gap-2 rounded-lg border border-surface-border bg-surface/60 p-1">
+    <button
+      type="button"
+      class="btn-ghost flex-1"
+      [class.btn-primary]="mode() === 'login'"
+      [class.btn-ghost]="mode() === 'register'"
+      (click)="setMode('login')"
+      data-testid="auth-tab-login"
+    >
+      Login
+    </button>
+    <button
+      type="button"
+      class="btn-ghost flex-1"
+      [class.btn-primary]="mode() === 'register'"
+      [class.btn-ghost]="mode() === 'login'"
+      (click)="setMode('register')"
+      data-testid="auth-tab-register"
+    >
+      Register
+    </button>
+  </div>
+
+  <div class="mt-4 space-y-3">
+    <form class="grid gap-3" (ngSubmit)="submitCredentials()">
+      <label class="flex flex-col gap-2">
+        <span class="text-sm font-medium">E-Mail</span>
+        <input
+          class="input"
+          type="email"
+          autocomplete="email"
+          name="email"
+          data-testid="auth-email"
+          [(ngModel)]="email"
+        />
+      </label>
+
+      @if (mode() === 'register') {
+        <label class="flex flex-col gap-2">
+          <span class="text-sm font-medium">Anzeigename</span>
+          <input
+            class="input"
+            type="text"
+            autocomplete="nickname"
+            name="displayName"
+            data-testid="auth-display-name"
+            [(ngModel)]="displayName"
+          />
+        </label>
+      }
+
+      <label class="flex flex-col gap-2">
+        <span class="text-sm font-medium">Passwort</span>
+        <input
+          class="input"
+          type="password"
+          autocomplete="current-password"
+          name="password"
+          data-testid="auth-password"
+          [(ngModel)]="password"
+        />
+      </label>
+
+      <button
+        type="submit"
+        class="btn-primary self-start"
+        data-testid="auth-submit"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) {
+          WIRD GELADEN...
+        } @else if (mode() === 'login') {
+          Login
+        } @else {
+          Registrieren
+        }
+      </button>
+    </form>
+
+    @if (errorMessage()) {
+      <p class="text-sm text-red-300" data-testid="auth-error">{{ errorMessage() }}</p>
+    }
+
+    @if (statusMessage()) {
+        <p class="text-sm text-green-200" data-testid="auth-status">{{ statusMessage() }}</p>
+    }
+
+    <div class="mt-auto border-t border-surface-border/80 pt-4">
+      <p class="mb-3 text-center text-xs uppercase tracking-widest text-white/50">
+        Oder mit
+      </p>
+
+      <div class="grid grid-cols-3 gap-2">
+        <button
+          type="button"
+          class="btn-ghost flex h-11 w-full cursor-pointer items-center justify-center gap-2 border border-white/15 bg-white px-3 py-2 text-[#111] hover:bg-white/85"
+          data-testid="provider-google"
+          [disabled]="isLoading()"
+          (click)="startGoogleLogin()"
+          title="Google"
+          aria-label="Google"
+        >
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 flex-none"
+            focusable="false"
+            viewBox="0 0 18 18"
+          >
+            <path
+              d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 0 1-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62Z"
+              fill="#4285f4"
+            />
+            <path
+              d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.8.54-1.84.86-3.04.86-2.35 0-4.34-1.58-5.05-3.72H.93v2.33A9 9 0 0 0 9 18Z"
+              fill="#34a853"
+            />
+            <path
+              d="M3.95 10.7A5.41 5.41 0 0 1 3.67 9c0-.59.1-1.16.28-1.7V4.97H.93A9 9 0 0 0 0 9c0 1.45.34 2.82.93 4.03l3.02-2.33Z"
+              fill="#fbbc05"
+            />
+            <path
+              d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58A8.65 8.65 0 0 0 9 0 9 9 0 0 0 .93 4.97L3.95 7.3C4.66 5.16 6.65 3.58 9 3.58Z"
+              fill="#ea4335"
+            />
+          </svg>
+          <span class="sr-only">Google</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn-ghost flex h-11 w-full cursor-pointer items-center justify-center gap-2 bg-[#5865f2] px-3 py-2 text-white hover:brightness-105"
+          data-testid="provider-discord"
+          [disabled]="isLoading()"
+          (click)="startDiscordLogin()"
+          title="Discord"
+          aria-label="Discord"
+        >
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 flex-none"
+            focusable="false"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M19.54 5.23a18.88 18.88 0 0 0-4.68-1.46 12.96 12.96 0 0 0-.6 1.24 17.5 17.5 0 0 0-5.19 0 12.1 12.1 0 0 0-.61-1.24 18.8 18.8 0 0 0-4.68 1.46C.82 9.65.02 13.95.42 18.19a18.93 18.93 0 0 0 5.74 2.9c.46-.62.87-1.28 1.22-1.97-.67-.25-1.31-.56-1.92-.92l.47-.37c3.7 1.71 7.72 1.71 11.38 0l.47.37c-.61.36-1.25.67-1.92.92.35.69.76 1.35 1.22 1.97a18.87 18.87 0 0 0 5.74-2.9c.48-4.91-.82-9.17-3.28-12.96ZM8.09 15.59c-1.12 0-2.04-1.03-2.04-2.29 0-1.26.9-2.29 2.04-2.29 1.14 0 2.06 1.04 2.04 2.29 0 1.26-.9 2.29-2.04 2.29Zm7.53 0c-1.12 0-2.04-1.03-2.04-2.29 0-1.26.9-2.29 2.04-2.29 1.14 0 2.06 1.04 2.04 2.29 0 1.26-.9 2.29-2.04 2.29Z"
+              fill="#ffffff"
+            />
+          </svg>
+          <span class="sr-only">Discord</span>
+        </button>
+
+        <button
+          type="button"
+          class="btn-ghost flex h-11 w-full cursor-pointer items-center justify-center gap-2 bg-[#0d1117] px-3 py-2 text-white hover:brightness-110"
+          data-testid="provider-github"
+          [disabled]="isLoading()"
+          (click)="startGithubLogin()"
+          title="GitHub"
+          aria-label="GitHub"
+        >
+          <svg
+            aria-hidden="true"
+            class="h-4 w-4 flex-none"
+            focusable="false"
+            viewBox="0 0 24 24"
+          >
+            <path
+              d="M12 .5A11.5 11.5 0 0 0 8.36 22.9c.58.11.79-.25.79-.56v-2.02c-3.22.7-3.9-1.38-3.9-1.38-.53-1.34-1.29-1.7-1.29-1.7-1.05-.72.08-.71.08-.71 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.72 1.27 3.38.97.11-.75.41-1.27.74-1.56-2.57-.29-5.27-1.28-5.27-5.72 0-1.26.45-2.3 1.19-3.11-.12-.29-.52-1.47.11-3.07 0 0 .98-.31 3.18 1.19a11.05 11.05 0 0 1 5.8 0c2.2-1.5 3.17-1.19 3.17-1.19.64 1.6.24 2.78.12 3.07.74.81 1.19 1.85 1.19 3.11 0 4.45-2.7 5.43-5.28 5.72.42.36.79 1.07.79 2.16v3.04c0 .31.21.68.8.56A11.5 11.5 0 0 0 12 .5Z"
+              fill="#ffffff"
+            />
+          </svg>
+          <span class="sr-only">GitHub</span>
+        </button>
+      </div>
+    </div>
+
+    @if (hasProviderCallback() && isLoading()) {
+      <p class="text-sm text-white/50">Meldevorgang läuft...</p>
+    }
+  </div>
+</section>

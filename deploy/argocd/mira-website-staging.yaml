@@ -1,0 +1,34 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: mira-website-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: mira-website
+    app.kubernetes.io/component: gitops
+    app.kubernetes.io/part-of: mira
+    environment: staging
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/tilt-us/mira-website.git
+    targetRevision: master
+    path: deploy/k8s/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: tilt-staging
+  syncPolicy:
+    automated:
+      enabled: true
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+    retry:
+      limit: 5
+      refresh: true
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
