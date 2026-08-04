@@ -5,7 +5,10 @@ resources:
   - ../../base
   - namespace.yaml
   - ingress.yaml
-  - runtime-config.yaml
+configMapGenerator:
+  - name: mira-website-runtime
+    files:
+      - runtime.json
 patches:
   - target:
       kind: Deployment

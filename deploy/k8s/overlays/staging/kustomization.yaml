@@ -5,7 +5,10 @@ resources:
   - ../../base
   - namespace.yaml
   - ingress.yaml
-  - runtime-config.yaml
+configMapGenerator:
+  - name: mira-website-runtime
+    files:
+      - runtime.json
 images:
   # master is the observed bootstrap tag. Argo CD Image Updater replaces it in-cluster with an immutable digest.
   - name: ghcr.io/tilt-us/mira-website
