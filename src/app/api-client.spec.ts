@@ -29,12 +29,12 @@ describe('api-client runtime configuration', () => {
   });
 
   it('uses the loaded runtime API address and reconfigures the generated client', () => {
-    applyRuntimeApiConfig('https://staging.api.tilt-us.com');
+    applyRuntimeApiConfig('https://staging-api.tilt-us.com');
     reconfigureClientConfig();
 
-    expect(getApiBaseUrl()).toBe('https://staging.api.tilt-us.com');
+    expect(getApiBaseUrl()).toBe('https://staging-api.tilt-us.com');
     expect(setConfigMock).toHaveBeenLastCalledWith({
-      baseUrl: 'https://staging.api.tilt-us.com',
+      baseUrl: 'https://staging-api.tilt-us.com',
     });
   });
 
@@ -51,7 +51,7 @@ describe('api-client runtime configuration', () => {
     });
 
     try {
-      expect(() => applyRuntimeApiConfig('https://dev.api.tilt-us.com')).toThrow(
+      expect(() => applyRuntimeApiConfig('https://dev-api.tilt-us.com')).toThrow(
         'Runtime API base URL',
       );
     } finally {
@@ -60,11 +60,11 @@ describe('api-client runtime configuration', () => {
   });
 
   it('sets browser auth and device headers', () => {
-    applyRuntimeApiConfig('https://dev.api.tilt-us.com');
+    applyRuntimeApiConfig('https://dev-api.tilt-us.com');
     setApiAccessToken('token');
 
     expect(setConfigMock).toHaveBeenLastCalledWith({
-      baseUrl: 'https://dev.api.tilt-us.com',
+      baseUrl: 'https://dev-api.tilt-us.com',
       headers: {
         Authorization: 'Bearer token',
         'X-Device-Type': 'Web',

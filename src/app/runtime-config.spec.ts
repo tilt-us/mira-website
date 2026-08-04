@@ -31,7 +31,7 @@ function environmentConfig(environment: MiraRuntimeConfig['environment']): MiraR
     return baseConfig;
   }
 
-  const host = environment === 'prod' ? 'api.tilt-us.com' : `${environment}.api.tilt-us.com`;
+  const host = environment === 'prod' ? 'api.tilt-us.com' : `${environment}-api.tilt-us.com`;
   return {
     environment,
     apiBaseUrl: `https://${host}`,
@@ -81,7 +81,7 @@ describe('runtime configuration', () => {
 
   it('rejects HTTP URLs outside the local environment', () => {
     expect(() =>
-      validateRuntimeConfig({ ...environmentConfig('dev'), apiBaseUrl: 'http://dev.api.tilt-us.com' }),
+      validateRuntimeConfig({ ...environmentConfig('dev'), apiBaseUrl: 'http://dev-api.tilt-us.com' }),
     ).toThrow('absolute HTTPS URL');
   });
 
@@ -139,10 +139,10 @@ describe('runtime configuration', () => {
     applyRuntimeApiConfig(config.apiBaseUrl);
     applyKeycloakRuntimeConfig(config);
 
-    expect(getApiBaseUrl()).toBe('https://staging.api.tilt-us.com');
-    expect(getCurrentKeycloakBaseUrl()).toBe('https://staging.api.tilt-us.com/keycloak');
+    expect(getApiBaseUrl()).toBe('https://staging-api.tilt-us.com');
+    expect(getCurrentKeycloakBaseUrl()).toBe('https://staging-api.tilt-us.com/keycloak');
     expect(getCurrentKeycloakIssuerUrl()).toBe(
-      'https://staging.api.tilt-us.com/keycloak/realms/mira',
+      'https://staging-api.tilt-us.com/keycloak/realms/mira',
     );
     expect(getCurrentKeycloakAuthUrl()).toContain('/protocol/openid-connect/auth');
     expect(getCurrentKeycloakTokenUrl()).toContain('/protocol/openid-connect/token');
