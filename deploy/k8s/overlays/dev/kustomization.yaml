@@ -3,7 +3,6 @@ kind: Kustomization
 namespace: tilt-dev
 resources:
   - ../../base
-  - namespace.yaml
   - ingress.yaml
 configMapGenerator:
   - name: mira-website-runtime
