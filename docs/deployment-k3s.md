@@ -76,6 +76,13 @@ kubectl apply -f deploy/argocd/mira-website-staging-image-updater.yaml
 
 Further staging updates are then automatic.
 
+## Dev namespace ownership
+
+`mira-services-dev` is the sole Argo CD owner of the `tilt-dev` Namespace. The
+website Application deploys its namespaced resources into `tilt-dev`, but does
+not render a Namespace resource. This prevents two Argo CD Applications from
+competing to manage the same cluster-scoped object.
+
 ## DNS and ZeroTier prerequisites
 
 Do not automate these entries from this repository. The public IONOS A records
