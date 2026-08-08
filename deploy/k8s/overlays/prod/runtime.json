@@ -1,0 +1,8 @@
+{
+  "environment": "prod",
+  "apiBaseUrl": "https://api.tilt-us.com",
+  "keycloakBaseUrl": "https://api.tilt-us.com/keycloak",
+  "keycloakRealm": "mira",
+  "keycloakClientId": "mira-web",
+  "keycloakPasswordClientId": "mira-web"
+}

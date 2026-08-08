@@ -3,9 +3,11 @@ kind: Kustomization
 namespace: tilt-dev
 resources:
   - ../../base
-  - namespace.yaml
   - ingress.yaml
-  - runtime-config.yaml
+configMapGenerator:
+  - name: mira-website-runtime
+    files:
+      - runtime.json
 images:
   # Bootstrap tag only. GitOps should replace this with an immutable digest after the first promotion.
   - name: ghcr.io/tilt-us/mira-website

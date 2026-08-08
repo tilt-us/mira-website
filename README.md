@@ -257,8 +257,8 @@ are documented in [docs/deployment-k3s.md](docs/deployment-k3s.md).
 
 The website loads its public runtime configuration from `/config/runtime.json`
 before Angular starts. The unchanged image is deployed to Dev from
-`development` (`dev.tilt-us.com`, `dev.api.tilt-us.com`, `tilt-dev`) and to
-Staging from `master` (`staging.tilt-us.com`, `staging.api.tilt-us.com`,
+`development` (`dev.tilt-us.com`, `dev-api.tilt-us.com`, `tilt-dev`) and to
+Staging from `master` (`staging.tilt-us.com`, `staging-api.tilt-us.com`,
 `tilt-staging`). Promotion is a pull request from `development` to `master`.
 Production remains inactive. See [the K3s deployment guide](docs/deployment-k3s.md)
 for the ConfigMap, Argo CD bootstrap, DNS, and ZeroTier prerequisites.

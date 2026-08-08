@@ -17,8 +17,8 @@ host networking, Docker socket, HostPath, NodePort, or LoadBalancer access.
 
 | Branch | Environment | Website | API | Mira Keycloak | Namespace | Image tag |
 | --- | --- | --- | --- | --- | --- | --- |
-| `development` | Dev / S-TEST | `https://dev.tilt-us.com` | `https://dev.api.tilt-us.com` | `https://dev.api.tilt-us.com/keycloak` | `tilt-dev` | `development` |
-| `master` | Staging / R-TEST | `https://staging.tilt-us.com` | `https://staging.api.tilt-us.com` | `https://staging.api.tilt-us.com/keycloak` | `tilt-staging` | `master` |
+| `development` | Dev / S-TEST | `https://dev.tilt-us.com` | `https://dev-api.tilt-us.com` | `https://dev-api.tilt-us.com/keycloak` | `tilt-dev` | `development` |
+| `master` | Staging / R-TEST | `https://staging.tilt-us.com` | `https://staging-api.tilt-us.com` | `https://staging-api.tilt-us.com/keycloak` | `tilt-staging` | `master` |
 | release tag `vX.Y.Z` | future production | `https://tilt-us.com` | `https://api.tilt-us.com` | `https://api.tilt-us.com/keycloak` | `tilt-prod` | release tag |
 
 Production has no Argo CD Application in this repository and is not activated
@@ -28,8 +28,10 @@ infrastructure applications and must never be used by Mira.
 ## Runtime configuration
 
 One unchanged image runs in every environment. It contains a local development
-file at `public/config/runtime.json`; each Kubernetes overlay mounts its own
-public ConfigMap file at `/usr/share/caddy/config/runtime.json`.
+file at `public/config/runtime.json`; each Kubernetes overlay generates and
+mounts its own public ConfigMap file at `/usr/share/caddy/config/runtime.json`.
+The generated ConfigMap name includes a content hash, so a runtime-config
+change updates the Deployment volume reference and rolls out a new Pod.
 
 The browser loads `/config/runtime.json` with `cache: "no-store"` before Angular
 starts. Caddy serves this file as JSON with `Cache-Control: no-store, no-cache,
@@ -74,6 +76,13 @@ kubectl apply -f deploy/argocd/mira-website-staging-image-updater.yaml
 
 Further staging updates are then automatic.
 
+## Dev namespace ownership
+
+`mira-services-dev` is the sole Argo CD owner of the `tilt-dev` Namespace. The
+website Application deploys its namespaced resources into `tilt-dev`, but does
+not render a Namespace resource. This prevents two Argo CD Applications from
+competing to manage the same cluster-scoped object.
+
 ## DNS and ZeroTier prerequisites
 
 Do not automate these entries from this repository. The public IONOS A records
@@ -81,16 +90,16 @@ needed for Let's Encrypt HTTP-01 are:
 
 ```text
 staging.tilt-us.com       -> public server IP
-dev.api.tilt-us.com       -> public server IP
-staging.api.tilt-us.com   -> public server IP
+dev-api.tilt-us.com       -> public server IP
+staging-api.tilt-us.com   -> public server IP
 ```
 
 Team machines resolve internal HTTPS hosts over ZeroTier:
 
 ```text
 10.253.212.1 staging.tilt-us.com
-10.253.212.1 dev.api.tilt-us.com
-10.253.212.1 staging.api.tilt-us.com
+10.253.212.1 dev-api.tilt-us.com
+10.253.212.1 staging-api.tilt-us.com
 ```
 
 Public TCP port 443 remains closed; public port 80 remains open only for
