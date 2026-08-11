@@ -13,11 +13,13 @@ import { DOWNLOAD_OPTIONS, DownloadOption, DownloadTarget } from '../../../domai
 export class OsModal {
   private readonly downloads = inject(DownloadService);
 
-  readonly version = input.required<string>();
   readonly options = input<readonly DownloadOption[]>(DOWNLOAD_OPTIONS);
   readonly close = output<void>();
 
-  protected hrefFor(target: DownloadTarget): string {
-    return this.downloads.buildDownloadUrl(target, this.version());
+  protected download(target: DownloadTarget): void {
+    this.downloads.download(target).subscribe({
+      next: () => this.close.emit(),
+      error: () => undefined,
+    });
   }
 }

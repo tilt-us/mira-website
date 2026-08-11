@@ -1,6 +1,7 @@
 {
   "environment": "dev",
   "apiBaseUrl": "https://dev-api.tilt-us.com",
+  "downloadBaseUrl": "https://downloads.tilt-us.com/dev",
   "keycloakBaseUrl": "https://dev-api.tilt-us.com/keycloak",
   "keycloakRealm": "mira",
   "keycloakClientId": "mira-web",

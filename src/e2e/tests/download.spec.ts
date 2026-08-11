@@ -6,36 +6,20 @@ test.describe('Download game button', () => {
     await expect(page).toHaveTitle(/MiraWebsite|mira-website/i);
   });
 
-  test('shows the primary download button and the alternative link', async ({
-    page,
-  }) => {
+  test('shows the primary download button and the alternative link', async ({ page }) => {
     await page.goto('/');
     await expect(page.getByTestId('primary-download')).toBeVisible();
     await expect(page.getByTestId('other-systems')).toBeVisible();
   });
 
-  test('opens the OS chooser modal with all installer links', async ({
-    page,
-  }) => {
+  test('opens the OS chooser modal with all installer options', async ({ page }) => {
     await page.goto('/');
     await page.getByTestId('other-systems').click();
 
     const dialog = page.getByRole('dialog');
     await expect(dialog).toBeVisible();
 
-    const links = dialog.locator('a[href]');
-    await expect(links).toHaveCount(5);
-
-    const hrefs = await links.evaluateAll((els) =>
-      els.map((el) => el.getAttribute('href') ?? ''),
-    );
-    for (const href of hrefs) {
-      // Links should point at the installer endpoint and include either a versioned installer
-      // filename or the macOS install script.
-      expect(href).toMatch(
-        /localhost:8080\/downloads\/game-sources\/installer\/(install-macos\.sh|mira-installer-\d+\.\d+\.\d+-)/,
-      );
-    }
+    await expect(dialog.locator('li button')).toHaveCount(5);
   });
 
   test('closes the modal with the Escape key', async ({ page }) => {

@@ -3,17 +3,12 @@ import { Observable } from 'rxjs';
 
 import { createVersionGateway } from '../adapters/gateway/http-version.adapter';
 import { createDownloadGateway } from '../adapters/gateway/browser-download.adapter';
+import type { InstallerManifest, LatestInstallerManifest } from './models';
 
-/** Raw release descriptor as served by the download endpoints. */
-export interface ReleaseInfo {
-  version?: string | null;
-  tag?: string | null;
-  tag_name?: string | null;
-}
-
-/** Outbound port: resolves the latest published release. */
+/** Outbound port: reads Garage manifests for the current download environment. */
 export interface VersionGateway {
-  fetchLatestRelease(): Observable<ReleaseInfo>;
+  fetchLatestManifest(): Observable<LatestInstallerManifest>;
+  fetchInstallerManifest(url: string): Observable<InstallerManifest>;
 }
 
 /** Outbound port: hands a URL to the browser to start a download. */
@@ -21,12 +16,12 @@ export interface DownloadGateway {
   trigger(url: string): void;
 }
 
-export const VERSION_GATEWAY = new InjectionToken<VersionGateway>(
-  'VERSION_GATEWAY',
-  { providedIn: 'root', factory: createVersionGateway },
-);
+export const VERSION_GATEWAY = new InjectionToken<VersionGateway>('VERSION_GATEWAY', {
+  providedIn: 'root',
+  factory: createVersionGateway,
+});
 
-export const DOWNLOAD_GATEWAY = new InjectionToken<DownloadGateway>(
-  'DOWNLOAD_GATEWAY',
-  { providedIn: 'root', factory: createDownloadGateway },
-);
+export const DOWNLOAD_GATEWAY = new InjectionToken<DownloadGateway>('DOWNLOAD_GATEWAY', {
+  providedIn: 'root',
+  factory: createDownloadGateway,
+});

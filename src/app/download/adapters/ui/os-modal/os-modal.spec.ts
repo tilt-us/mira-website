@@ -1,77 +1,82 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideHttpClient } from '@angular/common/http';
-import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { By } from '@angular/platform-browser';
+import { of, throwError } from 'rxjs';
 
 import { OsModal } from './os-modal';
+import { DownloadService } from '../../../application/download.service';
+
+class StubDownloadService {
+  readonly requested: string[] = [];
+
+  download(target: string) {
+    this.requested.push(target);
+    return of(undefined);
+  }
+}
 
 @Component({
   imports: [OsModal],
-  template: `<app-os-modal [version]="version" (close)="closed = closed + 1" />`,
+  template: `<app-os-modal (close)="closed = closed + 1" />`,
 })
 class HostComponent {
-  version = '3.2.1';
   closed = 0;
 }
 
 describe('OsModal', () => {
-  function setup(): ComponentFixture<HostComponent> {
+  function setup(): { fixture: ComponentFixture<HostComponent>; downloads: StubDownloadService } {
+    const downloads = new StubDownloadService();
     TestBed.configureTestingModule({
       imports: [HostComponent],
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [{ provide: DownloadService, useValue: downloads }],
     });
     const fixture = TestBed.createComponent(HostComponent);
     fixture.detectChanges();
-    return fixture;
+    return { fixture, downloads };
   }
 
-  it('renders one download link per option with the version applied', () => {
-    const fixture = setup();
-    const links = Array.from(
-      fixture.nativeElement.querySelectorAll('a[href]'),
-    ) as HTMLAnchorElement[];
+  it('renders one installer action per option and delegates it to DownloadService', () => {
+    const { fixture, downloads } = setup();
+    const buttons = fixture.nativeElement.querySelectorAll('li button');
 
-    expect(links.length).toBe(5);
-    const hrefs = links.map((a) => a.getAttribute('href') ?? '');
-    expect(hrefs.filter((h) => h.includes('mira-installer-3.2.1')).length).toBe(4);
-    expect(hrefs.some((h) => h.endsWith('-windows-mira-installer.exe'))).toBe(
-      true,
-    );
-    expect(hrefs.some((h) => h.endsWith('install-macos.sh'))).toBe(true);
+    expect(buttons).toHaveLength(5);
+    buttons[0].click();
+    expect(downloads.requested).toEqual(['windows']);
   });
 
   it('emits close on backdrop click', () => {
-    const fixture = setup();
-    fixture.debugElement
-      .query(By.css('[data-testid="backdrop"]'))
-      .nativeElement.click();
+    const { fixture } = setup();
+    fixture.debugElement.query(By.css('[data-testid="backdrop"]')).nativeElement.click();
     expect(fixture.componentInstance.closed).toBe(1);
   });
 
   it('emits close on the close button', () => {
-    const fixture = setup();
-    fixture.debugElement
-      .query(By.css('[data-testid="modal-close"]'))
-      .nativeElement.click();
+    const { fixture } = setup();
+    fixture.debugElement.query(By.css('[data-testid="modal-close"]')).nativeElement.click();
     expect(fixture.componentInstance.closed).toBe(1);
   });
 
   it('emits close on Escape', () => {
-    const fixture = setup();
+    const { fixture } = setup();
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
     fixture.detectChanges();
     expect(fixture.componentInstance.closed).toBe(1);
   });
 
-  it('emits close when a download link is chosen', () => {
-    const fixture = setup();
-    const link = fixture.nativeElement.querySelector(
-      'a[href]',
-    ) as HTMLAnchorElement;
-    // Stop jsdom from attempting a real navigation.
-    link.addEventListener('click', (event) => event.preventDefault());
-    link.click();
+  it('emits close when a download action succeeds', () => {
+    const { fixture } = setup();
+    const button = fixture.nativeElement.querySelector('li button') as HTMLButtonElement;
+    button.click();
     expect(fixture.componentInstance.closed).toBe(1);
+  });
+
+  it('keeps the modal open when the download action fails', () => {
+    const { fixture, downloads } = setup();
+    downloads.download = () => throwError(() => new Error('unavailable'));
+
+    const button = fixture.nativeElement.querySelector('li button') as HTMLButtonElement;
+    button.click();
+
+    expect(fixture.componentInstance.closed).toBe(0);
   });
 });
