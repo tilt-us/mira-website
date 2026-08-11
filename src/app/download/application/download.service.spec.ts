@@ -118,6 +118,26 @@ describe('DownloadService', () => {
     expect(version).toBe('99.0.0');
   });
 
+  it('uses the latest git tag when no version metadata is provided', () => {
+    let version: string | undefined;
+    service.getLatestVersion().subscribe((value) => (version = value));
+    http.expectOne('https://downloads.tilt-us.com/latest.json').flush({
+      ...latest(),
+      git: { tag: 'v99.1.0' },
+    });
+    expect(version).toBe('99.1.0');
+  });
+
+  it('uses the display fallback when the latest manifest has no version metadata', () => {
+    let version: string | undefined;
+    service.getLatestVersion().subscribe((value) => (version = value));
+    http.expectOne('https://downloads.tilt-us.com/latest.json').flush({
+      ...latest(),
+      git: {},
+    });
+    expect(version).toBe(FALLBACK_VERSION);
+  });
+
   it('uses a display-only fallback version when latest metadata is unavailable', () => {
     let version: string | undefined;
     service.getLatestVersion().subscribe((value) => (version = value));

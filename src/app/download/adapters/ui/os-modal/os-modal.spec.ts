@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { OsModal } from './os-modal';
 import { DownloadService } from '../../../application/download.service';
@@ -68,5 +68,15 @@ describe('OsModal', () => {
     const button = fixture.nativeElement.querySelector('li button') as HTMLButtonElement;
     button.click();
     expect(fixture.componentInstance.closed).toBe(1);
+  });
+
+  it('keeps the modal open when the download action fails', () => {
+    const { fixture, downloads } = setup();
+    downloads.download = () => throwError(() => new Error('unavailable'));
+
+    const button = fixture.nativeElement.querySelector('li button') as HTMLButtonElement;
+    button.click();
+
+    expect(fixture.componentInstance.closed).toBe(0);
   });
 });
