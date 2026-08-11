@@ -67,7 +67,7 @@ describe('createVersionGateway', () => {
     let installerSize: number | undefined;
     gateway
       .fetchInstallerManifest(INSTALLER_URL)
-      .subscribe((value) => (installerSize = value.platforms.windows?.size));
+      .subscribe((value) => (installerSize = value.installer.windows?.size));
     const installerRequest = http.expectOne(INSTALLER_URL);
     expect(installerRequest.request.method).toBe('GET');
     expect(installerRequest.request.withCredentials).toBe(false);
@@ -75,7 +75,7 @@ describe('createVersionGateway', () => {
     installerRequest.flush({
       schemaVersion: 1,
       environment: 'prod',
-      platforms: {
+      installer: {
         windows: {
           url: 'https://downloads.tilt-us.com/installer/windows/mira-installer.exe',
           sha256: 'abc',
@@ -122,14 +122,14 @@ describe('createVersionGateway', () => {
   });
 
   it.each([
-    [{ schemaVersion: 1, environment: 1, platforms: {} }],
-    [{ schemaVersion: 1, environment: 'prod', platforms: [] }],
-    [{ schemaVersion: 1, environment: 'prod', platforms: { linux: [] } }],
+    [{ schemaVersion: 1, environment: 1, installer: {} }],
+    [{ schemaVersion: 1, environment: 'prod', installer: [] }],
+    [{ schemaVersion: 1, environment: 'prod', installer: { linux: [] } }],
     [
       {
         schemaVersion: 1,
         environment: 'prod',
-        platforms: { windows: { url: 'ftp://downloads.tilt-us.com/mira-installer.exe' } },
+        installer: { windows: { url: 'ftp://downloads.tilt-us.com/mira-installer.exe' } },
       },
     ],
   ])('rejects malformed installer manifests', (payload) => {

@@ -19,7 +19,7 @@ const INSTALLER_MANIFEST_URL = 'https://downloads.tilt-us.com/installer/manifest
 const ARTIFACTS = {
   schemaVersion: 1,
   environment: 'prod',
-  platforms: {
+  installer: {
     windows: { url: 'https://cdn.tilt-us.com/mira/windows-installer.exe' },
     macos: { url: 'https://cdn.tilt-us.com/mira/macos-installer.dmg' },
     linux: {
@@ -249,7 +249,7 @@ describe('DownloadService', () => {
     http.expectOne(INSTALLER_MANIFEST_URL).flush({
       schemaVersion: 1,
       environment: 'prod',
-      platforms: { linux: { appImage: { url: 'https://cdn.tilt-us.com/mira.AppImage' } } },
+      installer: { linux: { appImage: { url: 'https://cdn.tilt-us.com/mira.AppImage' } } },
     });
 
     expect(getError()).toMatchObject<Partial<DownloadError>>({

@@ -158,18 +158,18 @@ function parseArtifact(value: unknown): InstallerArtifact | undefined {
 function parseInstallerManifest(value: unknown): InstallerManifest {
   const manifest = requireRecord(value, 'invalid-installer-manifest');
   requireSchema(manifest, 'invalid-installer-manifest');
-  const platforms = requireRecord(manifest['platforms'], 'invalid-installer-manifest');
+  const installer = requireRecord(manifest['installer'], 'invalid-installer-manifest');
   const linux =
-    platforms['linux'] === undefined
+    installer['linux'] === undefined
       ? undefined
-      : requireRecord(platforms['linux'], 'invalid-installer-manifest');
+      : requireRecord(installer['linux'], 'invalid-installer-manifest');
 
   return {
     schemaVersion: 1,
     environment: manifest['environment'] as string,
-    platforms: {
-      windows: parseArtifact(platforms['windows']),
-      macos: parseArtifact(platforms['macos']),
+    installer: {
+      windows: parseArtifact(installer['windows']),
+      macos: parseArtifact(installer['macos']),
       ...(linux
         ? {
             linux: {
