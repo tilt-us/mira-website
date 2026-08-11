@@ -9,7 +9,7 @@ export interface DownloadOption {
 
 export const DOWNLOAD_OPTIONS: readonly DownloadOption[] = [
   { target: 'windows', label: 'Windows (.exe)' },
-  { target: 'mac', label: 'macOS · Install Script (.sh)' },
+  { target: 'mac', label: 'macOS Installer (.dmg)' },
   { target: 'linux-debian', label: 'Linux · Debian / Ubuntu (.deb)' },
   { target: 'linux-fedora', label: 'Linux · Fedora (.rpm)' },
   { target: 'linux-arch', label: 'Linux · Arch / universal (.AppImage)' },
@@ -38,7 +38,7 @@ export interface LatestInstallerManifest {
 export interface InstallerManifest {
   readonly schemaVersion: 1;
   readonly environment: string;
-  readonly platforms: {
+  readonly installer: {
     readonly windows?: InstallerArtifact;
     readonly macos?: InstallerArtifact;
     readonly linux?: {

@@ -143,19 +143,19 @@ export class DownloadService {
     let artifact: InstallerArtifact | undefined;
     switch (target) {
       case 'windows':
-        artifact = manifest.platforms.windows;
+        artifact = manifest.installer.windows;
         break;
       case 'linux-arch':
-        artifact = manifest.platforms.linux?.appImage;
+        artifact = manifest.installer.linux?.appImage;
         break;
       case 'linux-fedora':
-        artifact = manifest.platforms.linux?.rpm;
+        artifact = manifest.installer.linux?.rpm;
         break;
       case 'linux-debian':
-        artifact = manifest.platforms.linux?.deb;
+        artifact = manifest.installer.linux?.deb;
         break;
       case 'mac':
-        artifact = manifest.platforms.macos;
+        artifact = manifest.installer.macos;
         break;
     }
 
