@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
 
 import { DownloadButton } from './download-button';
 import { DownloadService } from '../../../application/download.service';
@@ -11,6 +12,7 @@ class StubDownloadService {
   os: Os = 'windows';
   readonly requested: DownloadTarget[] = [];
   linuxTarget: DownloadTarget | null = null;
+  failure: unknown;
 
   detectOs(): Os {
     return this.os;
@@ -20,7 +22,7 @@ class StubDownloadService {
   }
   download(target: DownloadTarget) {
     this.requested.push(target);
-    return of(undefined);
+    return this.failure === undefined ? of(undefined) : throwError(() => this.failure);
   }
 }
 
@@ -111,5 +113,22 @@ describe('DownloadButton', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-os-modal')).toBeFalsy();
+  });
+
+  it('shows and logs a manifest failure instead of silently ignoring it', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { fixture, stub } = createFixture('windows');
+    stub.failure = { code: 'latest-manifest-unavailable' };
+
+    byTestId(fixture, 'primary-download').click();
+    fixture.detectChanges();
+
+    expect(byTestId(fixture, 'download-error').textContent).toContain(
+      'latest installer manifest is unavailable',
+    );
+    expect(warn).toHaveBeenCalledWith('Mira installer download failed.', {
+      code: 'latest-manifest-unavailable',
+    });
+    warn.mockRestore();
   });
 });

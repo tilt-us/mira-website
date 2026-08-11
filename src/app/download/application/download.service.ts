@@ -16,6 +16,14 @@ export const FALLBACK_VERSION = '1.0.0';
 
 export type DownloadErrorCode = 'no-compatible-artifact' | 'download-trigger-failed';
 
+type DownloadFailureCode =
+  | DownloadErrorCode
+  | 'latest-manifest-unavailable'
+  | 'invalid-latest-manifest'
+  | 'missing-installer-manifest-url'
+  | 'installer-manifest-unavailable'
+  | 'invalid-installer-manifest';
+
 export class DownloadError extends Error {
   constructor(
     readonly code: DownloadErrorCode,
@@ -24,6 +32,44 @@ export class DownloadError extends Error {
     super(message);
     this.name = 'DownloadError';
   }
+}
+
+/** Returns an actionable, non-sensitive message for a manifest or browser download failure. */
+export function describeDownloadFailure(error: unknown): string {
+  switch (downloadFailureCode(error)) {
+    case 'latest-manifest-unavailable':
+      return 'The latest installer manifest is unavailable. Please try again shortly.';
+    case 'invalid-latest-manifest':
+      return 'The latest installer manifest is invalid. Please try again later.';
+    case 'missing-installer-manifest-url':
+      return 'The latest installer manifest does not provide an installer URL.';
+    case 'installer-manifest-unavailable':
+      return 'The installer manifest is unavailable. Please try again shortly.';
+    case 'invalid-installer-manifest':
+      return 'The installer manifest is invalid. Please try again later.';
+    case 'no-compatible-artifact':
+      return 'No installer is available for your operating system or package.';
+    case 'download-trigger-failed':
+      return 'The installer download URL could not be opened.';
+    default:
+      return 'The installer download could not be started. Please try again.';
+  }
+}
+
+/** Logs only a stable failure code; URLs and server payloads are intentionally omitted. */
+export function logDownloadFailure(error: unknown): void {
+  console.warn('Mira installer download failed.', {
+    code: downloadFailureCode(error) ?? 'unknown',
+  });
+}
+
+function downloadFailureCode(error: unknown): DownloadFailureCode | undefined {
+  if (!error || typeof error !== 'object' || !('code' in error)) {
+    return undefined;
+  }
+
+  const code = (error as { code?: unknown }).code;
+  return typeof code === 'string' ? (code as DownloadFailureCode) : undefined;
 }
 
 @Injectable({ providedIn: 'root' })

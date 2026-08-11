@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
 
 import { OsModal } from './os-modal';
 import { DownloadService } from '../../../application/download.service';
@@ -71,12 +72,21 @@ describe('OsModal', () => {
   });
 
   it('keeps the modal open when the download action fails', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     const { fixture, downloads } = setup();
-    downloads.download = () => throwError(() => new Error('unavailable'));
+    downloads.download = () => throwError(() => ({ code: 'no-compatible-artifact' }));
 
     const button = fixture.nativeElement.querySelector('li button') as HTMLButtonElement;
     button.click();
+    fixture.detectChanges();
 
     expect(fixture.componentInstance.closed).toBe(0);
+    expect(
+      fixture.nativeElement.querySelector('[data-testid="download-error"]').textContent,
+    ).toContain('No installer is available');
+    expect(warn).toHaveBeenCalledWith('Mira installer download failed.', {
+      code: 'no-compatible-artifact',
+    });
+    warn.mockRestore();
   });
 });

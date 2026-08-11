@@ -53,7 +53,11 @@ describe('createVersionGateway', () => {
   it('accepts optional latest git metadata and fully described installer artifacts', () => {
     let latestVersion: string | undefined;
     gateway.fetchLatestManifest().subscribe((value) => (latestVersion = value.git.version));
-    http.expectOne(LATEST_URL).flush({
+    const latestRequest = http.expectOne(LATEST_URL);
+    expect(latestRequest.request.method).toBe('GET');
+    expect(latestRequest.request.withCredentials).toBe(false);
+    expect(latestRequest.request.headers.has('Authorization')).toBe(false);
+    latestRequest.flush({
       schemaVersion: 1,
       environment: 'prod',
       installerManifestUrl: INSTALLER_URL,
@@ -64,7 +68,11 @@ describe('createVersionGateway', () => {
     gateway
       .fetchInstallerManifest(INSTALLER_URL)
       .subscribe((value) => (installerSize = value.platforms.windows?.size));
-    http.expectOne(INSTALLER_URL).flush({
+    const installerRequest = http.expectOne(INSTALLER_URL);
+    expect(installerRequest.request.method).toBe('GET');
+    expect(installerRequest.request.withCredentials).toBe(false);
+    expect(installerRequest.request.headers.has('Authorization')).toBe(false);
+    installerRequest.flush({
       schemaVersion: 1,
       environment: 'prod',
       platforms: {
