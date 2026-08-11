@@ -2,11 +2,18 @@ import { DOCUMENT } from '@angular/core';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { vi } from 'vitest';
 
 import { DownloadManifestError } from '../adapters/gateway/http-version.adapter';
 import { applyRuntimeDownloadConfig, resetRuntimeDownloadConfig } from '../download-config';
 import { DOWNLOAD_GATEWAY } from '../domain/ports';
-import { DownloadError, DownloadService, FALLBACK_VERSION } from './download.service';
+import {
+  describeDownloadFailure,
+  DownloadError,
+  DownloadService,
+  FALLBACK_VERSION,
+  logDownloadFailure,
+} from './download.service';
 
 const INSTALLER_MANIFEST_URL = 'https://downloads.tilt-us.com/installer/manifest.json';
 const ARTIFACTS = {
@@ -69,6 +76,40 @@ describe('DownloadService', () => {
     http.verify();
     resetRuntimeDownloadConfig();
     TestBed.resetTestingModule();
+  });
+
+  it.each([
+    [
+      new DownloadManifestError('latest-manifest-unavailable', ''),
+      'latest installer manifest is unavailable',
+    ],
+    [
+      new DownloadManifestError('invalid-latest-manifest', ''),
+      'latest installer manifest is invalid',
+    ],
+    [
+      new DownloadManifestError('missing-installer-manifest-url', ''),
+      'does not provide an installer URL',
+    ],
+    [
+      new DownloadManifestError('installer-manifest-unavailable', ''),
+      'installer manifest is unavailable',
+    ],
+    [new DownloadManifestError('invalid-installer-manifest', ''), 'installer manifest is invalid'],
+    [new DownloadError('no-compatible-artifact', ''), 'No installer is available'],
+    [new DownloadError('download-trigger-failed', ''), 'download URL could not be opened'],
+    [new Error('unknown'), 'download could not be started'],
+  ])('describes download failures for the UI', (error, message) => {
+    expect(describeDownloadFailure(error)).toContain(message);
+  });
+
+  it('logs only the stable download error code', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    logDownloadFailure(new DownloadManifestError('invalid-installer-manifest', 'sensitive URL'));
+    expect(warn).toHaveBeenCalledWith('Mira installer download failed.', {
+      code: 'invalid-installer-manifest',
+    });
+    warn.mockRestore();
   });
 
   it.each([

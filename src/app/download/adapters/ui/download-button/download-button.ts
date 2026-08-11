@@ -1,6 +1,10 @@
 import { Component, inject, signal } from '@angular/core';
 
-import { DownloadService } from '../../../application/download.service';
+import {
+  describeDownloadFailure,
+  DownloadService,
+  logDownloadFailure,
+} from '../../../application/download.service';
 import { DOWNLOAD_OPTIONS, DownloadOption, DownloadTarget } from '../../../domain/models';
 import { OsModal } from '../os-modal/os-modal';
 
@@ -15,6 +19,7 @@ export class DownloadButton {
   protected readonly os = this.downloads.detectOs();
   protected readonly modalOpen = signal(false);
   protected readonly modalOptions = signal<readonly DownloadOption[]>(DOWNLOAD_OPTIONS);
+  protected readonly downloadError = signal<string | null>(null);
 
   protected primaryLabel(): string {
     switch (this.os) {
@@ -54,6 +59,12 @@ export class DownloadButton {
   }
 
   private startDownload(target: DownloadTarget): void {
-    this.downloads.download(target).subscribe({ error: () => undefined });
+    this.downloadError.set(null);
+    this.downloads.download(target).subscribe({
+      error: (error) => {
+        logDownloadFailure(error);
+        this.downloadError.set(describeDownloadFailure(error));
+      },
+    });
   }
 }

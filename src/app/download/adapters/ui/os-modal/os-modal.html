@@ -38,5 +38,11 @@
         </li>
       }
     </ul>
+
+    @if (downloadError(); as error) {
+      <p class="mt-4 text-sm text-red-300" role="alert" data-testid="download-error">
+        {{ error }}
+      </p>
+    }
   </div>
 </div>

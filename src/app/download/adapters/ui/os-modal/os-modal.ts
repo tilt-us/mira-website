@@ -1,6 +1,10 @@
-import { Component, inject, input, output } from '@angular/core';
+import { Component, inject, input, output, signal } from '@angular/core';
 
-import { DownloadService } from '../../../application/download.service';
+import {
+  describeDownloadFailure,
+  DownloadService,
+  logDownloadFailure,
+} from '../../../application/download.service';
 import { DOWNLOAD_OPTIONS, DownloadOption, DownloadTarget } from '../../../domain/models';
 
 @Component({
@@ -15,11 +19,16 @@ export class OsModal {
 
   readonly options = input<readonly DownloadOption[]>(DOWNLOAD_OPTIONS);
   readonly close = output<void>();
+  protected readonly downloadError = signal<string | null>(null);
 
   protected download(target: DownloadTarget): void {
+    this.downloadError.set(null);
     this.downloads.download(target).subscribe({
       next: () => this.close.emit(),
-      error: () => undefined,
+      error: (error) => {
+        logDownloadFailure(error);
+        this.downloadError.set(describeDownloadFailure(error));
+      },
     });
   }
 }
