@@ -2,6 +2,11 @@ import { afterEach, expect, it, vi } from 'vitest';
 
 import { applyRuntimeApiConfig, getApiBaseUrl, resetRuntimeApiConfig } from './api-client';
 import {
+  applyRuntimeDownloadConfig,
+  getDownloadBaseUrl,
+  resetRuntimeDownloadConfig,
+} from './download/download-config';
+import {
   applyKeycloakRuntimeConfig,
   getCurrentKeycloakAuthUrl,
   getCurrentKeycloakBaseUrl,
@@ -20,6 +25,7 @@ import {
 const baseConfig: MiraRuntimeConfig = {
   environment: 'local',
   apiBaseUrl: 'http://localhost:8080',
+  downloadBaseUrl: 'http://localhost:8090',
   keycloakBaseUrl: 'http://localhost:8081',
   keycloakRealm: 'mira',
   keycloakClientId: 'mira-bevy',
@@ -35,6 +41,10 @@ function environmentConfig(environment: MiraRuntimeConfig['environment']): MiraR
   return {
     environment,
     apiBaseUrl: `https://${host}`,
+    downloadBaseUrl:
+      environment === 'prod'
+        ? 'https://downloads.tilt-us.com'
+        : `https://downloads.tilt-us.com/${environment}`,
     keycloakBaseUrl: `https://${host}/keycloak`,
     keycloakRealm: 'mira',
     keycloakClientId: 'mira-web',
@@ -45,20 +55,23 @@ function environmentConfig(environment: MiraRuntimeConfig['environment']): MiraR
 describe('runtime configuration', () => {
   afterEach(() => {
     resetRuntimeApiConfig();
+    resetRuntimeDownloadConfig();
     applyKeycloakRuntimeConfig(baseConfig);
   });
 
   it.each(['local', 'dev', 'staging', 'prod'] as const)(
     'accepts a valid %s configuration',
     (environment) => {
-      expect(validateRuntimeConfig(environmentConfig(environment))).toEqual(environmentConfig(environment));
+      expect(validateRuntimeConfig(environmentConfig(environment))).toEqual(
+        environmentConfig(environment),
+      );
     },
   );
 
   it('loads runtime.json without using the HTTP cache', async () => {
-    const fetchImplementation = vi.fn().mockResolvedValue(
-      new Response(JSON.stringify(environmentConfig('dev')), { status: 200 }),
-    );
+    const fetchImplementation = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify(environmentConfig('dev')), { status: 200 }));
 
     await expect(loadRuntimeConfig(fetchImplementation)).resolves.toEqual(environmentConfig('dev'));
     expect(fetchImplementation).toHaveBeenCalledWith('/config/runtime.json', { cache: 'no-store' });
@@ -81,8 +94,43 @@ describe('runtime configuration', () => {
 
   it('rejects HTTP URLs outside the local environment', () => {
     expect(() =>
-      validateRuntimeConfig({ ...environmentConfig('dev'), apiBaseUrl: 'http://dev-api.tilt-us.com' }),
+      validateRuntimeConfig({
+        ...environmentConfig('dev'),
+        apiBaseUrl: 'http://dev-api.tilt-us.com',
+      }),
     ).toThrow('absolute HTTPS URL');
+  });
+
+  it('requires the environment-specific Garage download origin', () => {
+    expect(() =>
+      validateRuntimeConfig({
+        ...environmentConfig('dev'),
+        downloadBaseUrl: 'https://downloads.tilt-us.com',
+      }),
+    ).toThrow('must use the dev download base URL');
+  });
+
+  it('rejects API hosts and credentials for downloadBaseUrl', () => {
+    expect(() =>
+      validateRuntimeConfig({
+        ...environmentConfig('prod'),
+        downloadBaseUrl: 'https://api.tilt-us.com',
+      }),
+    ).toThrow('downloads.tilt-us.com host');
+    expect(() =>
+      validateRuntimeConfig({
+        ...environmentConfig('prod'),
+        downloadBaseUrl: 'https://user:password@downloads.tilt-us.com',
+      }),
+    ).toThrow('must not contain credentials');
+  });
+
+  it('does not map local downloads to production', () => {
+    applyRuntimeDownloadConfig(baseConfig.downloadBaseUrl);
+    expect(getDownloadBaseUrl()).toBe('http://localhost:8090');
+    expect(() =>
+      validateRuntimeConfig({ ...baseConfig, downloadBaseUrl: 'https://downloads.tilt-us.com' }),
+    ).toThrow('must use http://localhost:8090');
   });
 
   it('allows the explicitly supported local HTTP URLs', () => {
@@ -109,14 +157,17 @@ describe('runtime configuration', () => {
 
   it('rejects the infrastructure Keycloak host', () => {
     expect(() =>
-      validateRuntimeConfig({ ...environmentConfig('dev'), keycloakBaseUrl: 'https://sso.tilt-us.com' }),
+      validateRuntimeConfig({
+        ...environmentConfig('dev'),
+        keycloakBaseUrl: 'https://sso.tilt-us.com',
+      }),
     ).toThrow('infrastructure Keycloak');
   });
 
   it('reports a network error while loading runtime.json', async () => {
-    await expect(loadRuntimeConfig(vi.fn().mockRejectedValue(new Error('offline')))).rejects.toThrow(
-      'could not load /config/runtime.json',
-    );
+    await expect(
+      loadRuntimeConfig(vi.fn().mockRejectedValue(new Error('offline'))),
+    ).rejects.toThrow('could not load /config/runtime.json');
   });
 
   it('reports an unsuccessful runtime.json response', async () => {
@@ -128,7 +179,9 @@ describe('runtime configuration', () => {
   it('reports invalid JSON in runtime.json', async () => {
     await expect(
       loadRuntimeConfig(
-        vi.fn().mockResolvedValue({ ok: true, json: vi.fn().mockRejectedValue(new Error('invalid')) }),
+        vi
+          .fn()
+          .mockResolvedValue({ ok: true, json: vi.fn().mockRejectedValue(new Error('invalid')) }),
       ),
     ).rejects.toThrow('does not contain valid JSON');
   });
@@ -137,9 +190,11 @@ describe('runtime configuration', () => {
     const config = environmentConfig('staging');
     resetRuntimeApiConfig();
     applyRuntimeApiConfig(config.apiBaseUrl);
+    applyRuntimeDownloadConfig(config.downloadBaseUrl);
     applyKeycloakRuntimeConfig(config);
 
     expect(getApiBaseUrl()).toBe('https://staging-api.tilt-us.com');
+    expect(getDownloadBaseUrl()).toBe('https://downloads.tilt-us.com/staging');
     expect(getCurrentKeycloakBaseUrl()).toBe('https://staging-api.tilt-us.com/keycloak');
     expect(getCurrentKeycloakIssuerUrl()).toBe(
       'https://staging-api.tilt-us.com/keycloak/realms/mira',

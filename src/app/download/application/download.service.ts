@@ -1,13 +1,30 @@
 import { DOCUMENT, inject, Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { catchError, map, shareReplay } from 'rxjs/operators';
+import { catchError, map, shareReplay, switchMap, tap } from 'rxjs/operators';
 
-import { DownloadTarget, Os } from '../domain/models';
+import {
+  DownloadTarget,
+  InstallerArtifact,
+  InstallerManifest,
+  LatestInstallerManifest,
+  Os,
+} from '../domain/models';
 import { detectLinuxTarget, detectOs } from '../domain/os-detection';
 import { DOWNLOAD_GATEWAY, VERSION_GATEWAY } from '../domain/ports';
-import { getApiBaseUrl } from '../../api-client';
 
 export const FALLBACK_VERSION = '1.0.0';
+
+export type DownloadErrorCode = 'no-compatible-artifact' | 'download-trigger-failed';
+
+export class DownloadError extends Error {
+  constructor(
+    readonly code: DownloadErrorCode,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'DownloadError';
+  }
+}
 
 @Injectable({ providedIn: 'root' })
 export class DownloadService {
@@ -15,7 +32,8 @@ export class DownloadService {
   private readonly versionGateway = inject(VERSION_GATEWAY);
   private readonly downloadGateway = inject(DOWNLOAD_GATEWAY);
 
-  private version$?: Observable<string>;
+  private latestManifest$?: Observable<LatestInstallerManifest>;
+  private installerManifest$?: Observable<InstallerManifest>;
 
   detectOs(userAgent: string = this.currentUserAgent()): Os {
     return detectOs(userAgent);
@@ -26,22 +44,27 @@ export class DownloadService {
   }
 
   getLatestVersion(): Observable<string> {
-    this.version$ ??= this.versionGateway.fetchLatestRelease().pipe(
-      map((release) =>
-        this.normaliseVersion(release.version ?? release.tag ?? release.tag_name),
-      ),
+    return this.latestManifest().pipe(
+      map((manifest) => this.normaliseVersion(manifest.git.version ?? manifest.git.tag)),
       catchError(() => of(FALLBACK_VERSION)),
-      shareReplay({ bufferSize: 1, refCount: false }),
     );
-    return this.version$;
   }
 
-  buildDownloadUrl(target: DownloadTarget, version: string): string {
-    return `${getApiBaseUrl()}/downloads/game-sources/installer/${this.fileName(target, version)}`;
-  }
-
-  triggerDownload(url: string): void {
-    this.downloadGateway.trigger(url);
+  download(target: DownloadTarget): Observable<void> {
+    return this.installerManifest().pipe(
+      map((manifest) => this.selectArtifact(manifest, target).url),
+      tap((url) => {
+        try {
+          this.downloadGateway.trigger(url);
+        } catch {
+          throw new DownloadError(
+            'download-trigger-failed',
+            'The browser could not start the installer download.',
+          );
+        }
+      }),
+      map(() => undefined),
+    );
   }
 
   private currentUserAgent(): string {
@@ -53,18 +76,50 @@ export class DownloadService {
     return version || FALLBACK_VERSION;
   }
 
-  private fileName(target: DownloadTarget, v: string): string {
+  private latestManifest(): Observable<LatestInstallerManifest> {
+    this.latestManifest$ ??= this.versionGateway
+      .fetchLatestManifest()
+      .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    return this.latestManifest$;
+  }
+
+  private installerManifest(): Observable<InstallerManifest> {
+    this.installerManifest$ ??= this.latestManifest().pipe(
+      switchMap((latest) =>
+        this.versionGateway.fetchInstallerManifest(latest.installerManifestUrl),
+      ),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
+    return this.installerManifest$;
+  }
+
+  private selectArtifact(manifest: InstallerManifest, target: DownloadTarget): InstallerArtifact {
+    let artifact: InstallerArtifact | undefined;
     switch (target) {
       case 'windows':
-        return `mira-installer-${v}-windows-mira-installer.exe`;
+        artifact = manifest.platforms.windows;
+        break;
       case 'linux-arch':
-        return `mira-installer-${v}-linux-Mira-Installer.AppImage`;
+        artifact = manifest.platforms.linux?.appImage;
+        break;
       case 'linux-fedora':
-        return `mira-installer-${v}-linux-Mira-Installer-${v}-1.x86_64.rpm`;
+        artifact = manifest.platforms.linux?.rpm;
+        break;
       case 'linux-debian':
-        return `mira-installer-${v}-linux-Mira-Installer_${v}_amd64.deb`;
+        artifact = manifest.platforms.linux?.deb;
+        break;
       case 'mac':
-        return 'install-macos.sh';
+        artifact = manifest.platforms.macos;
+        break;
     }
+
+    if (!artifact) {
+      throw new DownloadError(
+        'no-compatible-artifact',
+        `No compatible installer artifact is available for ${target}.`,
+      );
+    }
+
+    return artifact;
   }
 }

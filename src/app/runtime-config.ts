@@ -3,6 +3,7 @@ export type RuntimeEnvironment = 'local' | 'dev' | 'staging' | 'prod';
 export interface MiraRuntimeConfig {
   environment: RuntimeEnvironment;
   apiBaseUrl: string;
+  downloadBaseUrl: string;
   keycloakBaseUrl: string;
   keycloakRealm: string;
   keycloakClientId: string;
@@ -14,18 +15,14 @@ export const RUNTIME_CONFIG_PATH = '/config/runtime.json';
 const REQUIRED_FIELDS = [
   'environment',
   'apiBaseUrl',
+  'downloadBaseUrl',
   'keycloakBaseUrl',
   'keycloakRealm',
   'keycloakClientId',
   'keycloakPasswordClientId',
 ] as const;
 
-const ALLOWED_ENVIRONMENTS = new Set<RuntimeEnvironment>([
-  'local',
-  'dev',
-  'staging',
-  'prod',
-]);
+const ALLOWED_ENVIRONMENTS = new Set<RuntimeEnvironment>(['local', 'dev', 'staging', 'prod']);
 
 export class RuntimeConfigError extends Error {
   constructor(message: string) {
@@ -102,6 +99,39 @@ function validateEndpointUrl(
   return normalized;
 }
 
+function validateDownloadBaseUrl(value: string, environment: RuntimeEnvironment): string {
+  const url = normalizeUrl(value, 'downloadBaseUrl');
+  const normalized = url.toString().replace(/\/$/, '');
+
+  if (url.username || url.password || url.search || url.hash) {
+    throw new RuntimeConfigError(
+      'field "downloadBaseUrl" must not contain credentials, a query, or a fragment.',
+    );
+  }
+
+  if (environment === 'local') {
+    if (url.protocol !== 'http:' || url.hostname !== 'localhost' || url.port !== '8090') {
+      throw new RuntimeConfigError('local field "downloadBaseUrl" must use http://localhost:8090.');
+    }
+    return normalized;
+  }
+
+  if (url.protocol !== 'https:' || url.hostname !== 'downloads.tilt-us.com') {
+    throw new RuntimeConfigError(
+      'non-local field "downloadBaseUrl" must use the HTTPS downloads.tilt-us.com host.',
+    );
+  }
+
+  const expectedPath = environment === 'prod' ? '' : `/${environment}`;
+  if (url.pathname.replace(/\/$/, '') !== expectedPath) {
+    throw new RuntimeConfigError(
+      `field "downloadBaseUrl" must use the ${environment} download base URL.`,
+    );
+  }
+
+  return normalized;
+}
+
 export function validateRuntimeConfig(value: unknown): MiraRuntimeConfig {
   const config = requireRecord(value);
   validateFields(config);
@@ -116,6 +146,10 @@ export function validateRuntimeConfig(value: unknown): MiraRuntimeConfig {
     apiBaseUrl: validateEndpointUrl(
       requiredString(config, 'apiBaseUrl').trim(),
       'apiBaseUrl',
+      environment,
+    ),
+    downloadBaseUrl: validateDownloadBaseUrl(
+      requiredString(config, 'downloadBaseUrl').trim(),
       environment,
     ),
     keycloakBaseUrl: validateEndpointUrl(

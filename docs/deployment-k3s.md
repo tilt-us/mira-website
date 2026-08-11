@@ -15,11 +15,11 @@ host networking, Docker socket, HostPath, NodePort, or LoadBalancer access.
 
 ## Environments
 
-| Branch | Environment | Website | API | Mira Keycloak | Namespace | Image tag |
-| --- | --- | --- | --- | --- | --- | --- |
-| `development` | Dev / S-TEST | `https://dev.tilt-us.com` | `https://dev-api.tilt-us.com` | `https://dev-api.tilt-us.com/keycloak` | `tilt-dev` | `development` |
-| `master` | Staging / R-TEST | `https://staging.tilt-us.com` | `https://staging-api.tilt-us.com` | `https://staging-api.tilt-us.com/keycloak` | `tilt-staging` | `master` |
-| release tag `vX.Y.Z` | future production | `https://tilt-us.com` | `https://api.tilt-us.com` | `https://api.tilt-us.com/keycloak` | `tilt-prod` | release tag |
+| Branch               | Environment       | Website                       | API                               | Mira Keycloak                              | Namespace      | Image tag     |
+| -------------------- | ----------------- | ----------------------------- | --------------------------------- | ------------------------------------------ | -------------- | ------------- |
+| `development`        | Dev / S-TEST      | `https://dev.tilt-us.com`     | `https://dev-api.tilt-us.com`     | `https://dev-api.tilt-us.com/keycloak`     | `tilt-dev`     | `development` |
+| `master`             | Staging / R-TEST  | `https://staging.tilt-us.com` | `https://staging-api.tilt-us.com` | `https://staging-api.tilt-us.com/keycloak` | `tilt-staging` | `master`      |
+| release tag `vX.Y.Z` | future production | `https://tilt-us.com`         | `https://api.tilt-us.com`         | `https://api.tilt-us.com/keycloak`         | `tilt-prod`    | release tag   |
 
 Production has no Argo CD Application in this repository and is not activated
 by this change. The infrastructure Keycloak at `sso.tilt-us.com` is only for
@@ -37,8 +37,12 @@ The browser loads `/config/runtime.json` with `cache: "no-store"` before Angular
 starts. Caddy serves this file as JSON with `Cache-Control: no-store, no-cache,
 must-revalidate` and does not route it through the SPA fallback. The file is
 public and may contain only endpoint URLs, realm, and public browser client
-IDs. Never put passwords, client secrets, tokens, keys, or database credentials
-in it.
+IDs. `downloadBaseUrl` is the Garage download origin and must be
+`https://downloads.tilt-us.com/dev`, `https://downloads.tilt-us.com/staging`, or
+`https://downloads.tilt-us.com` for Dev, Staging, and Prod respectively. Local
+development uses the explicit mock origin `http://localhost:8090`; it does not
+fall back to production. Never put passwords, client secrets, tokens, keys, or
+database credentials in it.
 
 ## Promotion
 

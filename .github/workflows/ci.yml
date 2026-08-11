@@ -150,6 +150,7 @@ jobs:
             type == "object" and
             .environment == "local" and
             .apiBaseUrl == "http://localhost:8080" and
+            .downloadBaseUrl == "http://localhost:8090" and
             .keycloakBaseUrl == "http://localhost:8081"
           ' >/dev/null
           test "$(docker image inspect "$image" --format '{{.Config.User}}')" = "1000:1000"

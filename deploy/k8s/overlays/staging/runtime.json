@@ -1,6 +1,7 @@
 {
   "environment": "staging",
   "apiBaseUrl": "https://staging-api.tilt-us.com",
+  "downloadBaseUrl": "https://downloads.tilt-us.com/staging",
   "keycloakBaseUrl": "https://staging-api.tilt-us.com/keycloak",
   "keycloakRealm": "mira",
   "keycloakClientId": "mira-web",

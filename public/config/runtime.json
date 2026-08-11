@@ -1,6 +1,7 @@
 {
   "environment": "local",
   "apiBaseUrl": "http://localhost:8080",
+  "downloadBaseUrl": "http://localhost:8090",
   "keycloakBaseUrl": "http://localhost:8081",
   "keycloakRealm": "mira",
   "keycloakClientId": "mira-bevy",
