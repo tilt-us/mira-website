@@ -8,20 +8,17 @@
     {{ primaryLabel() }}
   </button>
 
-  <button
-    type="button"
-    class="link text-sm"
-    data-testid="other-systems"
-    (click)="openModal()"
-  >
+  <button type="button" class="link text-sm" data-testid="other-systems" (click)="openModal()">
     Other systems (Linux &amp; macOS)
   </button>
+
+  @if (downloadError(); as error) {
+    <p class="text-center text-sm text-red-300" role="alert" data-testid="download-error">
+      {{ error }}
+    </p>
+  }
 </div>
 
 @if (modalOpen()) {
-  <app-os-modal
-    [version]="version()"
-    [options]="modalOptions()"
-    (close)="closeModal()"
-  />
+  <app-os-modal [options]="modalOptions()" (close)="closeModal()" />
 }

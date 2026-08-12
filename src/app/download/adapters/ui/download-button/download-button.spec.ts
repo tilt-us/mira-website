@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
+import { vi } from 'vitest';
 
 import { DownloadButton } from './download-button';
 import { DownloadService } from '../../../application/download.service';
@@ -9,30 +10,23 @@ import { DownloadTarget, Os } from '../../../domain/models';
 /** Lightweight stand-in for {@link DownloadService} with controllable OS. */
 class StubDownloadService {
   os: Os = 'windows';
-  readonly triggered: string[] = [];
+  readonly requested: DownloadTarget[] = [];
   linuxTarget: DownloadTarget | null = null;
+  failure: unknown;
 
   detectOs(): Os {
     return this.os;
   }
-  getLatestVersion() {
-    return of('9.9.9');
-  }
-  buildDownloadUrl(target: DownloadTarget, version: string): string {
-    return `https://dl/${target}/${version}`;
-  }
   detectLinuxTarget() {
     return this.linuxTarget;
   }
-  triggerDownload(url: string): void {
-    this.triggered.push(url);
+  download(target: DownloadTarget) {
+    this.requested.push(target);
+    return this.failure === undefined ? of(undefined) : throwError(() => this.failure);
   }
 }
 
-function byTestId(
-  fixture: ComponentFixture<DownloadButton>,
-  id: string,
-): HTMLElement {
+function byTestId(fixture: ComponentFixture<DownloadButton>, id: string): HTMLElement {
   return fixture.nativeElement.querySelector(`[data-testid="${id}"]`);
 }
 
@@ -55,7 +49,7 @@ describe('DownloadButton', () => {
     expect(button.textContent).toContain('Windows');
 
     button.click();
-    expect(stub.triggered).toEqual(['https://dl/windows/9.9.9']);
+    expect(stub.requested).toEqual(['windows']);
   });
 
   it('downloads the macOS build for macOS', () => {
@@ -63,7 +57,7 @@ describe('DownloadButton', () => {
     expect(byTestId(fixture, 'primary-download').textContent).toContain('macOS');
 
     byTestId(fixture, 'primary-download').click();
-    expect(stub.triggered).toEqual(['https://dl/mac/9.9.9']);
+    expect(stub.requested).toEqual(['mac']);
   });
 
   it('downloads the default Linux AppImage target when distro is not detected', () => {
@@ -73,7 +67,7 @@ describe('DownloadButton', () => {
     byTestId(fixture, 'primary-download').click();
     fixture.detectChanges();
 
-    expect(stub.triggered).toEqual(['https://dl/linux-arch/9.9.9']);
+    expect(stub.requested).toEqual(['linux-arch']);
     expect(fixture.nativeElement.querySelector('app-os-modal')).toBeFalsy();
   });
 
@@ -83,7 +77,7 @@ describe('DownloadButton', () => {
 
     byTestId(fixture, 'primary-download').click();
 
-    expect(stub.triggered).toEqual(['https://dl/linux-arch/9.9.9']);
+    expect(stub.requested).toEqual(['linux-arch']);
     expect(fixture.nativeElement.querySelector('app-os-modal')).toBeFalsy();
   });
 
@@ -95,7 +89,7 @@ describe('DownloadButton', () => {
     button.click();
     fixture.detectChanges();
 
-    expect(stub.triggered).toEqual([]);
+    expect(stub.requested).toEqual([]);
     expect(fixture.nativeElement.querySelector('app-os-modal')).toBeTruthy();
   });
 
@@ -107,9 +101,7 @@ describe('DownloadButton', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-os-modal')).toBeTruthy();
-    expect(
-      fixture.nativeElement.querySelectorAll('app-os-modal a[href]').length,
-    ).toBe(5);
+    expect(fixture.nativeElement.querySelectorAll('app-os-modal li button').length).toBe(5);
   });
 
   it('closes the modal when it emits close', () => {
@@ -117,11 +109,26 @@ describe('DownloadButton', () => {
     byTestId(fixture, 'other-systems').click();
     fixture.detectChanges();
 
-    fixture.debugElement
-      .query(By.css('app-os-modal'))
-      .componentInstance.close.emit();
+    fixture.debugElement.query(By.css('app-os-modal')).componentInstance.close.emit();
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-os-modal')).toBeFalsy();
+  });
+
+  it('shows and logs a manifest failure instead of silently ignoring it', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const { fixture, stub } = createFixture('windows');
+    stub.failure = { code: 'latest-manifest-unavailable' };
+
+    byTestId(fixture, 'primary-download').click();
+    fixture.detectChanges();
+
+    expect(byTestId(fixture, 'download-error').textContent).toContain(
+      'latest installer manifest is unavailable',
+    );
+    expect(warn).toHaveBeenCalledWith('Mira installer download failed.', {
+      code: 'latest-manifest-unavailable',
+    });
+    warn.mockRestore();
   });
 });

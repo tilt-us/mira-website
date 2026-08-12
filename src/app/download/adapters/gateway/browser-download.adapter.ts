@@ -8,7 +8,11 @@ export function createDownloadGateway(): DownloadGateway {
 
   return {
     trigger: (url) => {
-      document.defaultView?.location.assign(url);
+      const browserWindow = document.defaultView;
+      if (!browserWindow) {
+        throw new Error('A browser window is required to start a download.');
+      }
+      browserWindow.location.assign(url);
     },
   };
 }

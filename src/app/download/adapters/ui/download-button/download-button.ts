@@ -1,10 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 
-import { DownloadService, FALLBACK_VERSION } from '../../../application/download.service';
 import {
-  DOWNLOAD_OPTIONS,
-  DownloadOption,
-} from '../../../domain/models';
+  describeDownloadFailure,
+  DownloadService,
+  logDownloadFailure,
+} from '../../../application/download.service';
+import { DOWNLOAD_OPTIONS, DownloadOption, DownloadTarget } from '../../../domain/models';
 import { OsModal } from '../os-modal/os-modal';
 
 @Component({
@@ -16,14 +17,9 @@ export class DownloadButton {
   private readonly downloads = inject(DownloadService);
 
   protected readonly os = this.downloads.detectOs();
-  protected readonly version = signal(FALLBACK_VERSION);
   protected readonly modalOpen = signal(false);
-  protected readonly modalOptions =
-    signal<readonly DownloadOption[]>(DOWNLOAD_OPTIONS);
-
-  constructor() {
-    this.downloads.getLatestVersion().subscribe((v) => this.version.set(v));
-  }
+  protected readonly modalOptions = signal<readonly DownloadOption[]>(DOWNLOAD_OPTIONS);
+  protected readonly downloadError = signal<string | null>(null);
 
   protected primaryLabel(): string {
     switch (this.os) {
@@ -40,33 +36,35 @@ export class DownloadButton {
 
   protected onPrimaryClick(): void {
     if (this.os === 'windows' || this.os === 'mac') {
-      this.downloads.triggerDownload(
-        this.downloads.buildDownloadUrl(this.os, this.version()),
-      );
+      this.startDownload(this.os);
       return;
     }
 
     if (this.os === 'linux') {
       const linuxTarget = this.downloads.detectLinuxTarget() ?? 'linux-arch';
-      this.downloads.triggerDownload(
-        this.downloads.buildDownloadUrl(linuxTarget, this.version()),
-      );
+      this.startDownload(linuxTarget);
       return;
     }
 
-    this.openModal(
-      DOWNLOAD_OPTIONS,
-    );
+    this.openModal(DOWNLOAD_OPTIONS);
   }
 
-  protected openModal(
-    options: readonly DownloadOption[] = DOWNLOAD_OPTIONS,
-  ): void {
+  protected openModal(options: readonly DownloadOption[] = DOWNLOAD_OPTIONS): void {
     this.modalOptions.set(options);
     this.modalOpen.set(true);
   }
 
   protected closeModal(): void {
     this.modalOpen.set(false);
+  }
+
+  private startDownload(target: DownloadTarget): void {
+    this.downloadError.set(null);
+    this.downloads.download(target).subscribe({
+      error: (error) => {
+        logDownloadFailure(error);
+        this.downloadError.set(describeDownloadFailure(error));
+      },
+    });
   }
 }

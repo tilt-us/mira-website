@@ -28,17 +28,21 @@
     <ul class="flex flex-col gap-2">
       @for (option of options(); track option.target) {
         <li>
-          <a
+          <button
+            type="button"
             class="btn-ghost w-full justify-start"
-            [href]="hrefFor(option.target)"
-            (click)="close.emit()"
+            (click)="download(option.target)"
           >
             {{ option.label }}
-          </a>
+          </button>
         </li>
       }
     </ul>
 
-    <p class="mt-4 text-xs text-white/50">Version {{ version() }}</p>
+    @if (downloadError(); as error) {
+      <p class="mt-4 text-sm text-red-300" role="alert" data-testid="download-error">
+        {{ error }}
+      </p>
+    }
   </div>
 </div>
