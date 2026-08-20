@@ -22,7 +22,7 @@ permissions:
 jobs:
   unit-tests:
     name: Unit Tests + Coverage
-    runs-on: ubuntu-latest
+    runs-on: tilt-us-node-builder
     steps:
       - uses: actions/checkout@v4
 
@@ -58,7 +58,7 @@ jobs:
 
   playwright:
     name: Playwright Tests
-    runs-on: ubuntu-latest
+    runs-on: tilt-us-node-builder
     needs: unit-tests
     steps:
       - uses: actions/checkout@v4
@@ -82,7 +82,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps
+        run: pnpm exec playwright install chromium firefox webkit
 
       - name: Run Playwright tests
         run: pnpm run test:e2e
@@ -100,7 +100,7 @@ jobs:
 
   kustomize:
     name: Kustomize Validation
-    runs-on: ubuntu-latest
+    runs-on: tilt-us-node-builder
     steps:
       - uses: actions/checkout@v4
 
@@ -117,7 +117,7 @@ jobs:
 
   container-smoke:
     name: Container Build Smoke Test
-    runs-on: ubuntu-latest
+    runs-on: tilt-us-publisher
     needs: [unit-tests, playwright, kustomize]
     if: github.event_name == 'pull_request' || (github.event_name == 'push' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master'))
     steps:
@@ -157,7 +157,7 @@ jobs:
 
   publish-image:
     name: Publish Branch Image
-    runs-on: ubuntu-latest
+    runs-on: tilt-us-publisher
     needs: [unit-tests, playwright, container-smoke]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/master')
     permissions:
@@ -206,7 +206,7 @@ jobs:
 
   promote-release:
     name: Promote Existing Release Image
-    runs-on: ubuntu-latest
+    runs-on: tilt-us-publisher
     needs: [unit-tests, playwright]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     permissions:
